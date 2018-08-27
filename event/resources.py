@@ -1,0 +1,16 @@
+negative_words = {
+    'neither',
+    'not',
+    'nobody',
+    'no',
+    "n't",
+    'none',
+    'few',
+    'rare',
+    'hardly',
+    'barely',
+    'never',
+    'little',
+    'scarcely',
+    'seldom',
+}
