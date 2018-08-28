@@ -44,8 +44,8 @@ def add_entity_relations(relation_file, edl_entities, csr):
                         )
                         continue
 
-                    en_id = edl_entities[relen].id
-                    args.append((arg_name, en_id))
+                    en = edl_entities[relen]
+                    args.append((arg_name, en))
 
                 if len(args) < 2:
                     logging.error(
