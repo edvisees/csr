@@ -1,0 +1,222 @@
+Inspection.People	Inspection.People_Time	Time	
+Inspection.People	Inspection.People_Person	Person	
+Inspection.People	Inspection.People_Inspector	Person Sides GeopoliticalEntity Organization	
+Inspection.People	Inspection.People_Place	GeopoliticalEntity Facility Location	
+Business.Merge	Business.Merge_Organization	Organization	
+Business.Merge	Business.Merge_Place	GeopoliticalEntity Facility Location	
+Business.Merge	Business.Merge_Time	Time	
+Life.Marry	Life.Marry_Person	Person	
+Life.Marry	Life.Marry_Time	Time	
+Life.Marry	Life.Marry_Place	GeopoliticalEntity Facility Location	
+Justice.Acquit	Justice.Acquit_Time	Time	
+Justice.Acquit	Justice.Acquit_Adjudicator	GeopoliticalEntity Person Organization	
+Justice.Acquit	Justice.Acquit_Defendant	GeopoliticalEntity Person Organization	
+Justice.Acquit	Justice.Acquit_Place	GeopoliticalEntity Facility Location	
+Justice.Acquit	Justice.Acquit_Crime	Crime	
+Transaction.TransferMoney	Transaction.TransferMoney_Giver	GeopoliticalEntity Person Organization	Commerce_pay_Buyer
+Transaction.TransferMoney	Transaction.TransferMoney_Recipient	Person GeopoliticalEntity Organization	pb_ARG2	Commerce_buy_Buyer	Commerce_sell_Seller	
+Transaction.TransferMoney	Transaction.TransferMoney_Time	Time	
+Transaction.TransferMoney	Transaction.TransferMoney_Place	GeopoliticalEntity Facility Location	
+Transaction.TransferMoney	Transaction.TransferMoney_Beneficiary	Person GeopoliticalEntity Organization	Receiving_Recipient	Giving_Recipient	Commerce_buy_Seller
+Transaction.TransferMoney	Transaction.TransferMoney_Money	Money	Commerce_pay_Goods	Commerce_buy_Goods	Receiving_Theme	pb_ARG1	Commerce_sell_Goods
+Government.Legislate	Government.Legislate_Law	Law	
+Government.Legislate	Government.Legislate_Time	Time	
+Government.Legislate	Government.Legislate_Place	GeopoliticalEntity Facility Location	
+Government.Legislate	Government.Legislate_Legislature	Organization	
+Life.Injure	Life.Injure_Instrument	Commodity Vehicle Weapon	pb_ARG2	Cause_harm_Cause
+Life.Injure	Life.Injure_Victim	Person	Cause_harm_Victim	Impact_Impactor	pb_ARG1
+Life.Injure	Life.Injure_Place	GeopoliticalEntity Facility Location	
+Life.Injure	Life.Injure_Agent	GeopoliticalEntity Person Organization	Cause_harm_Agent	pb_ARG0
+Life.Injure	Life.Injure_Time	Time	
+Government.Vote	Government.Vote_Ballot	Ballot	
+Government.Vote	Government.Vote_Candidate	Law Sides Person Organization	
+Government.Vote	Government.Vote_Results	Results	
+Government.Vote	Government.Vote_Time	Time	
+Government.Vote	Government.Vote_Voter	Person	
+Government.Vote	Government.Vote_Place	GeopoliticalEntity Facility Location	
+Justice.Pardon	Justice.Pardon_Place	GeopoliticalEntity Facility Location	
+Justice.Pardon	Justice.Pardon_Time	Time	
+Justice.Pardon	Justice.Pardon_Crime	Crime	
+Justice.Pardon	Justice.Pardon_Defendant	Person GeopoliticalEntity Organization	
+Justice.Pardon	Justice.Pardon_Adjudicator	GeopoliticalEntity Person Organization	
+Justice.ReleaseParole	Justice.ReleaseParole_Crime	Crime	
+Justice.ReleaseParole	Justice.ReleaseParole_Time	Time	
+Justice.ReleaseParole	Justice.ReleaseParole_Place	GeopoliticalEntity Facility Location	
+Justice.ReleaseParole	Justice.ReleaseParole_Person	Person	pb_ARG1	
+Justice.ReleaseParole	Justice.ReleaseParole_Agent	GeopoliticalEntity Person Organization	
+Business.DeclareBankruptcy	Business.DeclareBankruptcy_Place	GeopoliticalEntity Facility Location	
+Business.DeclareBankruptcy	Business.DeclareBankruptcy_Organization	GeopoliticalEntity Person Organization	
+Business.DeclareBankruptcy	Business.DeclareBankruptcy_Time	Time	
+Justice.Convict	Justice.Convict_Place	GeopoliticalEntity Facility Location	
+Justice.Convict	Justice.Convict_Adjudicator	GeopoliticalEntity Person Organization	
+Justice.Convict	Justice.Convict_Crime	Crime	
+Justice.Convict	Justice.Convict_Time	Time	
+Justice.Convict	Justice.Convict_Defendant	GeopoliticalEntity Person Organization	
+Justice.Sentence	Justice.Sentence_Crime	Crime	
+Justice.Sentence	Justice.Sentence_Defendant	Person GeopoliticalEntity Organization	
+Justice.Sentence	Justice.Sentence_Adjudicator	Person GeopoliticalEntity Organization	
+Justice.Sentence	Justice.Sentence_Place	GeopoliticalEntity Facility Location	
+Justice.Sentence	Justice.Sentence_Time	Time	
+Justice.Sentence	Justice.Sentence_Sentence	Sentence	
+Life.Die	Life.Die_Instrument	Commodity Vehicle Weapon	Killing_Instrument	
+Life.Die	Life.Die_Time	Time	
+Life.Die	Life.Die_Victim	Person	Receiving_Recipient	Killing_Victim
+Life.Die	Life.Die_Place	GeopoliticalEntity Facility Location	
+Life.Die	Life.Die_Agent	GeopoliticalEntity Person Organization	pb_ARG0	Death_Protagonist	Dead_or_alive_Protagonist	Killing_Killer	Execution_Executed	Killing_Cause
+Justice.ArrestJail	Justice.ArrestJail_Crime	Crime	
+Justice.ArrestJail	Justice.ArrestJail_Person	Person	Arrest_Suspect
+Justice.ArrestJail	Justice.ArrestJail_Time	Time	
+Justice.ArrestJail	Justice.ArrestJail_Agent	Person GeopoliticalEntity Organization	
+Justice.ArrestJail	Justice.ArrestJail_Place	GeopoliticalEntity Facility Location	Arrest_Time:Location
+Justice.Extradite	Justice.Extradite_Crime	Crime	
+Justice.Extradite	Justice.Extradite_Agent	Person GeopoliticalEntity Organization	
+Justice.Extradite	Justice.Extradite_Origin	GeopoliticalEntity Facility Location	
+Justice.Extradite	Justice.Extradite_Destination	GeopoliticalEntity Facility Location	
+Justice.Extradite	Justice.Extradite_Person	Person	pb_ARG1
+Justice.Extradite	Justice.Extradite_Time	Time	
+Justice.ChargeIndict	Justice.ChargeIndict_Prosecutor	GeopoliticalEntity Person Organization	
+Justice.ChargeIndict	Justice.ChargeIndict_Crime	Crime	
+Justice.ChargeIndict	Justice.ChargeIndict_Defendant	GeopoliticalEntity Person Organization	
+Justice.ChargeIndict	Justice.ChargeIndict_Time	Time	
+Justice.ChargeIndict	Justice.ChargeIndict_Adjudicator	Person GeopoliticalEntity Organization	
+Justice.ChargeIndict	Justice.ChargeIndict_Place	GeopoliticalEntity Facility Location	
+Transaction.Transaction	Transaction.Transaction_Giver	Person GeopoliticalEntity Organization	
+Transaction.Transaction	Transaction.Transaction_Time	Time	
+Transaction.Transaction	Transaction.Transaction_Place	GeopoliticalEntity Facility Location	
+Transaction.Transaction	Transaction.Transaction_Recipient	Person GeopoliticalEntity Organization	
+Transaction.Transaction	Transaction.Transaction_Beneficiary	Person GeopoliticalEntity Organization	
+Contact.Correspondence	Contact.Correspondence_Place	GeopoliticalEntity Facility Location	
+Contact.Correspondence	Contact.Correspondence_Participant	GeopoliticalEntity Person Organization	
+Contact.Correspondence	Contact.Correspondence_Time	Time	
+Movement.TransportArtifact	Movement.TransportArtifact_Origin	GeopoliticalEntity Facility Location	Arriving_Source	
+Movement.TransportArtifact	Movement.TransportArtifact_Destination	GeopoliticalEntity Facility Location	Arriving_Goal	pb_ARGM-DIR	pb_ARG4	
+Movement.TransportArtifact	Movement.TransportArtifact_Agent	Person GeopoliticalEntity Organization	Intentionally_act_Agent	Supply_Supplier	pb_ARG0	Cotheme_Theme	Arranging_Agent	
+Movement.TransportArtifact	Movement.TransportArtifact_Time	Time	
+Movement.TransportArtifact	Movement.TransportArtifact_Artifact	Commodity Vehicle Weapon Facility	Causation_Effect	Arriving_Theme	Motion_Theme	Supply_Theme	pb_ARG1	Cotheme_Cotheme	Removing_Theme	Arranging_Theme
+Movement.TransportArtifact	Movement.TransportArtifact_Instrument	Vehicle Weapon	pb_ARG2	Arranging_Instrument
+Life.Divorce	Life.Divorce_Time	Time	
+Life.Divorce	Life.Divorce_Place	GeopoliticalEntity Facility Location	
+Life.Divorce	Life.Divorce_Person	Person	
+Justice.TrialHearing	Justice.TrialHearing_Crime	Crime	Trial_Case
+Justice.TrialHearing	Justice.TrialHearing_Adjudicator	Person GeopoliticalEntity Organization	Trial_Judge
+Justice.TrialHearing	Justice.TrialHearing_Prosecutor	GeopoliticalEntity Person Organization	Trial_Prosecution
+Justice.TrialHearing	Justice.TrialHearing_Time	Time	
+Justice.TrialHearing	Justice.TrialHearing_Place	GeopoliticalEntity Facility Location	
+Justice.TrialHearing	Justice.TrialHearing_Defendant	GeopoliticalEntity Person Organization	Trial_Defendant
+Government.Spy	Government.Spy_Agent	Person	
+Government.Spy	Government.Spy_Target	Sides GeopoliticalEntity Person Organization	
+Government.Spy	Government.Spy_Time	Time	
+Government.Spy	Government.Spy_Beneficiary	Sides GeopoliticalEntity Organization	
+Government.Spy	Government.Spy_Place	GeopoliticalEntity Facility Location	
+Transaction.TransferOwnership	Transaction.TransferOwnership_Beneficiary	GeopoliticalEntity Person Organization	Self_motion_Self_mover	Commerce_buy_Buyer	Commerce_sell_Buyer	
+Transaction.TransferOwnership	Transaction.TransferOwnership_Giver	GeopoliticalEntity Person Organization	GeopoliticalEntity Person Organization	Supply_Supplier	Commerce_sell_Seller	pb_ARG0
+Transaction.TransferOwnership	Transaction.TransferOwnership_Place	GeopoliticalEntity Facility Location	
+Transaction.TransferOwnership	Transaction.TransferOwnership_Thing	Commodity Weapon Organization Facility Vehicle	Becoming_Entity	pb_ARG1	Commerce_buy_Goods	Getting_Theme	Supply_Theme	Commerce_sell_Goods	Getting_Recipient	Arriving_Theme	
+Transaction.TransferOwnership	Transaction.TransferOwnership_Time	Time	
+Transaction.TransferOwnership	Transaction.TransferOwnership_Recipient	Person GeopoliticalEntity Organization	Arriving_Goal	pb_ARG2
+Government.Agreements	Government.Agreements_Signer	Sides GeopoliticalEntity	
+Government.Agreements	Government.Agreements_Place	GeopoliticalEntity Facility Location	
+Government.Agreements	Government.Agreements_Time	Time	
+Movement.TransportPerson	Movement.TransportPerson_Destination	GeopoliticalEntity Facility Location	Location Facility GeopoliticalEntity	Arriving_Goal	Motion_Goal	Self_motion_Goal	Travel_Goal	pb_ARG2	Fleeing_Goal	Bringing_Goal	Cause_motion_Theme	pb_ARGM-DIR	pb_ARG4	
+Movement.TransportPerson	Movement.TransportPerson_Instrument	Vehicle Weapon	Architectural_part_Part	pb_ARG2
+Movement.TransportPerson	Movement.TransportPerson_Person	Person	Arranging_Theme	Becoming_Entity	Motion_Theme	Arriving_Theme	Fleeing_Self_mover	Self_motion_Self_mover	Bringing_Theme	Departing_Theme	Causation_Effect	Event_Event	Cotheme_Cotheme	Removing_Theme
+Movement.TransportPerson	Movement.TransportPerson_Origin	GeopoliticalEntity Facility Location	Bringing_Source	Fleeing_Source	
+Movement.TransportPerson	Movement.TransportPerson_Agent	Person GeopoliticalEntity Organization	Arranging_Agent	Bringing_Agent	Attack_Assailant	Cause_motion_Agent	pb_ARG0	pb_ARG1	Cotheme_Theme
+Movement.TransportPerson	Movement.TransportPerson_Time	Time	
+Contact.Broadcast	Contact.Broadcast_Time	Time	
+Contact.Broadcast	Contact.Broadcast_Audience	Person GeopoliticalEntity Organization	Telling_Addressee	Statement_Addressee	Receiving_Recipient	pb_ARG2	
+Contact.Broadcast	Contact.Broadcast_Broadcaster	Person GeopoliticalEntity Organization	pb_ARG0	Candidness_Speaker	Sounds_Sound_source	Source_of_getting_Source	Source_of_getting_Theme	Statement_Speaker	Text_Author	Text_creation_Author	Request_Speaker	Judgment_communication_Evaluee	Statement_Medium	Judgment_communication_Communicator
+Contact.Broadcast	Contact.Broadcast_Place	GeopoliticalEntity Facility Location	
+Contact.Broadcast	Internal.Message	-	Becoming_aware_Phenomenon	Candidness_Topic	Statement_Message	Text_Text	Text_creation_Text	Unattributed_information_Reported_fact	Sending_Theme	Statement_Topic	Judgment_communication_Reason	Request_Message	Discussion_Topic	pb_ARG1	pb_ARGM-ADV	pb_ARG3	
+Inspection.Artifact	Inspection.Artifact_Place	GeopoliticalEntity Facility Location	
+Inspection.Artifact	Inspection.Artifact_Inspector	Sides GeopoliticalEntity Person Organization	
+Inspection.Artifact	Inspection.Artifact_Thing	Commodity Ballot Weapon Facility Vehicle	
+Inspection.Artifact	Inspection.Artifact_Time	Time	
+Existence.DamageDestroy	Existence.DamageDestroy_Place	GeopoliticalEntity Facility Location	
+Existence.DamageDestroy	Existence.DamageDestroy_Instrument	Commodity Vehicle Weapon	Weapon_Weapon	Attack_Weapon
+Existence.DamageDestroy	Existence.DamageDestroy_Agent	Person Sides GeopoliticalEntity Organization	Cause_impact_Agent
+Existence.DamageDestroy	Existence.DamageDestroy_Time	Time	
+Existence.DamageDestroy	Existence.DamageDestroy_Victim	Commodity Ballot Weapon Facility Vehicle	Cause_impact_Impactor	Cause_impact_Impactors	Impact_Impactor	Cause_impact_Impactee	Impact_Impactee
+Business.End	Business.End_Time	Time	
+Business.End	Business.End_Place	GeopoliticalEntity Facility Location	
+Business.End	Business.End_Organization	Organization	
+Personnel.StartPosition	Personnel.StartPosition_Organization	GeopoliticalEntity Organization	Hiring_Employer
+Personnel.StartPosition	Personnel.StartPosition_Time	Time	
+Personnel.StartPosition	Personnel.StartPosition_Person	Person	Hiring_Employee
+Personnel.StartPosition	Personnel.StartPosition_Place	GeopoliticalEntity Facility Location	
+Personnel.StartPosition	Personnel.StartPosition_Position	Title	
+Contact.Meet	Contact.Meet_Time	Time	
+Contact.Meet	Contact.Meet_Participant	GeopoliticalEntity Person Organization	Organization Person GeopoliticalEntity	Meet_with_Party_1	Statement_Speaker	pb_ARG0	Chatting_Interlocutors	Request_Speaker	Make_acquaintance_Individual_1	Chatting_Interlocutor_2	Chatting_Interlocutor_1	Communication_response_Speaker
+Contact.Meet	Contact.Meet_Place	GeopoliticalEntity Facility Location	
+Contact.Meet	Internal.Message	-	Becoming_aware_Phenomenon	Candidness_Topic	Statement_Message	Text_Text	Text_creation_Text	Unattributed_information_Reported_fact	Sending_Theme	Statement_Topic	Judgment_communication_Reason	Request_Message	Discussion_Topic	pb_ARG1	pb_ARGM-ADV	pb_ARG3
+Contact.Contact	Contact.Contact_Participant	GeopoliticalEntity Person Organization	Evidence_Support	Evoking_Stimulus	Reasoning_Arguer	Statement_Speaker	Telling_Speaker	Contacting_Addressee	Contacting_Communicator	Discussion_Interlocutor_1	Expressing_publicly_Communicator	pb_ARG0
+Contact.Contact	Contact.Contact_Time	Time	
+Contact.Contact	Contact.Contact_Place	GeopoliticalEntity Facility Location	
+Contact.Contact	Internal.Message	-	Becoming_aware_Phenomenon	Candidness_Topic	Statement_Message	Text_Text	Text_creation_Text	Unattributed_information_Reported_fact	Sending_Theme	Statement_Topic	Judgment_communication_Reason	Request_Message	Discussion_Topic	pb_ARG1	pb_ARGM-ADV	pb_ARG3
+Justice.Fine	Justice.Fine_Defendant	Person GeopoliticalEntity Organization	
+Justice.Fine	Justice.Fine_Crime	Crime	
+Justice.Fine	Justice.Fine_Place	GeopoliticalEntity Facility Location	
+Justice.Fine	Justice.Fine_Time	Time	
+Justice.Fine	Justice.Fine_Adjudicator	Person GeopoliticalEntity Organization	
+Justice.Fine	Justice.Fine_Money	Money	
+Justice.Sue	Justice.Sue_Plaintiff	GeopoliticalEntity Person Organization	
+Justice.Sue	Justice.Sue_Crime	Crime	
+Justice.Sue	Justice.Sue_Defendant	Person GeopoliticalEntity Organization	
+Justice.Sue	Justice.Sue_Place	GeopoliticalEntity Facility Location	
+Justice.Sue	Justice.Sue_Time	Time	
+Justice.Sue	Justice.Sue_Adjudicator	Person GeopoliticalEntity Organization	
+Conflict.Demonstrate	Conflict.Demonstrate_Place	GeopoliticalEntity Facility Location	
+Conflict.Demonstrate	Conflict.Demonstrate_Time	Time	
+Conflict.Demonstrate	Conflict.Demonstrate_Demonstrator	Person Organization	pb_ARG0	Reasoning_Arguer	pb_ARG1	
+Transaction.TransferControl	Transaction.TransferControl_Beneficiary	Sides GeopoliticalEntity Person Organization	
+Transaction.TransferControl	Transaction.TransferControl_Territory	GeopoliticalEntity Facility Location	
+Transaction.TransferControl	Transaction.TransferControl_Place	GeopoliticalEntity Facility Location	
+Transaction.TransferControl	Transaction.TransferControl_Giver	Sides GeopoliticalEntity Person Organization	Commerce_pay_Buyer
+Transaction.TransferControl	Transaction.TransferControl_Time	Time	
+Transaction.TransferControl	Transaction.TransferControl_Recipient	Person Sides GeopoliticalEntity Organization	
+Life.BeBorn	Life.BeBorn_Place	GeopoliticalEntity Facility Location	
+Life.BeBorn	Life.BeBorn_Time	Time	
+Life.BeBorn	Life.BeBorn_Person	Person	
+Personnel.EndPosition	Personnel.EndPosition_Position	Title	
+Personnel.EndPosition	Personnel.EndPosition_Person	Person	
+Personnel.EndPosition	Personnel.EndPosition_Place	GeopoliticalEntity Facility Location	
+Personnel.EndPosition	Personnel.EndPosition_Organization	GeopoliticalEntity Organization	
+Personnel.EndPosition	Personnel.EndPosition_Time	Time	
+Personnel.Nominate	Personnel.Nominate_Nominee	Person	
+Personnel.Nominate	Personnel.Nominate_Time	Time	
+Personnel.Nominate	Personnel.Nominate_Place	GeopoliticalEntity Facility Location	
+Personnel.Nominate	Personnel.Nominate_Nominator	Person GeopoliticalEntity Organization	
+Manufacture.Artifact	Manufacture.Artifact_Time	Time	
+Manufacture.Artifact	Manufacture.Artifact_Instrument	Commodity Vehicle Weapon Facility	pb_ARG2
+Manufacture.Artifact	Manufacture.Artifact_Place	GeopoliticalEntity Facility Location	Manufacturing_Factory
+Manufacture.Artifact	Manufacture.Artifact_Artifact	Commodity Vehicle Weapon Facility	Causation_Effect	Manufacturing_Product	pb_ARG1	Building_Created_entity	
+Manufacture.Artifact	Manufacture.Artifact_Manufacturer	GeopoliticalEntity Person Organization	pb_ARG0	Manufacturing_Producer	
+Justice.Appeal	Justice.Appeal_Prosecutor	Person GeopoliticalEntity Organization	
+Justice.Appeal	Justice.Appeal_Defendant	GeopoliticalEntity Person Organization	
+Justice.Appeal	Justice.Appeal_Crime	Crime	
+Justice.Appeal	Justice.Appeal_Adjudicator	GeopoliticalEntity Person Organization	
+Justice.Appeal	Justice.Appeal_Time	Time	
+Justice.Appeal	Justice.Appeal_Place	GeopoliticalEntity Facility Location	
+Justice.Execute	Justice.Execute_Time	Time	
+Justice.Execute	Justice.Execute_Person	Person	
+Justice.Execute	Justice.Execute_Crime	Crime	
+Justice.Execute	Justice.Execute_Place	GeopoliticalEntity Facility Location	
+Justice.Execute	Justice.Execute_Agent	GeopoliticalEntity Person Organization	
+Justice.Investigate	Justice.Investigate_Investigatee	Sides GeopoliticalEntity Person Organization	
+Justice.Investigate	Justice.Investigate_Crime	Crime	
+Justice.Investigate	Justice.Investigate_Time	Time	
+Justice.Investigate	Justice.Investigate_Investigator	Sides GeopoliticalEntity Person Organization	
+Justice.Investigate	Justice.Investigate_Place	GeopoliticalEntity Facility Location	
+Business.Start	Business.Start_Organization	Organization	
+Business.Start	Business.Start_Place	GeopoliticalEntity Facility Location	
+Business.Start	Business.Start_Time	Time	
+Business.Start	Business.Start_Agent	Person GeopoliticalEntity Organization	
+Conflict.Attack	Conflict.Attack_Instrument	Commodity Vehicle Weapon	Weapon_Weapon	Attack_Weapon	Impact_Impactee	pb_ARGM-MNR	Manufacturing_Product	Shoot_projectiles_Projectile:Weapon	pb_ARG2	Shoot_projectiles_Goal:Weapon
+Conflict.Attack	Conflict.Attack_Place	GeopoliticalEntity Facility Location	pb_ARG3	Shoot_projectiles_Source
+Conflict.Attack	Conflict.Attack_Time	Time	
+Conflict.Attack	Conflict.Attack_Attacker	Person GeopoliticalEntity Organization		Damaging_Agent	Hit_target_Agent	Killing_Killer	Secrecy_status_Cognizer	Shoot_projectiles_Agent	Taking_time_Agent	Attack_Assailant	Hostile_encounter_Side_1	Attack_Source	Cause_harm_Agent	Hostile_encounter_Sides	pb_ARG0	pb_ARG2
+Conflict.Attack	Conflict.Attack_Target	Commodity Weapon Facility Person Vehicle GeopoliticalEntity Location	pb_ARG1	Impact_Impactor	Killing_Victim	pb_ARGM-DIR	Attack_Victim	Hit_target_Target	Cause_harm_Victim	Destroying_Undergoer	Hostile_encounter_Side_2	Beat_opponent_Loser	Ingestion_Ingestibles	Shoot_projectiles_Projectile:Vehicle
+Personnel.Elect	Personnel.Elect_Elect	Person	pb_ARG1
+Personnel.Elect	Personnel.Elect_Place	GeopoliticalEntity Facility Location
+Personnel.Elect	Personnel.Elect_Elector	Person GeopoliticalEntity Organization	
+Personnel.Elect	Personnel.Elect_Time	Time
