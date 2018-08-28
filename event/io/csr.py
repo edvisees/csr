@@ -1006,6 +1006,17 @@ class CSR:
 
     def add_relation(self, ontology, arguments, relation_type, component=None,
                      relation_id=None):
+        """
+        Adding a relation to csr.
+        :param ontology: The ontology name of the relation.
+        :param arguments: List of arguments in pairs [(arg_typ, arg_obj)],
+         arg_obj is another frame object.
+        :param relation_type: The relation type for this relation.
+        :param component: The component name that produces this relation.
+        :param relation_id: A unique relation id, the CSR will automatically
+            assign one if not provided.
+        :return: The created relation mention will be returned
+        """
         if not relation_id:
             relation_id = self.get_id('relm')
         rel = RelationMention(relation_id, ontology, relation_type,
@@ -1015,6 +1026,8 @@ class CSR:
             rel.add_arg(arg_type, arg_ent)
 
         self._frame_map[self.rel_key][relation_id] = rel
+
+        return rel
 
     def get_json_rep(self):
         rep = {}
