@@ -1,0 +1,47 @@
+Business.DeclareBankruptcy
+Business.End	tac:Business_Endorg
+Business.Merge	tac:Business_Mergeorg
+Business.Start	Business_Startorg
+Conflict.Attack	framenet:Ingestion	framenet:Killing	framenet:Shoot_projectiles
+Conflict.Demonstrate
+Contact.Broadcast	framenet:Statement	framenet:Judgment_communication
+Contact.Contact	framenet:Request
+Contact.Correspondence
+Contact.Meet
+Existence.DamageDestroy	framenet:Impact
+Government.Agreements
+Government.Legislate
+Government.Spy
+Government.Vote
+Inspection.Artifact
+Inspection.People
+Justice.Acquit
+Justice.Appeal
+Justice.ArrestJail
+Justice.ChargeIndict
+Justice.Convict
+Justice.Execute
+Justice.Extradite
+Justice.Fine
+Justice.Investigate
+Justice.Pardon
+Justice.ReleaseParole
+Justice.Sentence
+Justice.Sue
+Justice.TrialHearing
+Life.BeBorn
+Life.Die
+Life.Divorce
+Life.Injure
+Life.Marry
+Manufacture.Artifact
+Movement.TransportArtifact	framenet:Arriving	framenet:Motion
+Movement.TransportPerson
+Personnel.Elect
+Personnel.EndPosition	Personnel_Endposition
+Personnel.Nominate
+Personnel.StartPosition	Personnel_Startposition
+Transaction.Transaction
+Transaction.TransferControl
+Transaction.TransferMoney
+Transaction.TransferOwnership
