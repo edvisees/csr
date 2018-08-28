@@ -236,7 +236,7 @@ class RelArgFrame(Frame):
         rep = {
             '@type': 'argument',
             'type': 'aida:' + self.arg_type,
-            'arg': self.arg_ent
+            'arg': self.arg_ent.id
         }
         return rep
 
