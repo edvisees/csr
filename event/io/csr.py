@@ -224,26 +224,20 @@ class InterpFrame(Frame):
 
 class RelArgFrame(Frame):
     """
-    A frame for the arguments of a relation.
+    A frame for the argument of a relation.
     """
 
-    def __init__(self, fid):
+    def __init__(self, fid, arg_type, arg_ent):
         super().__init__(fid, 'argument', None)
-        self.members = []
-
-    def add_arg(self, arg):
-        self.members.append(arg)
+        self.arg_type = arg_type
+        self.arg_ent = arg_ent
 
     def json_rep(self):
-        rep = []
-        for arg_type, arg_ent in self.members:
-            rep.append(
-                {
-                    '@type': 'argument',
-                    'type': 'aida:' + arg_type,
-                    'arg': arg_ent
-                }
-            )
+        rep = {
+            '@type': 'argument',
+            'type': 'aida:' + self.arg_type,
+            'arg': self.arg_ent
+        }
         return rep
 
 
@@ -465,26 +459,29 @@ class RelationMention(InterpFrame):
     Represent a relation between frames (more than 1).
     """
 
-    def __init__(self, fid, ontology, relation_type, arguments, score=None,
+    def __init__(self, fid, ontology, relation_type, score=None,
                  component=None):
         super().__init__(fid, 'relation_evidence', None,
                          'relation_evidence_interp', component=component)
         self.relation_type = relation_type
-        self.arguments = arguments
+
+        self.arguments = []
         onto_type = ontology + ":" + relation_type
-        self.interp.add_fields('type', 'type', onto_type, onto_type)
+        self.interp.add_fields('type', 'type', onto_type, onto_type,
+                               score=score)
 
     def json_rep(self):
-        arg_frame = RelArgFrame(None)
-        for arg in self.arguments:
-            arg_frame.add_arg(arg)
-
-        self.interp.add_fields('args', 'args', self.relation_type, arg_frame)
-
+        for arg_frame in self.arguments:
+            self.interp.add_fields(
+                'args', 'args', self.relation_type, arg_frame)
         return super().json_rep()
 
-    def add_arg(self, arg):
-        self.arguments.append(arg)
+    def add_arg(self, arg_type, arg_ent):
+        arg_frame = RelArgFrame(None, arg_type, arg_ent)
+        self.arguments.append(arg_frame)
+        self.interp.add_fields(
+            'args', arg_type, arg_ent.id, arg_frame, multi_value=True
+        )
 
 
 class CSR:
@@ -1011,8 +1008,12 @@ class CSR:
                      relation_id=None):
         if not relation_id:
             relation_id = self.get_id('relm')
-        rel = RelationMention(relation_id, ontology, relation_type, arguments,
+        rel = RelationMention(relation_id, ontology, relation_type,
                               component=component)
+
+        for arg_type, arg_ent in arguments:
+            rel.add_arg(arg_type, arg_ent)
+
         self._frame_map[self.rel_key][relation_id] = rel
 
     def get_json_rep(self):
