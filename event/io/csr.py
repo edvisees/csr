@@ -397,12 +397,28 @@ class RelationMention(SpanInterpFrame):
         super().__init__(fid, 'relation_evidence', parent,
                          'relation_evidence_interp', reference, begin, length,
                          text, component)
-        self.relation_type = relation_type
+
 
         self.arguments = []
-        onto_type = ontology + ":" + relation_type
+    def get_types(self):
+        return self.entity_types
+    
+    def add_type(self, ontology, rel_type, score=None, component=None):
+        # type_interp = Interp(self.interp_type)
+        if entity_type == "null":
+            return
+
+        onto_type = ontology + ":" + rel_type
+
+        if component == self.component:
+            # Inherit frame component name.
+            component = None
+
         self.interp.add_fields('type', 'type', onto_type, onto_type,
-                               score=score)
+                               score=score, component=component)
+
+        self.entity_types.append(onto_type)
+        # input("Added entity type for {}, {}".format(self.id, self.text))
 
     def json_rep(self):
         for arg_frame in self.arguments:
