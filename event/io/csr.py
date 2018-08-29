@@ -420,11 +420,7 @@ class RelationMention(SpanInterpFrame):
         self.entity_types.append(onto_type)
         # input("Added entity type for {}, {}".format(self.id, self.text))
 
-    def json_rep(self):
-        for arg_frame in self.arguments:
-            self.interp.add_fields(
-                'args', 'args', self.relation_type, arg_frame)
-        return super().json_rep()
+
 
     def add_arg(self, arg_type, arg_ent):
         arg_frame = RelArgFrame(None, arg_type, arg_ent)
@@ -868,9 +864,11 @@ class CSR:
 
             self._frame_map[self.rel_key][relation_id] = rel
 
-            return rel
         else:
             return
+        if entity_type:
+            entity_mention.add_type(ontology, entity_type, component=component)
+        return rel
 
     def add_entity_mention(self, head_span, span, text, ontology, entity_type,
                            sent_id=None, entity_form=None, component=None,
