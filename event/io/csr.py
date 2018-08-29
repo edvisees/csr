@@ -387,6 +387,37 @@ class EntityMention(SpanInterpFrame):
         self.interp.add_fields('salience', 'score', 'score', salience_score)
 
 
+class RelationMention(SpanInterpFrame):
+    """
+    Represent a relation between frames (more than 1).
+    """
+
+    def __init__(self, fid, parent, reference, begin, length, text,
+                 component=None):
+        super().__init__(fid, 'entity_evidence', parent,
+                         'entity_evidence_interp', reference, begin, length,
+                         text, component)
+        self.relation_type = relation_type
+
+        self.arguments = []
+        onto_type = ontology + ":" + relation_type
+        self.interp.add_fields('type', 'type', onto_type, onto_type,
+                               score=score)
+
+    def json_rep(self):
+        for arg_frame in self.arguments:
+            self.interp.add_fields(
+                'args', 'args', self.relation_type, arg_frame)
+        return super().json_rep()
+
+    def add_arg(self, arg_type, arg_ent):
+        arg_frame = RelArgFrame(None, arg_type, arg_ent)
+        self.arguments.append(arg_frame)
+        self.interp.add_fields(
+            'args', arg_type, arg_ent.id, arg_frame, multi_value=True
+        )
+
+
 class Argument(Frame):
     """
     An argument of event, which is simply a wrap around an entity,
@@ -405,6 +436,36 @@ class Argument(Frame):
 
         return rep
 
+'''
+class RelationMention(InterpFrame):
+    """
+    Represent a relation between frames (more than 1).
+    """
+
+    def __init__(self, fid, ontology, relation_type, score=None,
+                 component=None):
+        super().__init__(fid, 'relation_evidence', None,
+                         'relation_evidence_interp', component=component)
+        self.relation_type = relation_type
+
+        self.arguments = []
+        onto_type = ontology + ":" + relation_type
+        self.interp.add_fields('type', 'type', onto_type, onto_type,
+                               score=score)
+
+    def json_rep(self):
+        for arg_frame in self.arguments:
+            self.interp.add_fields(
+                'args', 'args', self.relation_type, arg_frame)
+        return super().json_rep()
+
+    def add_arg(self, arg_type, arg_ent):
+        arg_frame = RelArgFrame(None, arg_type, arg_ent)
+        self.arguments.append(arg_frame)
+        self.interp.add_fields(
+            'args', arg_type, arg_ent.id, arg_frame, multi_value=True
+        )
+'''
 
 class EventMention(SpanInterpFrame):
     """
@@ -454,34 +515,6 @@ class EventMention(SpanInterpFrame):
         self.interp.add_fields('salience', 'score', 'score', salience_score)
 
 
-class RelationMention(InterpFrame):
-    """
-    Represent a relation between frames (more than 1).
-    """
-
-    def __init__(self, fid, ontology, relation_type, score=None,
-                 component=None):
-        super().__init__(fid, 'relation_evidence', None,
-                         'relation_evidence_interp', component=component)
-        self.relation_type = relation_type
-
-        self.arguments = []
-        onto_type = ontology + ":" + relation_type
-        self.interp.add_fields('type', 'type', onto_type, onto_type,
-                               score=score)
-
-    def json_rep(self):
-        for arg_frame in self.arguments:
-            self.interp.add_fields(
-                'args', 'args', self.relation_type, arg_frame)
-        return super().json_rep()
-
-    def add_arg(self, arg_type, arg_ent):
-        arg_frame = RelArgFrame(None, arg_type, arg_ent)
-        self.arguments.append(arg_frame)
-        self.interp.add_fields(
-            'args', arg_type, arg_ent.id, arg_frame, multi_value=True
-        )
 
 
 class CSR:
@@ -789,6 +822,38 @@ class CSR:
                 return 'aida', 'Time'
         return onto_name, entity_type
 
+    def add_relation(self, head_span, span, text, ontology, arguments, 
+                     relation_type, component=None, relation_id=None):
+        """
+        Adding a relation to csr.
+        :param ontology: The ontology name of the relation.
+        :param arguments: List of arguments in pairs [(arg_typ, arg_obj)],
+         arg_obj is another frame object.
+        :param relation_type: The relation type for this relation.
+        :param component: The component name that produces this relation.
+        :param relation_id: A unique relation id, the CSR will automatically
+            assign one if not provided.
+        :return: The created relation mention will be returned
+        """
+        if not relation_id:
+            relation_id = self.get_id('relm')
+
+        align_res = self.align_to_text(span, text, sent_id)
+        if align_res:
+            rel = RelationMention(relation_id, sent_id, sent_id, relation_type,
+                                  fitted_span[0] - sentence_start,
+                                  fitted_span[1] - fitted_span[0], valid_text,
+                                  component=component)
+
+            for arg_type, arg_ent in arguments:
+                rel.add_arg(arg_type, arg_ent)
+
+            self._frame_map[self.rel_key][relation_id] = rel
+
+            return rel
+        else:
+            return
+
     def add_entity_mention(self, head_span, span, text, ontology, entity_type,
                            sent_id=None, entity_form=None, component=None,
                            entity_id=None):
@@ -1004,30 +1069,7 @@ class CSR:
         arg_id = self.get_id('arg')
         evm.add_arg(ontology, arg_role, ent, arg_id, component=component)
 
-    def add_relation(self, ontology, arguments, relation_type, component=None,
-                     relation_id=None):
-        """
-        Adding a relation to csr.
-        :param ontology: The ontology name of the relation.
-        :param arguments: List of arguments in pairs [(arg_typ, arg_obj)],
-         arg_obj is another frame object.
-        :param relation_type: The relation type for this relation.
-        :param component: The component name that produces this relation.
-        :param relation_id: A unique relation id, the CSR will automatically
-            assign one if not provided.
-        :return: The created relation mention will be returned
-        """
-        if not relation_id:
-            relation_id = self.get_id('relm')
-        rel = RelationMention(relation_id, ontology, relation_type,
-                              component=component)
-
-        for arg_type, arg_ent in arguments:
-            rel.add_arg(arg_type, arg_ent)
-
-        self._frame_map[self.rel_key][relation_id] = rel
-
-        return rel
+    
 
     def get_json_rep(self):
         rep = {}

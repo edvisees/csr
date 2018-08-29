@@ -32,6 +32,7 @@ def add_entity_relations(relation_file, edl_entities, csr):
         for relation in data:
             for rel in relation['rels']:
                 args = []
+                mention_span = [rel['span']]
                 for arg_name, relen in rel.items():
                     if arg_name == 'rel':
                         # Not an argument field.
