@@ -838,7 +838,7 @@ class CSR:
         if not relation_id:
             relation_id = self.get_id('relm')
 
-        align_res = self.align_to_text(span, None, sent_id)
+        align_res = self.align_to_text(span, None, None)
         if align_res:
             sent_id, fitted_span, valid_text = align_res
             sentence_start = self._frame_map[self.sent_key][sent_id].span.begin
