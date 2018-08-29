@@ -866,7 +866,7 @@ class CSR:
 
         else:
             return
-        if rel_type:
+        if relation_type:
             rel_mention.add_type(ontology, relation_type, component=component)
         return rel
 
