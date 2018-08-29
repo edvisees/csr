@@ -309,7 +309,7 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
 
             if relation['relationType'] == 'entity_coreference':
                 args_temp = [csr_entities[i] for i in relation['arguments'] if i in csr_entities]
-                args = [('member'%, arg) for i, arg in enumerate(args_temp)]
+                args = [('member', arg) for i, arg in enumerate(args_temp)]
 
                 csr.add_relation('aida', args, 'entity_coreference', 'corenlp')
 
