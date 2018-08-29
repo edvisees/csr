@@ -866,8 +866,8 @@ class CSR:
 
         else:
             return
-        if entity_type:
-            entity_mention.add_type(ontology, entity_type, component=component)
+        if rel_type:
+            rel_mention.add_type(ontology, relation_type, component=component)
         return rel
 
     def add_entity_mention(self, head_span, span, text, ontology, entity_type,
