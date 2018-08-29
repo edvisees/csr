@@ -296,18 +296,19 @@ class SpanInterpFrame(InterpFrame):
 
     def json_rep(self):
         rep = super().json_rep()
-        info = {
-            'provenance': {
-                '@type': 'text_span',
-                'reference': self.span.reference,
-                'start': self.span.begin,
-                'length': self.span.length,
-                'text': self.text,
-                'parent_scope': self.parent,
-                'modifiers': self.modifiers,
+        if self.span.reference:
+            info = {
+                'provenance': {
+                    '@type': 'text_span',
+                    'reference': self.span.reference,
+                    'start': self.span.begin,
+                    'length': self.span.length,
+                    'text': self.text,
+                    'parent_scope': self.parent,
+                    'modifiers': self.modifiers,
+                }
             }
-        }
-        rep.update(info)
+            rep.update(info)
         return rep
 
 
