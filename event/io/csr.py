@@ -397,7 +397,7 @@ class RelationMention(SpanInterpFrame):
                  component=None):
         super().__init__(fid, 'relation_evidence', parent,
                          'relation_evidence_interp', reference, begin, length,
-                         text, component)
+                         text, component=None, score=None)
 
 
         self.arguments = []
@@ -837,7 +837,7 @@ class CSR:
         return onto_name, entity_type
 
     def add_relation(self, ontology, arguments, 
-                     relation_type, component=None, relation_id=None, span=None):
+                     relation_type, component=None, relation_id=None, span=None, score=None):
         """
         Adding a relation to csr.
         :param ontology: The ontology name of the relation.
@@ -860,7 +860,7 @@ class CSR:
                 rel = RelationMention(relation_id, sent_id, sent_id,
                                       fitted_span[0] - sentence_start,
                                       fitted_span[1] - fitted_span[0], valid_text,
-                                      component=component)
+                                      component=component, score=score)
             else:
                 return
         else:

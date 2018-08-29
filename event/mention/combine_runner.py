@@ -58,7 +58,8 @@ def add_entity_relations(relation_file, edl_entities, csr):
                     continue
 
                 csr.add_relation(
-                    'aida', args, rel['rel'], 'opera.relations.xiang', span=mention_span
+                    'aida', args, rel['rel'], 'opera.relations.xiang',
+                    span=mention_span, score=score
                 )
 
 
