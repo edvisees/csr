@@ -405,7 +405,7 @@ class RelationMention(SpanInterpFrame):
     
     def add_type(self, ontology, rel_type, score=None, component=None):
         # type_interp = Interp(self.interp_type)
-        if entity_type == "null":
+        if rel_type == "null":
             return
 
         onto_type = ontology + ":" + rel_type
