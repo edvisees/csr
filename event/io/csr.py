@@ -860,15 +860,16 @@ class CSR:
                                       fitted_span[0] - sentence_start,
                                       fitted_span[1] - fitted_span[0], valid_text,
                                       component=component)
-
-                for arg_type, arg_ent in arguments:
-                    rel.add_arg(arg_type, arg_ent)
-
-                self._frame_map[self.rel_key][relation_id] = rel
             else:
                 return
         else:
             rel = RelationMention(relation_id, None, None, 0 ,0 , '', component)
+
+        for arg_type, arg_ent in arguments:
+            rel.add_arg(arg_type, arg_ent)
+
+        self._frame_map[self.rel_key][relation_id] = rel
+
 
         if relation_type:
             rel.add_type(ontology,  relation_type, component=component)
