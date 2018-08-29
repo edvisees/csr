@@ -842,7 +842,7 @@ class CSR:
         if align_res:
             sent_id, fitted_span, valid_text = align_res
             sentence_start = self._frame_map[self.sent_key][sent_id].span.begin
-            rel = RelationMention(relation_id, sent_id, sent_id, relation_type,
+            rel = RelationMention(relation_id, sent_id, sent_id,
                                   fitted_span[0] - sentence_start,
                                   fitted_span[1] - fitted_span[0], valid_text,
                                   component=component)
