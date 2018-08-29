@@ -835,8 +835,8 @@ class CSR:
                 return 'aida', 'Time'
         return onto_name, entity_type
 
-    def add_relation(self, span, ontology, arguments, 
-                     relation_type, component=None, relation_id=None):
+    def add_relation(self, ontology, arguments, 
+                     relation_type, component=None, relation_id=None, span=None):
         """
         Adding a relation to csr.
         :param ontology: The ontology name of the relation.
@@ -851,22 +851,25 @@ class CSR:
         if not relation_id:
             relation_id = self.get_id('relm')
 
-        align_res = self.align_to_text(span, None, None)
-        if align_res:
-            sent_id, fitted_span, valid_text = align_res
-            sentence_start = self._frame_map[self.sent_key][sent_id].span.begin
-            rel = RelationMention(relation_id, sent_id, sent_id,
-                                  fitted_span[0] - sentence_start,
-                                  fitted_span[1] - fitted_span[0], valid_text,
-                                  component=component)
+        if span:
+            align_res = self.align_to_text(span, None, None)
+            if align_res:
+                sent_id, fitted_span, valid_text = align_res
+                sentence_start = self._frame_map[self.sent_key][sent_id].span.begin
+                rel = RelationMention(relation_id, sent_id, sent_id,
+                                      fitted_span[0] - sentence_start,
+                                      fitted_span[1] - fitted_span[0], valid_text,
+                                      component=component)
 
-            for arg_type, arg_ent in arguments:
-                rel.add_arg(arg_type, arg_ent)
+                for arg_type, arg_ent in arguments:
+                    rel.add_arg(arg_type, arg_ent)
 
-            self._frame_map[self.rel_key][relation_id] = rel
-
+                self._frame_map[self.rel_key][relation_id] = rel
+            else:
+                return
         else:
-            return
+            rel = RelationMention(relation_id, None, None, 0 ,0 , '', component)
+
         if relation_type:
             rel.add_type(ontology,  relation_type, component=component)
         return rel
