@@ -32,9 +32,9 @@ def add_entity_relations(relation_file, edl_entities, csr):
         for relation in data:
             for rel in relation['rels']:
                 args = []
-                mention_span = [rel['span']]
+                mention_span = rel['span']
                 for arg_name, relen in rel.items():
-                    if arg_name == 'rel':
+                    if arg_name == 'rel' or arg_name == 'span' or arg_name == 'score':
                         # Not an argument field.
                         continue
 
@@ -56,7 +56,7 @@ def add_entity_relations(relation_file, edl_entities, csr):
                     continue
 
                 csr.add_relation(
-                    'aida', args, rel['rel'], 'opera.relations.xiang'
+                    mention_span, 'aida', args, rel['rel'], 'opera.relations.xiang'
                 )
 
 

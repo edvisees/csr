@@ -394,8 +394,8 @@ class RelationMention(SpanInterpFrame):
 
     def __init__(self, fid, parent, reference, begin, length, text,
                  component=None):
-        super().__init__(fid, 'entity_evidence', parent,
-                         'entity_evidence_interp', reference, begin, length,
+        super().__init__(fid, 'relation_evidence', parent,
+                         'relation_evidence_interp', reference, begin, length,
                          text, component)
         self.relation_type = relation_type
 
@@ -763,7 +763,7 @@ class CSR:
                 "No suitable sentence for entity {}".format(span))
         else:
             sent = self._frame_map[self.sent_key][sent_id]
-            if not fitted_span == span:
+            if (not fitted_span == span) or (not text):
                 # If the fitted span changes, we will simply use the doc text.
                 valid_text = sent.substring(fitted_span)
             else:
@@ -822,7 +822,7 @@ class CSR:
                 return 'aida', 'Time'
         return onto_name, entity_type
 
-    def add_relation(self, head_span, span, text, ontology, arguments, 
+    def add_relation(self, head_span,  ontology, arguments, 
                      relation_type, component=None, relation_id=None):
         """
         Adding a relation to csr.
@@ -840,6 +840,8 @@ class CSR:
 
         align_res = self.align_to_text(span, text, sent_id)
         if align_res:
+            sent_id, fitted_span, valid_text = align_res
+            sentence_start = self._frame_map[self.sent_key][sent_id].span.begin
             rel = RelationMention(relation_id, sent_id, sent_id, relation_type,
                                   fitted_span[0] - sentence_start,
                                   fitted_span[1] - fitted_span[0], valid_text,
