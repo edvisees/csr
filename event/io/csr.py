@@ -400,6 +400,7 @@ class RelationMention(SpanInterpFrame):
 
 
         self.arguments = []
+        sefl.rel_types = []
     def get_types(self):
         return self.entity_types
     
@@ -417,7 +418,7 @@ class RelationMention(SpanInterpFrame):
         self.interp.add_fields('type', 'type', onto_type, onto_type,
                                score=score, component=component)
 
-        self.entity_types.append(onto_type)
+        self.rel_types.append(onto_type)
         # input("Added entity type for {}, {}".format(self.id, self.text))
 
 
