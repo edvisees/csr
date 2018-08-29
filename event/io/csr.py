@@ -400,7 +400,7 @@ class RelationMention(SpanInterpFrame):
 
 
         self.arguments = []
-        sefl.rel_types = []
+        self.rel_types = []
     def get_types(self):
         return self.entity_types
     
