@@ -1,4 +1,3 @@
-
 from event.io.csr import CSR
 import logging
 import json
