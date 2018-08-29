@@ -835,7 +835,7 @@ class CSR:
                 return 'aida', 'Time'
         return onto_name, entity_type
 
-    def add_relation(self, span, score, ontology, arguments, 
+    def add_relation(self, span, ontology, arguments, 
                      relation_type, component=None, relation_id=None):
         """
         Adding a relation to csr.
