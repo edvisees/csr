@@ -208,8 +208,9 @@ class InterpFrame(Frame):
     A frame that can contain interpretations.
     """
 
-    def __init__(self, fid, frame_type, parent, interp_type, component=None):
-        super().__init__(fid, frame_type, parent, component)
+    def __init__(self, fid, frame_type, parent, interp_type, component=None,
+                 score=None):
+        super().__init__(fid, frame_type, parent, component, score)
         self.interp_type = interp_type
         self.interp = Interp(interp_type)
 
@@ -285,8 +286,9 @@ class SpanInterpFrame(InterpFrame):
     """
 
     def __init__(self, fid, frame_type, parent, interp_type, reference, begin,
-                 length, text, component=None):
-        super().__init__(fid, frame_type, parent, interp_type, component)
+                 length, text, component=None, score=None):
+        super().__init__(fid, frame_type, parent, interp_type, component,
+                         score=None)
         self.span = Span(reference, begin, length)
         self.text = text
         self.modifiers = {}
@@ -394,30 +396,30 @@ class RelationMention(SpanInterpFrame):
     """
 
     def __init__(self, fid, parent, reference, begin, length, text,
-                 component=None):
-        super().__init__(fid, 'relation_evidence', parent,
-                         'relation_evidence_interp', reference, begin, length,
-                         text, component)
+                 component=None, score=None):
+        super().__init__(
+            fid, 'relation_evidence', parent, 'relation_evidence_interp',
+            reference, begin, length, text, component)
 
         self.arguments = []
         self.rel_types = []
+        self.score = score
 
     def get_types(self):
         return self.rel_types
 
     def add_type(self, ontology, rel_type, score=None, component=None):
         onto_type = ontology + ":" + rel_type
+        self.rel_types.append(onto_type)
 
         if component == self.component:
             # Inherit frame component name.
             component = None
 
         self.interp.add_fields(
-            'type', 'type', onto_type, onto_type, score=score,
-            component=component
+            'type', 'type', onto_type, onto_type, component=component,
+            score=score
         )
-
-        self.rel_types.append(onto_type)
 
     def add_arg(self, arg_ent, score=None):
         arg_frame = RelArgFrame(None, 'member', arg_ent)
@@ -806,8 +808,7 @@ class CSR:
                 return 'aida', 'Time'
         return onto_name, entity_type
 
-    def add_relation(self, ontology, relation_type, arguments,
-                     arg_names=None, component=None,
+    def add_relation(self, arguments, arg_names=None, component=None,
                      relation_id=None, span=None, score=None):
         """
         Adding a relation mention to CSR. If the span is not provided, it will
@@ -840,11 +841,15 @@ class CSR:
                     fitted_span[0] - sentence_start,
                     fitted_span[1] - fitted_span[0],
                     valid_text, component=component,
+                    score=score
                 )
             else:
                 return
         else:
-            rel = RelationMention(relation_id, None, None, 0, 0, '', component)
+            # Adding a relation mention without span information.
+            rel = RelationMention(
+                relation_id, None, None, 0, 0, '', component=component,
+                score=score)
 
         if arg_names is None:
             for arg_ent in arguments:
@@ -855,9 +860,6 @@ class CSR:
 
         self._frame_map[self.rel_key][relation_id] = rel
 
-        if relation_type:
-            rel.add_type(ontology, relation_type, component=component,
-                         score=score)
         return rel
 
     def add_entity_mention(self, head_span, span, text, ontology, entity_type,

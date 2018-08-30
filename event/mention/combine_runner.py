@@ -59,10 +59,13 @@ def add_entity_relations(relation_file, edl_entities, csr):
                             len(args), relation_file))
                     continue
 
-                csr.add_relation(
-                    'aida', rel['rel'], args, arg_names=arg_names,
+                rel = csr.add_relation(
+                    arguments=args, arg_names=arg_names,
                     component=rel_comp, span=mention_span, score=score
                 )
+
+                if rel:
+                    rel.add_type('aida', rel['rel'])
 
 
 def add_edl_entities(edl_file, csr):
@@ -306,14 +309,16 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
                 args = [evm_by_id[i] for i in relation['arguments'] if
                         i in evm_by_id]
 
-                csr.add_relation('aida', 'event_coreference', args,
-                                 component=base_component_name)
+                rel = csr.add_relation(args, component=base_component_name)
+                if rel:
+                    rel.add_type('aida', 'event_coreference')
 
             if relation['relationType'] == 'entity_coreference':
                 args = [csr_entities[i] for i in relation['arguments'] if
                         i in csr_entities]
-                csr.add_relation('aida', 'entity_coreference', args,
-                                 component='corenlp')
+                rel = csr.add_relation(args, component='corenlp')
+                if rel:
+                    rel.add_type('aida', 'entity_coreference')
 
 
 def load_salience(salience_folder):
