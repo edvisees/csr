@@ -425,7 +425,7 @@ class RelationMention(SpanInterpFrame):
         arg_frame = RelArgFrame(None, 'member', arg_ent)
         self.arguments.append(arg_frame)
         self.interp.add_fields(
-            'args', 'member_%d' % len(self.arguments), arg_ent.id, arg_frame,
+            'args', 'member_%d' % len(self.arguments), arg_ent, arg_frame,
             score=score, multi_value=True
         )
 
@@ -433,7 +433,7 @@ class RelationMention(SpanInterpFrame):
         arg_frame = RelArgFrame(None, arg_name, arg_ent)
         self.arguments.append(arg_frame)
         self.interp.add_fields(
-            'args', arg_name, arg_ent.id, arg_frame,
+            'args', arg_name, arg_ent, arg_frame,
             score=score, multi_value=True
         )
 
