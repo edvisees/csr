@@ -16,7 +16,7 @@ entity_type_mapping = {
     "Fac": "Facility",
     "Gpe": "GeopoliticalEntity",
     "Loc": "Location",
-    # "Nom": "Nominal",
+    # "Nom": "Nominal",Im
     "Org": "Organization",
     "Per": "Person",
     "Veh": "Vehicle",
@@ -337,6 +337,26 @@ class Sentence(SpanInterpFrame):
         return rep
 
 
+class ImageDetectionMention(InterpFrame):
+    """
+    Represent a image detection result (bounding box).
+    """
+
+    def __init__(self, fid, parent, reference, top_left, bottom_right,
+                 component=None):
+        super().__init__(
+            fid, 'image_detection_evidence', parent,
+            'image_detection_evidence_interp', component
+        )
+
+    def add_label(self, ontology, detection_label, score=None, component=None):
+        onto_type = ontology + ":" + detection_label
+        self.interp.add_fields(
+            'type', 'type', onto_type, onto_type, score=score,
+            component=component
+        )
+
+
 class EntityMention(SpanInterpFrame):
     """
     Represent a entity mention (in output, it is called entity_evidence).
@@ -550,6 +570,7 @@ class CSR:
         self.event_group_key = 'event_group'
         self.sent_key = 'sentence'
         self.rel_key = 'relation'
+        self.image_detection_key = 'image_detection'
 
         self.base_onto_name = 'aida'
 
