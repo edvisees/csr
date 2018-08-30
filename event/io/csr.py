@@ -397,7 +397,7 @@ class RelationMention(SpanInterpFrame):
                  component=None):
         super().__init__(fid, 'relation_evidence', parent,
                          'relation_evidence_interp', reference, begin, length,
-                         text, component=None, score=None)
+                         text, component=None)
 
 
         self.arguments = []
@@ -424,11 +424,11 @@ class RelationMention(SpanInterpFrame):
 
 
 
-    def add_arg(self, arg_type, arg_ent):
+    def add_arg(self, arg_type, arg_ent, score=None):
         arg_frame = RelArgFrame(None, arg_type, arg_ent)
         self.arguments.append(arg_frame)
         self.interp.add_fields(
-            'args', arg_type, arg_ent.id, arg_frame, multi_value=True
+            'args', arg_type, arg_ent.id, arg_frame, score=score, multi_value=True
         )
 
 
@@ -860,14 +860,14 @@ class CSR:
                 rel = RelationMention(relation_id, sent_id, sent_id,
                                       fitted_span[0] - sentence_start,
                                       fitted_span[1] - fitted_span[0], valid_text,
-                                      component=component, score=score)
+                                      component=component)
             else:
                 return
         else:
             rel = RelationMention(relation_id, None, None, 0 ,0 , '', component)
 
         for arg_type, arg_ent in arguments:
-            rel.add_arg(arg_type, arg_ent)
+            rel.add_arg(arg_type, arg_ent, score=score)
 
         self._frame_map[self.rel_key][relation_id] = rel
 
