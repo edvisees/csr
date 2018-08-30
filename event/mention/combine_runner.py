@@ -26,12 +26,15 @@ import nltk
 
 
 def add_entity_relations(relation_file, edl_entities, csr):
+    rel_comp = 'opera.relations.xiang'
+
     with open(relation_file) as rf:
         data = json.load(rf)
 
         for relation in data:
             for rel in relation['rels']:
                 args = []
+                arg_names = []
                 mention_span = rel['span']
                 score = rel['score']
                 for arg_name, relen in rel.items():
@@ -46,20 +49,19 @@ def add_entity_relations(relation_file, edl_entities, csr):
                         )
                         continue
 
-                    en = edl_entities[relen]
-                    args.append((arg_name, en))
+                    args.append(edl_entities[relen])
+                    arg_names.append(arg_name)
 
                 if len(args) < 2:
-                    print(args)
                     logging.error(
-                        "Insufficent number of fields {} in relation "
+                        "Insufficient number of fields {} in relation "
                         "at {}. some might be filtered".format(
                             len(args), relation_file))
                     continue
 
                 csr.add_relation(
-                    'aida', args, rel['rel'], 'opera.relations.xiang',
-                    span=mention_span, score=score
+                    'aida', rel['rel'], args, arg_names=arg_names,
+                    component=rel_comp, span=mention_span, score=score
                 )
 
 
@@ -301,20 +303,16 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
 
         for relation in rich_event_info['relations']:
             if relation['relationType'] == 'event_coreference':
-                args_temp = [evm_by_id[i] for i in relation['arguments'] if
-                             i in evm_by_id]
-                args = [('member', arg) for i, arg in enumerate(args_temp)]
+                args = [evm_by_id[i] for i in relation['arguments'] if
+                        i in evm_by_id]
 
-                csr.add_relation(
-                    'aida', args, 'event_coreference', base_component_name
-                )
+                csr.add_relation('aida', 'event_coreference', args,
+                                 base_component_name)
 
             if relation['relationType'] == 'entity_coreference':
-                args_temp = [csr_entities[i] for i in relation['arguments'] if
-                             i in csr_entities]
-                args = [('member', arg) for i, arg in enumerate(args_temp)]
-
-                csr.add_relation('aida', args, 'entity_coreference', 'corenlp')
+                args = [csr_entities[i] for i in relation['arguments'] if
+                        i in csr_entities]
+                csr.add_relation('aida', 'entity_coreference', args, 'corenlp')
 
 
 def load_salience(salience_folder):

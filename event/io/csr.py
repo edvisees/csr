@@ -130,8 +130,8 @@ class Interp(Jsonable):
         :param name: The name to be displayed for this field.
         :param key_name: A unique key name for this field.
         :param content_rep: A value to identify this content from the rest,
-        if two content_reps are the same, the are consider the same field.
-        :param content: The actual content.
+        if two content_rep are the same, the are consider the same field.
+        :param content: The actual content, it could be the same as content_rep
         :param component: The component name.
         :param score: The score of this interp field.
         :param multi_value: Whether this field can contain multiple values.
@@ -406,10 +406,6 @@ class RelationMention(SpanInterpFrame):
         return self.rel_types
 
     def add_type(self, ontology, rel_type, score=None, component=None):
-        # type_interp = Interp(self.interp_type)
-        if rel_type == "null":
-            return
-
         onto_type = ontology + ":" + rel_type
 
         if component == self.component:
@@ -423,11 +419,19 @@ class RelationMention(SpanInterpFrame):
 
         self.rel_types.append(onto_type)
 
-    def add_arg(self, arg_type, arg_ent, score=None):
-        arg_frame = RelArgFrame(None, arg_type, arg_ent)
+    def add_arg(self, arg_ent, score=None):
+        arg_frame = RelArgFrame(None, 'member', arg_ent)
         self.arguments.append(arg_frame)
         self.interp.add_fields(
-            'args', arg_type, arg_ent.id, arg_frame,
+            'args', 'member_%d' % len(self.arguments), arg_ent.id, arg_frame,
+            score=score, multi_value=True
+        )
+
+    def add_named_arg(self, arg_name, arg_ent, score=None):
+        arg_frame = RelArgFrame(None, arg_name, arg_ent)
+        self.arguments.append(arg_frame)
+        self.interp.add_fields(
+            'args', arg_name, arg_ent.id, arg_frame,
             score=score, multi_value=True
         )
 
@@ -449,38 +453,6 @@ class Argument(Frame):
         rep['arg'] = self.entity_mention.id
 
         return rep
-
-
-'''
-class RelationMention(InterpFrame):
-    """
-    Represent a relation between frames (more than 1).
-    """
-
-    def __init__(self, fid, ontology, relation_type, score=None,
-                 component=None):
-        super().__init__(fid, 'relation_evidence', None,
-                         'relation_evidence_interp', component=component)
-        self.relation_type = relation_type
-
-        self.arguments = []
-        onto_type = ontology + ":" + relation_type
-        self.interp.add_fields('type', 'type', onto_type, onto_type,
-                               score=score)
-
-    def json_rep(self):
-        for arg_frame in self.arguments:
-            self.interp.add_fields(
-                'args', 'args', self.relation_type, arg_frame)
-        return super().json_rep()
-
-    def add_arg(self, arg_type, arg_ent):
-        arg_frame = RelArgFrame(None, arg_type, arg_ent)
-        self.arguments.append(arg_frame)
-        self.interp.add_fields(
-            'args', arg_type, arg_ent.id, arg_frame, multi_value=True
-        )
-'''
 
 
 class EventMention(SpanInterpFrame):
@@ -686,10 +658,8 @@ class CSR:
 
                 args = [arg['arg'] for arg in interp['args']]
 
-                self.add_relation(
-                    onto, args, rel_type, component=frame['component'],
-                    relation_id=fid
-                )
+                self.add_relation(onto, rel_type, args,
+                                  component=frame['component'], relation_id=fid)
 
     def __canonicalize_event_type(self):
         canonical_map = {}
@@ -836,14 +806,18 @@ class CSR:
                 return 'aida', 'Time'
         return onto_name, entity_type
 
-    def add_relation(self, ontology, arguments, relation_type, component=None,
+    def add_relation(self, ontology, relation_type, arguments,
+                     argument_names=None, component=None,
                      relation_id=None, span=None, score=None):
         """
-        Adding a relation to csr.
+        Adding a relation mention to CSR. If the span is not provided, it will
+        not have a provenance.
+
         :param ontology: The ontology name of the relation.
-        :param arguments: List of arguments in pairs [(arg_typ, arg_obj)],
-         arg_obj is another frame object.
         :param relation_type: The relation type for this relation.
+        :param arguments: List of arguments (their frame ids).
+        :param argument_names: If provided, the arguments will be named
+        accordingly.
         :param component: The component name that produces this relation.
         :param relation_id: A unique relation id, the CSR will automatically
             assign one if not provided.
@@ -872,8 +846,12 @@ class CSR:
         else:
             rel = RelationMention(relation_id, None, None, 0, 0, '', component)
 
-        for arg_type, arg_ent in arguments:
-            rel.add_arg(arg_type, arg_ent)
+        if argument_names:
+            for arg_name, arg_ent in zip(argument_names, arguments):
+                rel.add_named_arg(arg_name, arg_ent)
+        else:
+            for arg_ent in arguments:
+                rel.add_arg(arg_ent)
 
         self._frame_map[self.rel_key][relation_id] = rel
 
