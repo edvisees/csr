@@ -49,7 +49,7 @@ def add_entity_relations(relation_file, edl_entities, csr):
                         )
                         continue
 
-                    args.append(edl_entities[relen])
+                    args.append(edl_entities[relen].id)
                     arg_names.append(arg_name)
 
                 if len(args) < 2:

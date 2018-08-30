@@ -228,16 +228,16 @@ class RelArgFrame(Frame):
     A frame for the argument of a relation.
     """
 
-    def __init__(self, fid, arg_type, arg_ent):
+    def __init__(self, fid, arg_type, arg_ent_id):
         super().__init__(fid, 'argument', None)
         self.arg_type = arg_type
-        self.arg_ent = arg_ent
+        self.arg_ent_id = arg_ent_id
 
     def json_rep(self):
         rep = {
             '@type': 'argument',
             'type': 'aida:' + self.arg_type,
-            'arg': self.arg_ent.id
+            'arg': self.arg_ent_id
         }
         return rep
 
@@ -667,10 +667,21 @@ class CSR:
                     end = start + frame['provenance']['length']
                     span = (start, end)
 
-                rel = self.add_relation(
-                    args, arg_names, component=frame['component'],
-                    relation_id=fid, span=span, score=frame.get('score', None)
-                )
+                if len(set(arg_names)) == 1 and arg_names[0] == 'aida:member':
+                    # i.e. all arguments are the same, unordered.
+                    rel = self.add_relation(
+                        args, component=frame['component'],
+                        relation_id=fid, span=span,
+                        score=frame.get('score', None)
+                    )
+                else:
+
+                    rel = self.add_relation(
+                        args, arg_names, component=frame['component'],
+                        relation_id=fid, span=span,
+                        score=frame.get('score', None)
+                    )
+
                 rel.add_type(onto, rel_type)
 
     def __canonicalize_event_type(self):
