@@ -421,6 +421,9 @@ class RelationMention(SpanInterpFrame):
 
     def add_arg(self, arg_ent, score=None):
         arg_frame = RelArgFrame(None, 'member', arg_ent)
+        print('arg_frame is ')
+        print(arg_frame.json_rep())
+        input('test')
         self.arguments.append(arg_frame)
         self.interp.add_fields(
             'args', 'member_%d' % len(self.arguments), arg_ent.id, arg_frame,
