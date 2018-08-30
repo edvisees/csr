@@ -390,21 +390,21 @@ class EntityMention(SpanInterpFrame):
 
 class RelationMention(SpanInterpFrame):
     """
-    Represent a relation between frames (more than 1).
+    Represent a relation mention between other mentions.
     """
 
     def __init__(self, fid, parent, reference, begin, length, text,
                  component=None):
         super().__init__(fid, 'relation_evidence', parent,
                          'relation_evidence_interp', reference, begin, length,
-                         text, component=None)
-
+                         text, component)
 
         self.arguments = []
         self.rel_types = []
+
     def get_types(self):
-        return self.entity_types
-    
+        return self.rel_types
+
     def add_type(self, ontology, rel_type, score=None, component=None):
         # type_interp = Interp(self.interp_type)
         if rel_type == "null":
@@ -416,22 +416,20 @@ class RelationMention(SpanInterpFrame):
             # Inherit frame component name.
             component = None
 
-        self.interp.add_fields('type', 'type', onto_type, onto_type,
-                               score=score, component=component)
+        self.interp.add_fields(
+            'type', 'type', onto_type, onto_type, score=score,
+            component=component
+        )
 
         self.rel_types.append(onto_type)
-        # input("Added entity type for {}, {}".format(self.id, self.text))
-
-
 
     def add_arg(self, arg_type, arg_ent, score=None):
         arg_frame = RelArgFrame(None, arg_type, arg_ent)
         self.arguments.append(arg_frame)
         self.interp.add_fields(
-            'args', arg_type, arg_ent.id, arg_frame, score=1, multi_value=True
+            'args', arg_type, arg_ent.id, arg_frame,
+            score=score, multi_value=True
         )
-    def add_score(self, score):
-         self.interp.add_fields('score', salience_score)
 
 
 class Argument(Frame):
@@ -451,6 +449,7 @@ class Argument(Frame):
         rep['arg'] = self.entity_mention.id
 
         return rep
+
 
 '''
 class RelationMention(InterpFrame):
@@ -482,6 +481,7 @@ class RelationMention(InterpFrame):
             'args', arg_type, arg_ent.id, arg_frame, multi_value=True
         )
 '''
+
 
 class EventMention(SpanInterpFrame):
     """
@@ -529,8 +529,6 @@ class EventMention(SpanInterpFrame):
 
     def add_salience(self, salience_score):
         self.interp.add_fields('salience', 'score', 'score', salience_score)
-
-
 
 
 class CSR:
@@ -838,8 +836,8 @@ class CSR:
                 return 'aida', 'Time'
         return onto_name, entity_type
 
-    def add_relation(self, ontology, arguments, 
-                     relation_type, component=None, relation_id=None, span=None, score=None):
+    def add_relation(self, ontology, arguments, relation_type, component=None,
+                     relation_id=None, span=None, score=None):
         """
         Adding a relation to csr.
         :param ontology: The ontology name of the relation.
@@ -849,6 +847,9 @@ class CSR:
         :param component: The component name that produces this relation.
         :param relation_id: A unique relation id, the CSR will automatically
             assign one if not provided.
+        :param span: A span providing the provenance of the relation mention
+        :param score: A score for this relation
+
         :return: The created relation mention will be returned
         """
         if not relation_id:
@@ -858,25 +859,27 @@ class CSR:
             align_res = self.align_to_text(span, None, None)
             if align_res:
                 sent_id, fitted_span, valid_text = align_res
-                sentence_start = self._frame_map[self.sent_key][sent_id].span.begin
-                rel = RelationMention(relation_id, sent_id, sent_id,
-                                      fitted_span[0] - sentence_start,
-                                      fitted_span[1] - fitted_span[0], valid_text,
-                                      component=component)
+                sentence_start = self._frame_map[self.sent_key][
+                    sent_id].span.begin
+                rel = RelationMention(
+                    relation_id, sent_id, sent_id,
+                    fitted_span[0] - sentence_start,
+                    fitted_span[1] - fitted_span[0],
+                    valid_text, component=component,
+                    score=score
+                )
             else:
                 return
         else:
-            rel = RelationMention(relation_id, None, None, 0 ,0 , '', component)
+            rel = RelationMention(relation_id, None, None, 0, 0, '', component)
 
         for arg_type, arg_ent in arguments:
-            rel.add_arg(arg_type, arg_ent, score=score)
-
+            rel.add_arg(arg_type, arg_ent)
 
         self._frame_map[self.rel_key][relation_id] = rel
 
-
         if relation_type:
-            rel.add_type(ontology,  relation_type, component=component)
+            rel.add_type(ontology, relation_type, component=component)
         return rel
 
     def add_entity_mention(self, head_span, span, text, ontology, entity_type,
@@ -1093,8 +1096,6 @@ class CSR:
     def add_event_arg(self, evm, ent, ontology, arg_role, component):
         arg_id = self.get_id('arg')
         evm.add_arg(ontology, arg_role, ent, arg_id, component=component)
-
-    
 
     def get_json_rep(self):
         rep = {}
