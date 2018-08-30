@@ -306,15 +306,14 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
 
         for relation in rich_event_info['relations']:
             if relation['relationType'] == 'event_coreference':
-                args = [evm_by_id[i] for i in relation['arguments'] if
+                args = [evm_by_id[i].id for i in relation['arguments'] if
                         i in evm_by_id]
-
                 csr_rel = csr.add_relation(args, component=base_component_name)
                 if csr_rel:
                     csr_rel.add_type('aida', 'event_coreference')
 
             if relation['relationType'] == 'entity_coreference':
-                args = [csr_entities[i] for i in relation['arguments'] if
+                args = [csr_entities[i].id for i in relation['arguments'] if
                         i in csr_entities]
                 csr_rel = csr.add_relation(args, component='corenlp')
                 if csr_rel:
