@@ -65,7 +65,7 @@ def add_entity_relations(relation_file, edl_entities, csr):
                 )
 
                 if csr_rel:
-                    rel.add_type('aida', rel['rel'])
+                    csr_rel.add_type('aida', rel['rel'])
 
 
 def add_edl_entities(edl_file, csr):
