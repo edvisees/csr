@@ -307,12 +307,13 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
                         i in evm_by_id]
 
                 csr.add_relation('aida', 'event_coreference', args,
-                                 base_component_name)
+                                 component=base_component_name)
 
             if relation['relationType'] == 'entity_coreference':
                 args = [csr_entities[i] for i in relation['arguments'] if
                         i in csr_entities]
-                csr.add_relation('aida', 'entity_coreference', args, 'corenlp')
+                csr.add_relation('aida', 'entity_coreference', args,
+                                 component='corenlp')
 
 
 def load_salience(salience_folder):

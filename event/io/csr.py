@@ -421,9 +421,6 @@ class RelationMention(SpanInterpFrame):
 
     def add_arg(self, arg_ent, score=None):
         arg_frame = RelArgFrame(None, 'member', arg_ent)
-        print('arg_frame is ')
-        print(arg_frame.json_rep())
-        input('test')
         self.arguments.append(arg_frame)
         self.interp.add_fields(
             'args', 'member_%d' % len(self.arguments), arg_ent.id, arg_frame,
@@ -849,12 +846,12 @@ class CSR:
         else:
             rel = RelationMention(relation_id, None, None, 0, 0, '', component)
 
-        if arg_names:
-            for arg_name, arg_ent in zip(arg_names, arguments):
-                rel.add_named_arg(arg_name, arg_ent)
-        else:
+        if arg_names is None:
             for arg_ent in arguments:
                 rel.add_arg(arg_ent)
+        else:
+            for arg_name, arg_ent in zip(arg_names, arguments):
+                rel.add_named_arg(arg_name, arg_ent)
 
         self._frame_map[self.rel_key][relation_id] = rel
 
