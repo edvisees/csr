@@ -79,9 +79,6 @@ def add_edl_entities(edl_file, csr):
         data = json.load(edl)
 
         for entity_sent in data:
-            docid = entity_sent['docID']
-            csr.add_doc(docid, 'text', 'en')
-
             for entity in entity_sent['namedMentions']:
                 mention_span = [entity['char_begin'], entity['char_end']]
                 head_span = entity['head_span']
@@ -644,7 +641,7 @@ if __name__ == '__main__':
         relation_json = Unicode(help='Relation json output.').tag(config=True)
         salience_data = Unicode(help='Salience output.').tag(config=True)
         rich_event_token = Bool(
-            help='Whether to use tokens from rich event output',
+            help='Whether to use tokenqs from rich event output',
             default_value=False).tag(config=True)
         add_rule_detector = Bool(help='Whether to add rule detector',
                                  default_value=False).tag(config=True)
