@@ -35,7 +35,7 @@ Life.Divorce
 Life.Injure
 Life.Marry
 Manufacture.Artifact
-Movement.TransportArtifact	framenet:Arriving	framenet:Motion
+Movement.TransportArtifact	framenet:Arriving	framenet:Motion	lemma:carry
 Movement.TransportPerson
 Personnel.Elect
 Personnel.EndPosition	Personnel_Endposition

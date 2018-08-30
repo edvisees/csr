@@ -659,9 +659,19 @@ class CSR:
                 onto, rel_type = interp['type'].split(':')
 
                 args = [arg['arg'] for arg in interp['args']]
+                arg_names = [arg['type'] for arg in interp['args']]
 
-                self.add_relation(onto, rel_type, args,
-                                  component=frame['component'], relation_id=fid)
+                span = None
+                if 'provenance' in frame:
+                    start = frame['provenance']['start']
+                    end = start + frame['provenance']['length']
+                    span = (start, end)
+
+                rel = self.add_relation(
+                    args, arg_names, component=frame['component'],
+                    relation_id=fid, span=span, score=frame.get('score', None)
+                )
+                rel.add_type(onto, rel_type)
 
     def __canonicalize_event_type(self):
         canonical_map = {}
@@ -831,6 +841,8 @@ class CSR:
             relation_id = self.get_id('relm')
 
         if span:
+            # Here we didn't provide text for validation,
+            # may result in incorrect spans.
             align_res = self.align_to_text(span, None, None)
             if align_res:
                 sent_id, fitted_span, valid_text = align_res
