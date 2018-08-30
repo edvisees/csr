@@ -574,7 +574,8 @@ def main(config):
                         if relation_file:
                             logging.info("Adding relations between entities.")
                             add_entity_relations(
-                                relation_file, edl_entities, csr)
+                                relation_file, edl_entities, csr
+                            )
                         else:
                             logging.error("Cannot find the relation file for"
                                           " {}".format(docid))

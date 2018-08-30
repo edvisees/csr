@@ -807,7 +807,7 @@ class CSR:
         return onto_name, entity_type
 
     def add_relation(self, ontology, relation_type, arguments,
-                     argument_names=None, component=None,
+                     arg_names=None, component=None,
                      relation_id=None, span=None, score=None):
         """
         Adding a relation mention to CSR. If the span is not provided, it will
@@ -816,7 +816,7 @@ class CSR:
         :param ontology: The ontology name of the relation.
         :param relation_type: The relation type for this relation.
         :param arguments: List of arguments (their frame ids).
-        :param argument_names: If provided, the arguments will be named
+        :param arg_names: If provided, the arguments will be named
         accordingly.
         :param component: The component name that produces this relation.
         :param relation_id: A unique relation id, the CSR will automatically
@@ -846,8 +846,8 @@ class CSR:
         else:
             rel = RelationMention(relation_id, None, None, 0, 0, '', component)
 
-        if argument_names:
-            for arg_name, arg_ent in zip(argument_names, arguments):
+        if arg_names:
+            for arg_name, arg_ent in zip(arg_names, arguments):
                 rel.add_named_arg(arg_name, arg_ent)
         else:
             for arg_ent in arguments:
