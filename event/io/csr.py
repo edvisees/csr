@@ -871,7 +871,7 @@ class CSR:
             rel = RelationMention(relation_id, None, None, 0 ,0 , '', component)
 
         for arg_type, arg_ent in arguments:
-            print score
+            print(score)
             rel.add_arg(arg_type, arg_ent, score=score)
 
 
