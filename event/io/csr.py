@@ -424,11 +424,11 @@ class RelationMention(SpanInterpFrame):
 
 
 
-    def add_arg(self, arg_type, arg_ent):
+    def add_arg(self, arg_type, arg_ent, score=None):
         arg_frame = RelArgFrame(None, arg_type, arg_ent)
         self.arguments.append(arg_frame)
         self.interp.add_fields(
-            'args', arg_type, arg_ent.id, arg_frame, multi_value=True
+            'args', arg_type, arg_ent.id, arg_frame, score=score, multi_value=True
         )
     def add_score(self, score):
          self.interp.add_fields('score', salience_score)
@@ -869,7 +869,7 @@ class CSR:
             rel = RelationMention(relation_id, None, None, 0 ,0 , '', component)
 
         for arg_type, arg_ent in arguments:
-            rel.add_arg(arg_type, arg_ent)
+            rel.add_arg(arg_type, arg_ent, score=score)
 
 
         self._frame_map[self.rel_key][relation_id] = rel
