@@ -523,9 +523,11 @@ class EventMention(SpanInterpFrame):
         # entity mentions being identified for this field we consider them as
         # alternative interpretation.
         self.interp.add_fields(
-            'args', arg_role, entity_mention.id, arg, score=score,
+            'args', arg_role, entity_mention.id, arg,
             component=component, multi_value=True
         )
+        if not score:
+            self.interp.add_fields('score', 'score', 'score', score)
 
     def add_salience(self, salience_score):
         self.interp.add_fields('salience', 'score', 'score', salience_score)
