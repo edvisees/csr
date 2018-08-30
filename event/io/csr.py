@@ -866,7 +866,6 @@ class CSR:
                     fitted_span[0] - sentence_start,
                     fitted_span[1] - fitted_span[0],
                     valid_text, component=component,
-                    score=score
                 )
             else:
                 return
@@ -879,7 +878,8 @@ class CSR:
         self._frame_map[self.rel_key][relation_id] = rel
 
         if relation_type:
-            rel.add_type(ontology, relation_type, component=component)
+            rel.add_type(ontology, relation_type, component=component,
+                         score=score)
         return rel
 
     def add_entity_mention(self, head_span, span, text, ontology, entity_type,
