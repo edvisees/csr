@@ -428,7 +428,7 @@ class RelationMention(SpanInterpFrame):
         arg_frame = RelArgFrame(None, arg_type, arg_ent)
         self.arguments.append(arg_frame)
         self.interp.add_fields(
-            'args', arg_type, arg_ent.id, arg_frame, score=score, multi_value=True
+            'args', arg_type, arg_ent.id, arg_frame, score=1, multi_value=True
         )
     def add_score(self, score):
          self.interp.add_fields('score', salience_score)
@@ -523,11 +523,9 @@ class EventMention(SpanInterpFrame):
         # entity mentions being identified for this field we consider them as
         # alternative interpretation.
         self.interp.add_fields(
-            'args', arg_role, entity_mention.id, arg,
+            'args', arg_role, entity_mention.id, arg, score=score,
             component=component, multi_value=True
         )
-        if not score:
-            self.interp.add_fields('score', 'score', 'score', score)
 
     def add_salience(self, salience_score):
         self.interp.add_fields('salience', 'score', 'score', salience_score)
@@ -871,7 +869,6 @@ class CSR:
             rel = RelationMention(relation_id, None, None, 0 ,0 , '', component)
 
         for arg_type, arg_ent in arguments:
-            print(score)
             rel.add_arg(arg_type, arg_ent, score=score)
 
 
