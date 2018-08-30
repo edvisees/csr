@@ -118,7 +118,7 @@ class CrsConverter:
             )
 
         for fid, rel_frame in csr.get_frames(csr.rel_key).items():
-            relations.append((rel_frame.get_types[0], rel_frame.arguments))
+            relations.append((rel_frame.get_types()[0], rel_frame.arguments))
 
         self.data = doc_sentences, event_mentions, event_args, \
                     entity_mentions, relations
