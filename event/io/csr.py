@@ -5,9 +5,6 @@ import logging
 import string
 from event.util import remove_punctuation
 
-# Control whether we use a verbose facet representation for interp score or not.
-SIMPLE_SCORE_REP = True
-
 
 class Constants:
     GENERAL_ENTITY_TYPE = 'aida:General_Entity'
@@ -47,12 +44,12 @@ class Frame(Jsonable):
     Represent top level frame collection.
     """
 
-    def __init__(self, fid, frame_type, parent, component=None, score=None):
+    def __init__(self, fid, frame_type, parent, component=None):
         self.type = frame_type
         self.id = fid
         self.parent = parent
         self.component = component
-        self.score = score
+        # self.score = score
 
     def json_rep(self):
         rep = {
@@ -67,9 +64,6 @@ class Frame(Jsonable):
 
         if self.component:
             rep['component'] = self.component
-
-        if self.score:
-            rep['score'] = self.score
 
         return rep
 
@@ -100,7 +94,12 @@ class Interp(Jsonable):
     event/entity type, database links, scores, etc.
     """
 
-    def __init__(self, interp_type):
+    def __init__(self, interp_type, score=None):
+        """
+
+        :param interp_type:
+        :param score: It is possible to add a score to interp level.
+        """
         self.interp_type = interp_type
         self.__fields = defaultdict(lambda: defaultdict(dict))
         self.multi_value_fields = set()
@@ -125,14 +124,14 @@ class Interp(Jsonable):
             'content': content, 'score': score, 'component': component,
         }
 
-    def add_fields(self, name, key_name, content_rep, content,
-                   component=None, score=None, multi_value=False):
+    def add_field(self, name, key_name, content_rep, content,
+                  component=None, score=None, multi_value=False):
         """
-        Add an interp field
+        Add an interp field.
         :param name: The name to be displayed for this field.
         :param key_name: A unique key name for this field.
         :param content_rep: A value to identify this content from the rest,
-        if two content_rep are the same, the are consider the same field.
+        works like a hash key.
         :param content: The actual content, it could be the same as content_rep
         :param component: The component name.
         :param score: The score of this interp field.
@@ -179,7 +178,8 @@ class Interp(Jsonable):
 
                         field['args'].append(r)
                 else:
-                    # Single interpretation.
+                    # We still do this iteration, but it will only return one
+                    # single value.
                     for key, value in keyed_content.items():
                         v = value['content']
                         score = value['score']
@@ -189,16 +189,12 @@ class Interp(Jsonable):
 
                         # Facet repr is too verbose.
                         if score:
-                            if SIMPLE_SCORE_REP:
-                                # Use the simple interp level scoring.
-                                field = v_str
-                            else:
-                                # Use the verbose facet level scoring.
-                                field = {'@type': 'facet', 'value': v_str}
-                                if score:
-                                    field['score'] = score
-                                if component:
-                                    field['component'] = component
+                            # Use the verbose facet level stuff.
+                            field = {'@type': 'facet', 'value': v_str}
+                            if score:
+                                field['score'] = score
+                            if component:
+                                field['component'] = component
                         else:
                             field = v_str
 
@@ -217,9 +213,9 @@ class InterpFrame(Frame):
 
     def __init__(self, fid, frame_type, parent, interp_type, component=None,
                  score=None):
-        super().__init__(fid, frame_type, parent, component, score)
+        super().__init__(fid, frame_type, parent, component)
         self.interp_type = interp_type
-        self.interp = Interp(interp_type)
+        self.interp = Interp(interp_type, score)
 
     def json_rep(self):
         rep = super().json_rep()
@@ -255,8 +251,7 @@ class ValueFrame(Frame):
     """
 
     def __init__(self, fid, frame_type, component=None, score=None):
-        super().__init__(fid, frame_type, None, component=component,
-                         score=score)
+        super().__init__(fid, frame_type, None, component=component)
 
 
 class Span:
@@ -359,7 +354,7 @@ class ImageDetectionMention(InterpFrame):
 
     def add_label(self, ontology, detection_label, score=None, component=None):
         onto_type = ontology + ":" + detection_label
-        self.interp.add_fields(
+        self.interp.add_field(
             'type', 'type', onto_type, onto_type, score=score,
             component=component
         )
@@ -371,14 +366,14 @@ class EntityMention(SpanInterpFrame):
     """
 
     def __init__(self, fid, parent, begin, length, text,
-                 component=None):
+                 component=None, score=None):
         super().__init__(fid, 'entity_evidence', parent,
                          'entity_evidence_interp', begin, length,
-                         text, component=component)
+                         text, component=component, score=score)
         self.entity_types = []
 
     def add_form(self, entity_form):
-        self.interp.add_fields('form', 'form', entity_form, entity_form)
+        self.interp.add_field('form', 'form', entity_form, entity_form)
 
     def get_types(self):
         return self.entity_types
@@ -395,8 +390,8 @@ class EntityMention(SpanInterpFrame):
             # Inherit frame component name.
             component = None
 
-        self.interp.add_fields('type', 'type', onto_type, onto_type,
-                               score=score, component=component)
+        self.interp.add_field('type', 'type', onto_type, onto_type,
+                              score=score, component=component)
 
         self.entity_types.append(onto_type)
         # input("Added entity type for {}, {}".format(self.id, self.text))
@@ -406,16 +401,16 @@ class EntityMention(SpanInterpFrame):
             mid = mid.strip('/')
 
         fb_xref = ValueFrame('freebase:' + mid, 'db_reference', score=score)
-        self.interp.add_fields('xref', 'freebase', mid, fb_xref,
-                               multi_value=True)
+        self.interp.add_field('xref', 'freebase', mid, fb_xref,
+                              multi_value=True)
 
         wiki_xref = ValueFrame(lang + '_wiki:' + wiki, 'db_reference',
                                score=score)
-        self.interp.add_fields('xref', 'wikipedia', wiki, wiki_xref,
-                               component=component, multi_value=True)
+        self.interp.add_field('xref', 'wikipedia', wiki, wiki_xref,
+                              component=component, multi_value=True)
 
     def add_salience(self, salience_score):
-        self.interp.add_fields('salience', 'score', 'score', salience_score)
+        self.interp.add_field('salience', 'score', 'score', salience_score)
 
 
 class RelationMention(SpanInterpFrame):
@@ -427,7 +422,7 @@ class RelationMention(SpanInterpFrame):
                  component=None, score=None):
         super().__init__(
             fid, 'relation_evidence', parent, 'relation_evidence_interp',
-            begin, length, text, component=component)
+            begin, length, text, component=component, score=score)
 
         self.arguments = []
         self.rel_types = []
@@ -444,7 +439,7 @@ class RelationMention(SpanInterpFrame):
             # Inherit frame component name.
             component = None
 
-        self.interp.add_fields(
+        self.interp.add_field(
             'type', 'type', onto_type, onto_type, component=component,
             score=score
         )
@@ -452,7 +447,7 @@ class RelationMention(SpanInterpFrame):
     def add_arg(self, arg_ent, score=None):
         arg_frame = RelArgFrame(None, 'member', arg_ent)
         self.arguments.append(arg_frame)
-        self.interp.add_fields(
+        self.interp.add_field(
             'args', 'member_%d' % len(self.arguments), arg_ent, arg_frame,
             score=score, multi_value=True
         )
@@ -460,7 +455,7 @@ class RelationMention(SpanInterpFrame):
     def add_named_arg(self, arg_name, arg_ent, score=None):
         arg_frame = RelArgFrame(None, arg_name, arg_ent)
         self.arguments.append(arg_frame)
-        self.interp.add_fields(
+        self.interp.add_field(
             'args', arg_name, arg_ent, arg_frame,
             score=score, multi_value=True
         )
@@ -490,11 +485,11 @@ class EventMention(SpanInterpFrame):
     An event mention (in output, it is called event_evidence)
     """
 
-    def __init__(self, fid, parent, begin, length, text,
-                 component=None):
+    def __init__(self, fid, parent, begin, length, text, component=None,
+                 score=None):
         super().__init__(
             fid, 'event_evidence', parent, 'event_evidence_interp',
-            begin, length, text, component=component)
+            begin, length, text, component=component, score=score)
         self.trigger = None
         self.event_type = None
         self.realis = None
@@ -511,10 +506,10 @@ class EventMention(SpanInterpFrame):
             # Inherit frame component name.
             component = None
 
-        self.interp.add_fields('type', 'type', onto_type, onto_type,
-                               score=score, component=component)
-        self.interp.add_fields('realis', 'realis', realis, realis, score=score,
-                               component=component)
+        self.interp.add_field('type', 'type', onto_type, onto_type,
+                              score=score, component=component)
+        self.interp.add_field('realis', 'realis', realis, realis, score=score,
+                              component=component)
         self.event_type = onto_type
         self.realis = realis
 
@@ -525,13 +520,13 @@ class EventMention(SpanInterpFrame):
         # If we use the role name as as the key name, if there are multiple
         # entity mentions being identified for this field we consider them as
         # alternative interpretation.
-        self.interp.add_fields(
+        self.interp.add_field(
             'args', arg_role, entity_mention.id, arg, score=score,
             component=component, multi_value=True
         )
 
     def add_salience(self, salience_score):
-        self.interp.add_fields('salience', 'score', 'score', salience_score)
+        self.interp.add_field('salience', 'score', 'score', salience_score)
 
 
 class CSR:
@@ -920,7 +915,7 @@ class CSR:
 
     def add_entity_mention(self, head_span, span, text, ontology, entity_type,
                            sent_id=None, entity_form=None, component=None,
-                           entity_id=None):
+                           entity_id=None, score=None):
         if span is None:
             logging.warning("None span provided")
             return
@@ -948,7 +943,7 @@ class CSR:
                 entity_id, sent_id,
                 fitted_span[0] - sentence_start,
                 fitted_span[1] - fitted_span[0], valid_text,
-                component=component
+                component=component, score=score
             )
             self._span_frame_map[self.entity_key][fitted_span] = entity_id
             self._frame_map[self.entity_key][entity_id] = entity_mention

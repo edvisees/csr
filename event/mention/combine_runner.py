@@ -59,13 +59,17 @@ def add_entity_relations(relation_file, edl_entities, csr):
                             len(args), relation_file))
                     continue
 
+                # Adding a score here will create a interp level score.
                 csr_rel = csr.add_relation(
                     arguments=args, arg_names=arg_names,
-                    component=rel_comp, span=mention_span
+                    component=rel_comp, span=mention_span,
+                    score=score
                 )
 
                 if csr_rel:
-                    csr_rel.add_type('aida', rel['rel'], score=score)
+                    csr_rel.add_type('aida', rel['rel'])
+                    # Adding a score here will create facet.
+                    # csr_rel.add_type('aida', rel['rel'],score=score)
 
 
 def add_edl_entities(edl_file, csr):
