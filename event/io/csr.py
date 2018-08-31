@@ -306,7 +306,10 @@ class SpanInterpFrame(InterpFrame):
         self.modifiers = {}
 
         if parent.type == 'Sentence':
+            # Inherit key frame from parents.
             self.keyframe = parent.keyframe
+        else:
+            self.keyframe = None
 
     def add_modifier(self, modifier_type, modifier_text):
         self.modifiers[modifier_type] = modifier_text
