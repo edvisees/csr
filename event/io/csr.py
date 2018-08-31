@@ -829,7 +829,7 @@ class CSR:
                 return sentence, span
             else:
                 logging.warning("Force span {} end at sentence end {} of "
-                                "{}".format(span, sent_end, sent.id))
+                                "{}".format(span, sent_end, sentence.id))
                 return sentence, (span[0], sent_end)
 
     def get_by_span(self, object_type, span):
@@ -985,9 +985,7 @@ class CSR:
 
             self._span_frame_map[self.event_key][head_span] = event_id
 
-            sent = self._frame_map[self.sent_key][parent_sent]
-
-            relative_begin = fitted_span[0] - sent.span.begin
+            relative_begin = fitted_span[0] - parent_sent.span.begin
             length = fitted_span[1] - fitted_span[0]
 
             evm = EventMention(event_id, parent_sent, relative_begin,
