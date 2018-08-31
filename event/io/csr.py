@@ -103,6 +103,7 @@ class Interp(Jsonable):
         self.interp_type = interp_type
         self.__fields = defaultdict(lambda: defaultdict(dict))
         self.multi_value_fields = set()
+        self.interp_score = score
 
     def get_field(self, name):
         if name in self.__fields:
@@ -153,6 +154,10 @@ class Interp(Jsonable):
         rep = {
             '@type': self.interp_type,
         }
+
+        if self.interp_score:
+            rep['score'] = self.interp_score
+
         for field_name, field_info in self.__fields.items():
             field_data = []
 
@@ -203,6 +208,7 @@ class Interp(Jsonable):
             if field_name not in self.multi_value_fields:
                 field_data = field_data[0]
             rep[field_name] = field_data
+
         return rep
 
 
