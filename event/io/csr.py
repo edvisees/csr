@@ -5,6 +5,9 @@ import logging
 import string
 from event.util import remove_punctuation
 
+# Control whether we use a verbose facet representation for interp score or not.
+SIMPLE_SCORE_REP = True
+
 
 class Constants:
     GENERAL_ENTITY_TYPE = 'aida:General_Entity'
@@ -16,7 +19,6 @@ entity_type_mapping = {
     "Fac": "Facility",
     "Gpe": "GeopoliticalEntity",
     "Loc": "Location",
-    # "Nom": "Nominal",Im
     "Org": "Organization",
     "Per": "Person",
     "Veh": "Vehicle",
@@ -95,7 +97,7 @@ class Document(Frame):
 class Interp(Jsonable):
     """
     An interp is an interpretation of the evidence. It can contain values like
-    event/entity type, database links, etc.
+    event/entity type, database links, scores, etc.
     """
 
     def __init__(self, interp_type):
@@ -116,8 +118,8 @@ class Interp(Jsonable):
         if not component:
             component = original['component']
 
-        if not score:
-            score = original['score']
+        # if not score:
+        #     score = original['score']
 
         self.__fields[name][key_name][content_rep] = {
             'content': content, 'score': score, 'component': component,
@@ -187,11 +189,16 @@ class Interp(Jsonable):
 
                         # Facet repr is too verbose.
                         if score:
-                            field = {'@type': 'facet', 'value': v_str}
-                            if score:
-                                field['score'] = score
-                            if component:
-                                field['component'] = component
+                            if SIMPLE_SCORE_REP:
+                                # Use the simple interp level scoring.
+                                field = v_str
+                            else:
+                                # Use the verbose facet level scoring.
+                                field = {'@type': 'facet', 'value': v_str}
+                                if score:
+                                    field['score'] = score
+                                if component:
+                                    field['component'] = component
                         else:
                             field = v_str
 
@@ -285,11 +292,12 @@ class SpanInterpFrame(InterpFrame):
     interpretations.
     """
 
-    def __init__(self, fid, frame_type, parent, interp_type, reference, begin,
-                 length, text, component=None, score=None):
-        super().__init__(fid, frame_type, parent, interp_type, component,
-                         score=None)
-        self.span = Span(reference, begin, length)
+    def __init__(
+            self, fid, frame_type, parent, interp_type, begin,
+            length, text, component=None, score=None
+    ):
+        super().__init__(fid, frame_type, parent, interp_type, component, score)
+        self.span = Span(parent, begin, length)
         self.text = text
         self.modifiers = {}
 
@@ -319,9 +327,9 @@ class Sentence(SpanInterpFrame):
     Represent a sentence.
     """
 
-    def __init__(self, fid, parent, reference, begin, length,
-                 text, component=None, keyframe=None):
-        super().__init__(fid, 'sentence', parent, 'sentence_interp', reference,
+    def __init__(self, fid, parent, begin, length, text,
+                 component=None, keyframe=None):
+        super().__init__(fid, 'sentence', parent, 'sentence_interp',
                          begin, length, text, component=component)
         self.keyframe = keyframe
 
@@ -362,11 +370,11 @@ class EntityMention(SpanInterpFrame):
     Represent a entity mention (in output, it is called entity_evidence).
     """
 
-    def __init__(self, fid, parent, reference, begin, length, text,
+    def __init__(self, fid, parent, begin, length, text,
                  component=None):
         super().__init__(fid, 'entity_evidence', parent,
-                         'entity_evidence_interp', reference, begin, length,
-                         text, component)
+                         'entity_evidence_interp', begin, length,
+                         text, component=component)
         self.entity_types = []
 
     def add_form(self, entity_form):
@@ -415,11 +423,11 @@ class RelationMention(SpanInterpFrame):
     Represent a relation mention between other mentions.
     """
 
-    def __init__(self, fid, parent, reference, begin, length, text,
+    def __init__(self, fid, parent, begin, length, text,
                  component=None, score=None):
         super().__init__(
             fid, 'relation_evidence', parent, 'relation_evidence_interp',
-            reference, begin, length, text, component)
+            begin, length, text, component=component)
 
         self.arguments = []
         self.rel_types = []
@@ -482,10 +490,11 @@ class EventMention(SpanInterpFrame):
     An event mention (in output, it is called event_evidence)
     """
 
-    def __init__(self, fid, parent, reference, begin, length, text,
+    def __init__(self, fid, parent, begin, length, text,
                  component=None):
-        super().__init__(fid, 'event_evidence', parent, 'event_evidence_interp',
-                         reference, begin, length, text, component=component)
+        super().__init__(
+            fid, 'event_evidence', parent, 'event_evidence_interp',
+            begin, length, text, component=component)
         self.trigger = None
         self.event_type = None
         self.realis = None
@@ -753,8 +762,10 @@ class CSR:
         docid = self.current_doc.id
         self.current_doc.num_sentences += 1
         sent_text = text if text else ""
-        sent = Sentence(sent_id, docid, docid, span[0], span[1] - span[0],
-                        text=sent_text, component=component, keyframe=keyframe)
+        sent = Sentence(
+            sent_id, docid, span[0], span[1] - span[0],
+            text=sent_text, component=component, keyframe=keyframe
+        )
         self._frame_map[self.sent_key][sent_id] = sent
 
         for c in range(span[0], span[1]):
@@ -865,7 +876,8 @@ class CSR:
         :param relation_id: A unique relation id, the CSR will automatically
             assign one if not provided.
         :param span: A span providing the provenance of the relation mention
-        :param score: A score for this relation
+        :param score: A score for this relation, normally we don't use score at
+            frame level.
 
         :return: The created relation mention will be returned
         """
@@ -875,25 +887,25 @@ class CSR:
         if span:
             # Here we didn't provide text for validation,
             # may result in incorrect spans.
+            # But relations are build on other mentions, so it should generally
+            # be OK.
             align_res = self.align_to_text(span, None, None)
-            if align_res:
-                sent_id, fitted_span, valid_text = align_res
-                sentence_start = self._frame_map[self.sent_key][
-                    sent_id].span.begin
-                rel = RelationMention(
-                    relation_id, sent_id, sent_id,
-                    fitted_span[0] - sentence_start,
-                    fitted_span[1] - fitted_span[0],
-                    valid_text, component=component,
-                    score=score
-                )
-            else:
+            if not align_res:
                 return
+
+            sent_id, fitted_span, valid_text = align_res
+            sentence_start = self._frame_map[self.sent_key][sent_id].span.begin
+            rel = RelationMention(
+                relation_id, sent_id,
+                fitted_span[0] - sentence_start,
+                fitted_span[1] - fitted_span[0],
+                valid_text, component=component,
+                score=score
+            )
         else:
             # Adding a relation mention without span information.
             rel = RelationMention(
-                relation_id, None, None, 0, 0, '', component=component,
-                score=score)
+                relation_id, None, 0, 0, '', component=component, score=score)
 
         if arg_names is None:
             for arg_ent in arguments:
@@ -933,10 +945,11 @@ class CSR:
                 entity_id = self.get_id('ent')
 
             entity_mention = EntityMention(
-                entity_id, sent_id, sent_id,
+                entity_id, sent_id,
                 fitted_span[0] - sentence_start,
                 fitted_span[1] - fitted_span[0], valid_text,
-                component=component)
+                component=component
+            )
             self._span_frame_map[self.entity_key][fitted_span] = entity_id
             self._frame_map[self.entity_key][entity_id] = entity_mention
 
@@ -993,7 +1006,7 @@ class CSR:
             relative_begin = fitted_span[0] - sent.span.begin
             length = fitted_span[1] - fitted_span[0]
 
-            evm = EventMention(event_id, sent_id, sent_id, relative_begin,
+            evm = EventMention(event_id, sent_id, relative_begin,
                                length, valid_text, component=component)
             evm.add_trigger(relative_begin, length)
             self._frame_map[self.event_key][event_id] = evm
