@@ -300,7 +300,11 @@ class SpanInterpFrame(InterpFrame):
             length, text, component=None, score=None
     ):
         super().__init__(fid, frame_type, parent, interp_type, component, score)
-        self.span = Span(parent.id, begin, length)
+        if parent:
+            self.span = Span(parent.id, begin, length)
+        else:
+            self.span = None
+
         self.text = text
         self.modifiers = {}
 
@@ -309,7 +313,7 @@ class SpanInterpFrame(InterpFrame):
 
     def json_rep(self):
         rep = super().json_rep()
-        if self.span.reference:
+        if self.span:
             info = {
                 'provenance': {
                     '@type': 'text_span',
