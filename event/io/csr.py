@@ -49,7 +49,6 @@ class Frame(Jsonable):
         self.id = fid
         self.parent = parent
         self.component = component
-        # self.score = score
 
     def json_rep(self):
         rep = {
@@ -224,8 +223,6 @@ class InterpFrame(Frame):
         rep = super().json_rep()
         if self.interp and not self.interp.is_empty():
             rep['interp'] = self.interp.json_rep()
-            # for interp in self.interps:
-            #     rep['interp'].update(interp.json_rep())
         return rep
 
 
@@ -308,6 +305,9 @@ class SpanInterpFrame(InterpFrame):
         self.text = text
         self.modifiers = {}
 
+        if parent.type == 'Sentence':
+            self.keyframe = parent.keyframe
+
     def add_modifier(self, modifier_type, modifier_text):
         self.modifiers[modifier_type] = modifier_text
 
@@ -325,6 +325,10 @@ class SpanInterpFrame(InterpFrame):
                     'modifiers': self.modifiers,
                 }
             }
+
+            if self.keyframe:
+                info['provenance']['keyframe'] = self.keyframe
+
             rep.update(info)
         return rep
 
@@ -344,12 +348,6 @@ class Sentence(SpanInterpFrame):
         begin = span[0] - self.span.begin
         end = span[1] - self.span.begin
         return self.text[begin: end]
-
-    def json_rep(self):
-        rep = super().json_rep()
-        if self.keyframe:
-            rep['@keyframe'] = self.keyframe
-        return rep
 
 
 class EntityMention(SpanInterpFrame):
