@@ -748,11 +748,10 @@ class CSR:
         if sent_id in self._frame_map[self.sent_key]:
             return sent_id
 
-        docid = self.current_doc.id
         self.current_doc.num_sentences += 1
         sent_text = text if text else ""
         sent = Sentence(
-            sent_id, docid, span[0], span[1] - span[0],
+            sent_id, self.current_doc, span[0], span[1] - span[0],
             text=sent_text, component=component, keyframe=keyframe
         )
         self._frame_map[self.sent_key][sent_id] = sent
