@@ -59,9 +59,6 @@ class Frame(Jsonable):
         if self.id:
             rep['@id'] = self.id
 
-        # if self.parent:
-        #     rep['parent_scope'] = self.parent
-
         if self.component:
             rep['component'] = self.component
 
@@ -258,6 +255,11 @@ class ValueFrame(Frame):
 
     def __init__(self, fid, frame_type, component=None, score=None):
         super().__init__(fid, frame_type, None, component=component)
+        self.score = score
+
+    def json_rep(self):
+        rep = super().json_rep()
+        rep['score'] = self.score
 
 
 class Span:
@@ -298,7 +300,7 @@ class SpanInterpFrame(InterpFrame):
             length, text, component=None, score=None
     ):
         super().__init__(fid, frame_type, parent, interp_type, component, score)
-        self.span = Span(parent, begin, length)
+        self.span = Span(parent.id, begin, length)
         self.text = text
         self.modifiers = {}
 
@@ -315,7 +317,7 @@ class SpanInterpFrame(InterpFrame):
                     'start': self.span.begin,
                     'length': self.span.length,
                     'text': self.text,
-                    'parent_scope': self.parent,
+                    'parent_scope': self.parent.id,
                     'modifiers': self.modifiers,
                 }
             }
@@ -344,26 +346,6 @@ class Sentence(SpanInterpFrame):
         if self.keyframe:
             rep['@keyframe'] = self.keyframe
         return rep
-
-
-class ImageDetectionMention(InterpFrame):
-    """
-    Represent a image detection result (bounding box).
-    """
-
-    def __init__(self, fid, parent, reference, top_left, bottom_right,
-                 component=None):
-        super().__init__(
-            fid, 'image_detection_evidence', parent,
-            'image_detection_evidence_interp', component
-        )
-
-    def add_label(self, ontology, detection_label, score=None, component=None):
-        onto_type = ontology + ":" + detection_label
-        self.interp.add_field(
-            'type', 'type', onto_type, onto_type, score=score,
-            component=component
-        )
 
 
 class EntityMention(SpanInterpFrame):
@@ -600,13 +582,19 @@ class CSR:
                 self.canonical_types[c_type] = arg_type
 
     def load_from_file(self, csr_file):
-        def compute_span(this_frame):
+        def get_parent_sent(this_frame):
             parent_sent_id = this_frame['provenance']['reference']
-            if sent_ref in self._frame_map[self.sent_key]:
+            if parent_sent_id in self._frame_map[self.sent_key]:
                 parent_sent = self._frame_map[self.sent_key][parent_sent_id]
+                return parent_sent
+
+        def compute_span(this_frame):
+            parent_sent = get_parent_sent(this_frame)
+            if parent_sent:
                 offset = parent_sent.span.begin
             else:
                 offset = 0
+
             s = this_frame["provenance"]["start"] + offset
             e = this_frame["provenance"]["length"] + s
             return (s, e)
@@ -635,7 +623,7 @@ class CSR:
 
             entities = {}
             for frame in frame_data['entity_evidence']:
-                sent_ref = frame['provenance']['reference']
+                parent_sent = get_parent_sent(frame['provenance']['reference'])
                 interp = frame['interp']
                 onto, t = interp['type'].split(':')
                 text = frame["provenance"]['text']
@@ -643,14 +631,14 @@ class CSR:
                 eid = frame['@id']
 
                 csr_ent = self.add_entity_mention(
-                    span, span, text, onto, t, sent_ref, interp['form'],
+                    span, span, text, onto, t, parent_sent, interp['form'],
                     frame['component'], entity_id=eid
                 )
 
                 entities[eid] = csr_ent
 
             for frame in frame_data['event_evidence']:
-                sent_ref = frame['provenance']['reference']
+                parent_sent = get_parent_sent(frame['provenance']['reference'])
                 interp = frame['interp']
                 onto, t = interp['type'].split(':')
                 text = frame["provenance"]['text']
@@ -658,7 +646,7 @@ class CSR:
 
                 csr_evm = self.add_event_mention(
                     span, span, text, onto, t, realis=interp['realis'],
-                    sent_id=sent_ref, component=frame['component'],
+                    parent_sent=parent_sent, component=frame['component'],
                     event_id=frame['@id']
                 )
 
@@ -777,44 +765,41 @@ class CSR:
     def set_sentence_text(self, sent_id, text):
         self._frame_map[self.sent_key][sent_id].text = text
 
-    def align_to_text(self, span, text, sent_id=None):
+    def align_to_text(self, span, text, sent):
         """
         Hacking the correct spans.
         :param span: The origin mention span.
         :param text: The origin mention text.
-        :param sent_id: The sentence if, if provided.
+        :param sent: The sentence if provided.
         :return:
         """
 
         span = tuple(span)
-        if not sent_id:
+        if not sent:
             # Find the sentence if not provided.
             res = self.fit_to_sentence(span)
             if res:
-                sent_id, fitted_span = res
+                sent, fitted_span = res
         else:
-            # Use the provided ones.
-            sent_id = sent_id
+            # Use the provided sentence.
             fitted_span = span
 
-        if not sent_id or not fitted_span:
+        if not sent or not fitted_span:
             # No suitable sentence found.
             logging.warning(
                 "No suitable sentence for entity {}".format(span))
         else:
-            sent = self._frame_map[self.sent_key][sent_id]
             if (not fitted_span == span) or (not text):
                 # If the fitted span changes, we will simply use the doc text.
                 valid_text = sent.substring(fitted_span)
             else:
                 # The fitted span has not changed, validate it.
-                valid_text = self.validate_span(sent_id, fitted_span, text)
+                valid_text = self.validate_span(sent, fitted_span, text)
 
             if valid_text is not None:
-                return sent_id, fitted_span, valid_text
+                return sent, fitted_span, valid_text
 
-    def validate_span(self, sent_id, span, text):
-        sent = self._frame_map[self.sent_key][sent_id]
+    def validate_span(self, sent, span, text):
         span_text = sent.substring(span)
 
         if not span_text == text:
@@ -824,7 +809,7 @@ class CSR:
             logging.warning(
                 "Span text: [{}] not matching given text [{}]"
                 ", at span [{}] at sent [{}]".format(
-                    span_text, text, span, sent_id)
+                    span_text, text, span, sent.id)
             )
 
             if "".join(span_text.split()) == "".join(text.split()):
@@ -836,17 +821,17 @@ class CSR:
 
     def fit_to_sentence(self, span):
         if span[0] in self._char_sent_map:
-            sent_id = self._char_sent_map[span[0]]
-            sentence = self._frame_map[self.sent_key][sent_id]
+            sentence = self._frame_map[self.sent_key][
+                self._char_sent_map[span[0]]]
             sent_begin = sentence.span.begin
             sent_end = sentence.span.length + sent_begin
 
             if span[1] <= sent_end:
-                return sent_id, span
+                return sentence, span
             else:
                 logging.warning("Force span {} end at sentence end {} of "
-                                "{}".format(span, sent_end, sent_id))
-                return sent_id, (span[0], sent_end)
+                                "{}".format(span, sent_end, sent.id))
+                return sentence, (span[0], sent_end)
 
     def get_by_span(self, object_type, span):
         span = tuple(span)
@@ -886,18 +871,17 @@ class CSR:
             relation_id = self.get_id('relm')
 
         if span:
-            # Here we didn't provide text for validation,
-            # may result in incorrect spans.
-            # But relations are build on other mentions, so it should generally
-            # be OK.
+            # We didn't provide text for validation, this may result in
+            # incorrect spans. But relations are build on other mentions, so
+            # it should generally be OK.
             align_res = self.align_to_text(span, None, None)
             if not align_res:
                 return
 
-            sent_id, fitted_span, valid_text = align_res
-            sentence_start = self._frame_map[self.sent_key][sent_id].span.begin
+            sent, fitted_span, valid_text = align_res
+            sentence_start = self._frame_map[self.sent_key][sent.id].span.begin
             rel = RelationMention(
-                relation_id, sent_id,
+                relation_id, sent.id,
                 fitted_span[0] - sentence_start,
                 fitted_span[1] - fitted_span[0],
                 valid_text, component=component,
@@ -920,7 +904,7 @@ class CSR:
         return rel
 
     def add_entity_mention(self, head_span, span, text, ontology, entity_type,
-                           sent_id=None, entity_form=None, component=None,
+                           parent_sent=None, entity_form=None, component=None,
                            entity_id=None, score=None):
         if span is None:
             logging.warning("None span provided")
@@ -935,18 +919,18 @@ class CSR:
             return
 
         head_span = tuple(head_span)
-        align_res = self.align_to_text(span, text, sent_id)
+        align_res = self.align_to_text(span, text, parent_sent)
 
         if align_res:
-            sent_id, fitted_span, valid_text = align_res
+            parent_sent, fitted_span, valid_text = align_res
 
-            sentence_start = self._frame_map[self.sent_key][sent_id].span.begin
+            sentence_start = parent_sent.span.begin
 
             if not entity_id:
                 entity_id = self.get_id('ent')
 
             entity_mention = EntityMention(
-                entity_id, sent_id,
+                entity_id, parent_sent,
                 fitted_span[0] - sentence_start,
                 fitted_span[1] - fitted_span[0], valid_text,
                 component=component, score=score
@@ -983,15 +967,15 @@ class CSR:
         return None
 
     def add_event_mention(self, head_span, span, text, onto_name, evm_type,
-                          realis=None, sent_id=None, component=None,
+                          realis=None, parent_sent=None, component=None,
                           arg_entity_types=None, event_id=None):
         # Annotation on the same span will be reused.
         head_span = tuple(head_span)
 
-        align_res = self.align_to_text(span, text, sent_id)
+        align_res = self.align_to_text(span, text, parent_sent)
 
         if align_res:
-            sent_id, fitted_span, valid_text = align_res
+            parent_sent, fitted_span, valid_text = align_res
 
             if head_span in self._span_frame_map[self.event_key]:
                 # logging.info("Cannot handle overlapped event mentions now.")
@@ -1002,12 +986,12 @@ class CSR:
 
             self._span_frame_map[self.event_key][head_span] = event_id
 
-            sent = self._frame_map[self.sent_key][sent_id]
+            sent = self._frame_map[self.sent_key][parent_sent]
 
             relative_begin = fitted_span[0] - sent.span.begin
             length = fitted_span[1] - fitted_span[0]
 
-            evm = EventMention(event_id, sent_id, relative_begin,
+            evm = EventMention(event_id, parent_sent, relative_begin,
                                length, valid_text, component=component)
             evm.add_trigger(relative_begin, length)
             self._frame_map[self.event_key][event_id] = evm
