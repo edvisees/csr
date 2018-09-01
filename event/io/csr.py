@@ -387,7 +387,7 @@ class EntityMention(SpanInterpFrame):
                               score=score, component=component)
 
         self.entity_types.append(onto_type)
-        # input("Added entity type for {}, {}".format(self.id, self.text))
+
 
     def add_linking(self, mid, wiki, score, lang='en', component=None):
         if mid.startswith('/'):
@@ -934,13 +934,6 @@ class CSR:
             elif head_span in self._span_frame_map[self.entity_key + "_head"]:
                 entity_mention = self._span_frame_map[
                     self.entity_key + "_head"][head_span]
-
-                print("Trying to add ", head_span, span, text, entity_type)
-
-                print("Existing entity mention is ")
-                print(entity_mention.json_rep())
-
-                input('-----------')
             else:
                 if not entity_id:
                     entity_id = self.get_id('ent')
