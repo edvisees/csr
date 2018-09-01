@@ -561,7 +561,7 @@ class CSR:
         self.media_type = media_type
 
         self.entity_key = 'entity'
-        self.entity_head_key = 'entity_head'
+        # self.entity_head_key = 'entity_head'
         self.entity_group_key = 'entity_group'
         self.event_key = 'event'
         self.event_group_key = 'event_group'
@@ -836,10 +836,16 @@ class CSR:
 
     def get_by_span(self, object_type, span):
         span = tuple(span)
+        head_span_type = object_type + '_head'
+        eid = None
         if span in self._span_frame_map[object_type]:
             eid = self._span_frame_map[object_type][span]
-            e = self._frame_map[object_type][eid]
-            return e
+        elif head_span_type in self._span_frame_map:
+            eid = self._span_frame_map[head_span_type][span]
+
+        if eid:
+            return self._frame_map[object_type][eid]
+
         return None
 
     def map_entity_type(self, onto_name, entity_type):
@@ -929,13 +935,11 @@ class CSR:
             if fitted_span in self._span_frame_map[self.entity_key]:
                 entity_mention = self._span_frame_map[self.entity_key][
                     fitted_span]
-            elif head_span in self._span_frame_map[self.entity_head_key]:
-                entity_mention = self._span_frame_map[self.entity_head_key][
-                    head_span
-                ]
+            elif head_span in self._span_frame_map[self.entity_key + "_head"]:
+                entity_mention = self._span_frame_map[
+                    self.entity_key + "_head"][head_span]
 
                 print("Trying to add ", head_span, span, text, entity_type)
-
 
                 print("Existing entity mention is ")
                 print(entity_mention.json_rep())

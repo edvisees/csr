@@ -194,7 +194,7 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
 
         rich_entities = {}
         csr_entities = {}
-        same_head_entities = {}
+        # same_head_entities = {}
 
         for rich_ent in rich_event_info['entityMentions']:
             eid = rich_ent['id']
@@ -210,22 +210,28 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
                 text = rich_ent['text']
                 head_span = rich_ent['headWord']['span']
 
-            ent = csr.get_by_span(csr.entity_key, span)
-            head_ent = csr.get_by_span(csr.entity_head_key, head_span)
+            # ent = csr.get_by_span(csr.entity_key, span)
+            # head_ent = csr.get_by_span(csr.entity_head_key, head_span)
+            #
+            # if head_ent:
+            #     same_head_entities[eid] = head_ent
+            #
+            # if not ent:
+            #     if rich_ent.get('component') == 'FrameBasedEventDetector':
+            #         component = 'Semafor'
+            #     else:
+            #         component = base_component_name
 
-            if head_ent:
-                same_head_entities[eid] = head_ent
+            if rich_ent.get('component') == 'FrameBasedEventDetector':
+                component = 'Semafor'
+            else:
+                component = base_component_name
 
-            if not ent:
-                if rich_ent.get('component') == 'FrameBasedEventDetector':
-                    component = 'Semafor'
-                else:
-                    component = base_component_name
-
-                ent = csr.add_entity_mention(
-                    head_span, span, text, 'conll', rich_ent.get('type', None),
-                    entity_form=rich_ent.get('entity_form', 'named'),
-                    component=component)
+            ent = csr.add_entity_mention(
+                head_span, span, text, 'conll', rich_ent.get('type', None),
+                entity_form=rich_ent.get('entity_form', 'named'),
+                component=component
+            )
 
             if 'negationWord' in rich_ent:
                 ent.add_modifier('NEG', rich_ent['negationWord'])
@@ -280,10 +286,10 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
                 for t in csr_ent.get_types():
                     arg_entity_types.add(t)
 
-                if entity_id in same_head_entities:
-                    same_head_ent = same_head_entities[entity_id]
-                    for t in same_head_ent.get_types():
-                        arg_entity_types.add(t)
+                # if entity_id in same_head_entities:
+                #     same_head_ent = same_head_entities[entity_id]
+                #     for t in same_head_ent.get_types():
+                #         arg_entity_types.add(t)
 
             csr_evm = csr.add_event_mention(
                 head_span, span, text, ontology, evm_type,
@@ -477,13 +483,14 @@ def mid_rdf_format(mid):
 
 def add_entity_salience(csr, entity_salience_info):
     for span, data in entity_salience_info.items():
-        entity = csr.get_by_span(csr.entity_key, span)
-        if not entity:
-            # Names that can only spot by DBpedia is considered to be nominal.
-            entity = csr.add_entity_mention(
-                span, data['span'], data['text'], 'aida', None,
-                entity_form='nominal', component='dbpedia-spotlight-0.7'
-            )
+        # entity = csr.get_by_span(csr.entity_key, span)
+        # if not entity:
+
+        # Names that can only spot by DBpedia is considered to be nominal.
+        entity = csr.add_entity_mention(
+            span, data['span'], data['text'], 'aida', None,
+            entity_form='nominal', component='dbpedia-spotlight-0.7'
+        )
 
         if not entity:
             if len(data['text']) > 20:
