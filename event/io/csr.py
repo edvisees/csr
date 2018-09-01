@@ -785,6 +785,8 @@ class CSR:
             print(res)
             if res:
                 sent, fitted_span = res
+                print(sent.span)
+                print(fitted_span)
         else:
             # Use the provided sentence.
             fitted_span = span
