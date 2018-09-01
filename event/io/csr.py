@@ -781,6 +781,8 @@ class CSR:
         if not sent:
             # Find the sentence if not provided.
             res = self.fit_to_sentence(span)
+            print('fit result')
+            print(res)
             if res:
                 sent, fitted_span = res
         else:
