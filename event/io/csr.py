@@ -1060,9 +1060,9 @@ class CSR:
             if key in map_to_aida:
                 candidate_aida_types = map_to_aida[key]
 
-                for arg_aid_type, type_res in candidate_aida_types:
+                for arg_aida_type, type_res in candidate_aida_types:
                     c_arg_aida_type = self.onto_mapper.canonicalize_type(
-                        arg_aid_type)
+                        arg_aida_type)
 
                     if type_res:
                         if len(aida_arg_ent_types) > 0:
@@ -1075,24 +1075,26 @@ class CSR:
                                 logging.info(
                                     "arg is rejected because entity type "
                                     "{} cannot fill {}".format(
-                                        arg_aid_type, full_role_name))
+                                        str(aida_arg_ent_types),
+                                        full_role_name)
+                                )
                                 continue
                     if c_arg_aida_type in self.canonical_types:
                         mapped_arg_type = self.canonical_types[c_arg_aida_type]
                         break
-                    elif arg_aid_type.startswith('Internal.'):
-                        mapped_arg_type = arg_aid_type
+                    elif arg_aida_type.startswith('Internal.'):
+                        mapped_arg_type = arg_aida_type
                         break
             elif full_role_name == 'pb_ARGM-TMP' or 'Time' in full_role_name:
-                arg_aid_type = evm_type + '_Time'
-                full_arg = (evm_type, arg_aid_type)
+                arg_aida_type = evm_type + '_Time'
+                full_arg = (evm_type, arg_aida_type)
                 if full_arg in self.arg_restricts:
-                    mapped_arg_type = arg_aid_type
+                    mapped_arg_type = arg_aida_type
             elif full_role_name == 'pb_ARGM-LOC' or 'Place' in full_role_name:
-                arg_aid_type = evm_type + '_Place'
-                full_arg = (evm_type, arg_aid_type)
+                arg_aida_type = evm_type + '_Place'
+                full_arg = (evm_type, arg_aida_type)
                 if full_arg in self.arg_restricts:
-                    mapped_arg_type = arg_aid_type
+                    mapped_arg_type = arg_aida_type
 
             return mapped_arg_type
 
