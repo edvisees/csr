@@ -58,7 +58,7 @@ Justice.Sentence	Justice.Sentence_Adjudicator	Person GeopoliticalEntity Organiza
 Justice.Sentence	Justice.Sentence_Place	GeopoliticalEntity Facility Location	
 Justice.Sentence	Justice.Sentence_Time	Time	
 Justice.Sentence	Justice.Sentence_Sentence	Sentence	
-Life.Die	Life.Die_Instrument	Commodity Vehicle Weapon	Killing_Instrument	
+Life.Die	Life.Die_Instrument	Commodity Vehicle Weapon	Killing_Instrument	Death_Cause
 Life.Die	Life.Die_Time	Time	
 Life.Die	Life.Die_Victim	Person	Receiving_Recipient	Killing_Victim
 Life.Die	Life.Die_Place	GeopoliticalEntity Facility Location	
@@ -176,7 +176,7 @@ Transaction.TransferControl	Transaction.TransferControl_Time	Time
 Transaction.TransferControl	Transaction.TransferControl_Recipient	Person Sides GeopoliticalEntity Organization	
 Life.BeBorn	Life.BeBorn_Place	GeopoliticalEntity Facility Location	
 Life.BeBorn	Life.BeBorn_Time	Time	
-Life.BeBorn	Life.BeBorn_Person	Person	
+Life.BeBorn	Life.BeBorn_Person	Person	Being_born_Child	Giving_birth_Child	
 Personnel.EndPosition	Personnel.EndPosition_Position	Title	
 Personnel.EndPosition	Personnel.EndPosition_Person	Person	
 Personnel.EndPosition	Personnel.EndPosition_Place	GeopoliticalEntity Facility Location	

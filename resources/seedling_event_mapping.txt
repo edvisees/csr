@@ -29,8 +29,8 @@ Justice.ReleaseParole
 Justice.Sentence
 Justice.Sue
 Justice.TrialHearing
-Life.BeBorn
-Life.Die
+Life.BeBorn	framenet:Being_born	framenet:Giving_birth
+Life.Die	framenet:Death
 Life.Divorce
 Life.Injure
 Life.Marry

@@ -807,9 +807,6 @@ class CSR:
         span_text = sent.substring(span)
 
         if not span_text == text:
-            # logging.warning("Was {}".format(span))
-            # logging.warning("Becomes {},{}".format(begin, end))
-            # logging.warning(sent_text)
             logging.warning(
                 "Span text: [{}] not matching given text [{}]"
                 ", at span [{}] at sent [{}]".format(
@@ -927,34 +924,52 @@ class CSR:
 
         if align_res:
             parent_sent, fitted_span, valid_text = align_res
-
             sentence_start = parent_sent.span.begin
 
-            if not entity_id:
-                entity_id = self.get_id('ent')
+            if fitted_span in self._span_frame_map[self.entity_key]:
+                entity_mention = self._span_frame_map[self.entity_key][
+                    fitted_span]
+            elif head_span in self._span_frame_map[self.entity_head_key]:
+                entity_mention = self._span_frame_map[self.entity_head_key][
+                    head_span
+                ]
 
-            entity_mention = EntityMention(
-                entity_id, parent_sent,
-                fitted_span[0] - sentence_start,
-                fitted_span[1] - fitted_span[0], valid_text,
-                component=component, score=score
-            )
-            self._span_frame_map[self.entity_key][fitted_span] = entity_id
-            self._frame_map[self.entity_key][entity_id] = entity_mention
+                print("Trying to add ", head_span, span, text)
 
-            self._span_frame_map[self.entity_head_key][head_span] = entity_id
-            self._frame_map[self.entity_head_key][entity_id] = entity_mention
+
+                print("Existing entity mention is ")
+                print(entity_mention.json_rep())
+
+                input('-----------')
+
+
+            else:
+                if not entity_id:
+                    entity_id = self.get_id('ent')
+
+                entity_mention = EntityMention(
+                    entity_id, parent_sent,
+                    fitted_span[0] - sentence_start,
+                    fitted_span[1] - fitted_span[0], valid_text,
+                    component=component, score=score
+                )
+                self._frame_map[self.entity_key][entity_id] = entity_mention
+                self._span_frame_map[self.entity_key][fitted_span] = entity_id
+                self._span_frame_map[self.entity_head_key][
+                    head_span] = entity_id
+
+                if entity_form:
+                    entity_mention.add_form(entity_form)
         else:
             return
 
         ontology, entity_type = self.map_entity_type(ontology, entity_type)
 
-        if entity_form:
-            entity_mention.add_form(entity_form)
         if entity_type:
             entity_mention.add_type(ontology, entity_type, component=component)
         else:
-            entity_mention.add_type('conll', 'MISC', component=component)
+            if len(entity_mention.get_types()) < 1:
+                entity_mention.add_type('conll', 'MISC', component=component)
         return entity_mention
 
     def map_event_type(self, evm_type, onto_name):
