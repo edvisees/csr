@@ -511,13 +511,11 @@ def add_entity_salience(csr, entity_salience_info):
 
 def add_event_salience(csr, event_salience_info):
     for span, data in event_salience_info.items():
-        event = csr.get_by_span(csr.event_key, span)
-        if not event:
-            event = csr.add_event_mention(
-                span, data['span'], data['text'],
-                'aida', None, component='opera.events.mention.tac.hector')
-            if event:
-                event.add_salience(data['salience'])
+        event = csr.add_event_mention(
+            span, data['span'], data['text'],
+            'aida', None, component='opera.events.mention.tac.hector')
+        if event:
+            event.add_salience(data['salience'])
 
 
 def token_to_span(conll_file):

@@ -561,7 +561,6 @@ class CSR:
         self.media_type = media_type
 
         self.entity_key = 'entity'
-        # self.entity_head_key = 'entity_head'
         self.entity_group_key = 'entity_group'
         self.event_key = 'event'
         self.event_group_key = 'event_group'
@@ -996,22 +995,28 @@ class CSR:
         if align_res:
             parent_sent, fitted_span, valid_text = align_res
 
-            if head_span in self._span_frame_map[self.event_key]:
-                # logging.info("Cannot handle overlapped event mentions now.")
-                return
+            if span in self._span_frame_map[self.event_key]:
+                logging.info("Cannot handle overlapped event mentions now.")
+                evm = self._span_frame_map[self.event_key][span]
+            elif head_span in self._span_frame_map[self.event_key + '_head']:
+                evm = self._span_frame_map[self.event_key + '_head'][head_span]
+            else:
+                if not event_id:
+                    event_id = self.get_id('evm')
 
-            if not event_id:
-                event_id = self.get_id('evm')
+                relative_begin = fitted_span[0] - parent_sent.span.begin
+                length = fitted_span[1] - fitted_span[0]
 
+                evm = EventMention(
+                    event_id, parent_sent, relative_begin, length, valid_text,
+                    component=component
+                )
+                evm.add_trigger(relative_begin, length)
 
-            relative_begin = fitted_span[0] - parent_sent.span.begin
-            length = fitted_span[1] - fitted_span[0]
+                self._frame_map[self.event_key][event_id] = evm
 
-            evm = EventMention(event_id, parent_sent, relative_begin,
-                               length, valid_text, component=component)
-            evm.add_trigger(relative_begin, length)
-            self._frame_map[self.event_key][event_id] = evm
-            self._span_frame_map[self.event_key][head_span] = evm
+                self._span_frame_map[self.event_key][span] = evm
+                self._span_frame_map[self.event_key + "_head"][head_span] = evm
         else:
             return
 
@@ -1096,16 +1101,10 @@ class CSR:
     def add_event_arg_by_span(self, evm, arg_head_span, arg_span,
                               arg_text, arg_onto, full_role_name, component,
                               arg_entity_form='named'):
-        ent = self.get_by_span(self.entity_key, arg_span)
-
-        if not ent:
-            ent = self.get_by_span(self.entity_head_key, arg_head_span)
-
-        if not ent:
-            ent = self.add_entity_mention(
-                arg_head_span, arg_span, arg_text, 'aida', "argument",
-                entity_form=arg_entity_form, component=component
-            )
+        ent = self.add_entity_mention(
+            arg_head_span, arg_span, arg_text, 'aida', "argument",
+            entity_form=arg_entity_form, component=component
+        )
 
         if ent:
             evm_onto, evm_type = evm.event_type.split(':')
