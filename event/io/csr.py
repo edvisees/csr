@@ -815,7 +815,6 @@ class CSR:
                 ", at span [{}] at sent [{}]".format(
                     span_text, text, span, sent.id)
             )
-            input('------')
 
             if "".join(span_text.split()) == "".join(text.split()):
                 logging.warning('only white space difference, accepting.')
