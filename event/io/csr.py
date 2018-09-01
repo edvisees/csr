@@ -840,7 +840,8 @@ class CSR:
         if span in self._span_frame_map[object_type]:
             return self._span_frame_map[object_type][span]
         elif head_span_type in self._span_frame_map:
-            return self._span_frame_map[head_span_type][span]
+            if span in self._span_frame_map[head_span_type]:
+                return self._span_frame_map[head_span_type][span]
 
         return None
 
