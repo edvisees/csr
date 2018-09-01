@@ -934,7 +934,7 @@ class CSR:
                     head_span
                 ]
 
-                print("Trying to add ", head_span, span, text)
+                print("Trying to add ", head_span, span, text, entity_type)
 
 
                 print("Existing entity mention is ")
