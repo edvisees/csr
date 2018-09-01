@@ -989,6 +989,7 @@ class CSR:
                           arg_entity_types=None, event_id=None):
         # Annotation on the same span will be reused.
         head_span = tuple(head_span)
+        span = tuple(span)
 
         align_res = self.align_to_text(span, text, parent_sent)
 
