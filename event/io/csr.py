@@ -348,6 +348,12 @@ class Sentence(SpanInterpFrame):
         self.keyframe = keyframe
 
     def substring(self, span):
+        """
+        This substring method take the doc level span, and get the sentence
+        substring by correcting the offsets.
+        :param span:
+        :return:
+        """
         begin = span[0] - self.span.begin
         end = span[1] - self.span.begin
         return self.text[begin: end]
@@ -387,7 +393,6 @@ class EntityMention(SpanInterpFrame):
                               score=score, component=component)
 
         self.entity_types.append(onto_type)
-
 
     def add_linking(self, mid, wiki, score, lang='en', component=None):
         if mid.startswith('/'):
@@ -781,20 +786,15 @@ class CSR:
         if not sent:
             # Find the sentence if not provided.
             res = self.fit_to_sentence(span)
-            print('fit result')
-            print(res)
             if res:
                 sent, fitted_span = res
-                print(sent.span)
-                print(fitted_span)
         else:
             # Use the provided sentence.
             fitted_span = span
 
         if not sent or not fitted_span:
             # No suitable sentence found.
-            logging.warning(
-                "No suitable sentence for entity {}".format(span))
+            logging.warning("No suitable sentence for entity {}".format(span))
         else:
             if (not fitted_span == span) or (not text):
                 # If the fitted span changes, we will simply use the doc text.
