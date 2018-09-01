@@ -837,14 +837,10 @@ class CSR:
     def get_by_span(self, object_type, span):
         span = tuple(span)
         head_span_type = object_type + '_head'
-        eid = None
         if span in self._span_frame_map[object_type]:
-            eid = self._span_frame_map[object_type][span]
+            return self._span_frame_map[object_type][span]
         elif head_span_type in self._span_frame_map:
-            eid = self._span_frame_map[head_span_type][span]
-
-        if eid:
-            return self._frame_map[object_type][eid]
+            return self._span_frame_map[head_span_type][span]
 
         return None
 
@@ -945,8 +941,6 @@ class CSR:
                 print(entity_mention.json_rep())
 
                 input('-----------')
-
-
             else:
                 if not entity_id:
                     entity_id = self.get_id('ent')
@@ -958,9 +952,10 @@ class CSR:
                     component=component, score=score
                 )
                 self._frame_map[self.entity_key][entity_id] = entity_mention
-                self._span_frame_map[self.entity_key][fitted_span] = entity_id
+                self._span_frame_map[self.entity_key][
+                    fitted_span] = entity_mention
                 self._span_frame_map[self.entity_key + "_head"][
-                    head_span] = entity_id
+                    head_span] = entity_mention
 
                 if entity_form:
                     entity_mention.add_form(entity_form)
@@ -1007,7 +1002,6 @@ class CSR:
             if not event_id:
                 event_id = self.get_id('evm')
 
-            self._span_frame_map[self.event_key][head_span] = event_id
 
             relative_begin = fitted_span[0] - parent_sent.span.begin
             length = fitted_span[1] - fitted_span[0]
@@ -1016,6 +1010,7 @@ class CSR:
                                length, valid_text, component=component)
             evm.add_trigger(relative_begin, length)
             self._frame_map[self.event_key][event_id] = evm
+            self._span_frame_map[self.event_key][head_span] = evm
         else:
             return
 
