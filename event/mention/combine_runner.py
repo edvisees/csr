@@ -210,18 +210,6 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
                 text = rich_ent['text']
                 head_span = rich_ent['headWord']['span']
 
-            # ent = csr.get_by_span(csr.entity_key, span)
-            # head_ent = csr.get_by_span(csr.entity_head_key, head_span)
-            #
-            # if head_ent:
-            #     same_head_entities[eid] = head_ent
-            #
-            # if not ent:
-            #     if rich_ent.get('component') == 'FrameBasedEventDetector':
-            #         component = 'Semafor'
-            #     else:
-            #         component = base_component_name
-
             if rich_ent.get('component') == 'FrameBasedEventDetector':
                 component = 'Semafor'
             else:
@@ -229,7 +217,7 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
 
             ent = csr.add_entity_mention(
                 head_span, span, text, 'conll', rich_ent.get('type', None),
-                entity_form=rich_ent.get('entity_form', 'named'),
+                entity_form=rich_ent.get('entity_form', None),
                 component=component
             )
 
@@ -285,11 +273,6 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
 
                 for t in csr_ent.get_types():
                     arg_entity_types.add(t)
-
-                # if entity_id in same_head_entities:
-                #     same_head_ent = same_head_entities[entity_id]
-                #     for t in same_head_ent.get_types():
-                #         arg_entity_types.add(t)
 
             csr_evm = csr.add_event_mention(
                 head_span, span, text, ontology, evm_type,

@@ -962,7 +962,7 @@ class CSR:
             entity_mention.add_type(ontology, entity_type, component=component)
         else:
             if len(entity_mention.get_types()) < 1:
-                entity_mention.add_type('conll', 'MISC', component=component)
+                entity_mention.add_type('conll', 'OTHER', component=component)
         return entity_mention
 
     def map_event_type(self, evm_type, onto_name):
