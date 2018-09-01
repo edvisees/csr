@@ -658,8 +658,8 @@ if __name__ == '__main__':
 
     log_file = os.path.join(params.output_folder, 'combiner.log')
     print("Logs will be output at {}".format(log_file))
-    # util.set_file_log(log_file)
+    util.set_file_log(log_file)
 
-    util.set_basic_log()
+    # util.set_basic_log()
 
     main(params)
