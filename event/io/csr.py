@@ -959,7 +959,7 @@ class CSR:
                 )
                 self._frame_map[self.entity_key][entity_id] = entity_mention
                 self._span_frame_map[self.entity_key][fitted_span] = entity_id
-                self._span_frame_map[self.entity_head_key][
+                self._span_frame_map[self.entity_key + "_head"][
                     head_span] = entity_id
 
                 if entity_form:
