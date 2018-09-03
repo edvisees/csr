@@ -406,12 +406,13 @@ class EntityMention(SpanInterpFrame):
         if mid.startswith('/'):
             mid = mid.strip('/')
 
-        fb_xref = ValueFrame('freebase:' + mid, 'db_reference', score=score)
+        fb_xref = ValueFrame('freebase:' + mid, 'db_reference', score=score,
+                             component=component)
         self.interp.add_field('xref', 'freebase', mid, fb_xref,
                               multi_value=True)
 
         wiki_xref = ValueFrame(lang + '_wiki:' + wiki, 'db_reference',
-                               score=score)
+                               score=score, component=component)
         self.interp.add_field('xref', 'wikipedia', wiki, wiki_xref,
                               component=component, multi_value=True)
 
