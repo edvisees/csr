@@ -93,6 +93,9 @@ def text_to_ltf(in_file_path, out_file_path, docid):
         ltf = LTF(docid)
         is_empty = True
         for line in inf:
+            if line.strip() == '':
+                continue
+
             ltf.begin_seg()
             for word in line.split(' '):
                 ltf.add_token(word)
