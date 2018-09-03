@@ -496,7 +496,7 @@ def add_entity_salience(csr, entity_salience_info):
             entity.add_salience(data['salience'])
             entity.add_linking(
                 mid_rdf_format(data['mid']), data['wiki'], data['link_score'],
-                # component='wikifier'
+                component='dbpedia-spotlight-0.7'
             )
 
 
