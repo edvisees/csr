@@ -221,7 +221,7 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
 
             ent = csr.add_entity_mention(
                 head_span, span, text, 'conll', rich_ent.get('type', None),
-                entity_form=rich_ent.get('entity_form', None),
+                entity_form=rich_ent.get('entityForm', None),
                 component=component
             )
 
