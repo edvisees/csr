@@ -264,6 +264,7 @@ class ValueFrame(Frame):
     def json_rep(self):
         rep = super().json_rep()
         rep['score'] = self.score
+        return rep
 
 
 class Span:
