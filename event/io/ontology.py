@@ -102,6 +102,13 @@ class OntologyLoader:
         self.labels = {}
         self.__load()
 
+        self.onto_name = None
+        self.version = None
+        for n, _, v in self.g.triples(
+                (None, self.namespaces[self.owl].versionInfo, None)):
+            self.onto_name = str(n)
+            self.version = str(v)
+
     def event_onto_text(self):
         text_dict = {}
         for event_key, content in self.event_onto.items():
@@ -430,7 +437,6 @@ class OntologyLoader:
                                              '|'.join(plain_res))
                         )
                         sep = ', '
-
 
                     # Add a general arg.
                     out.write(', Arg:<ENTITY>')

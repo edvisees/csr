@@ -554,6 +554,10 @@ class CSR:
                 'component': component_name,
                 'organization': 'CMU',
                 'media_type': media_type,
+                'ontology': {
+                    'name': aida_ontology.onto_name,
+                    'version': aida_ontology.version,
+                }
             },
         }
 
