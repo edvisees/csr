@@ -411,7 +411,7 @@ def read_source(source_folder, language, aida_ontology, onto_mapper):
         with open(source_text_path, newline='') as text_in:
             docid = os.path.basename(source_text_path).split('.')[0]
 
-            runid = str(time.time())
+            runid = int(time.time())
 
             csr = CSR('Frames_hector_combined', runid, 'data',
                       aida_ontology=aida_ontology, onto_mapper=onto_mapper)
