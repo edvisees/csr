@@ -22,6 +22,13 @@ entity_type_mapping = {
     "Wea": "Weapon",
 }
 
+coll_to_aida = {
+    "TIME": "Time",
+    "PERSON": "Person",
+    "LOCATION": "Location",
+    "ORGANIZATION": "Organization",
+}
+
 
 def fix_entity_type(t):
     t_l = t.lower().title()
@@ -850,8 +857,8 @@ class CSR:
 
     def map_entity_type(self, onto_name, entity_type):
         if onto_name == 'conll':
-            if entity_type == 'DATE':
-                return 'aida', 'Time'
+            if entity_type in coll_to_aida:
+                return 'aida', coll_to_aida[entity_type]
         return onto_name, entity_type
 
     def add_relation(self, arguments, arg_names=None, component=None,
@@ -994,7 +1001,6 @@ class CSR:
             parent_sent, fitted_span, valid_text = align_res
 
             if span in self._span_frame_map[self.event_key]:
-                logging.info("Cannot handle overlapped event mentions now.")
                 evm = self._span_frame_map[self.event_key][span]
             elif head_span in self._span_frame_map[self.event_key + '_head']:
                 evm = self._span_frame_map[self.event_key + '_head'][head_span]
@@ -1102,7 +1108,7 @@ class CSR:
                               arg_text, arg_onto, full_role_name, component,
                               arg_entity_form='named'):
         ent = self.add_entity_mention(
-            arg_head_span, arg_span, arg_text, 'aida', "argument",
+            arg_head_span, arg_span, arg_text, 'aida', None,
             entity_form=arg_entity_form, component=component
         )
 
