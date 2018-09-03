@@ -23,6 +23,7 @@ from event.io.ontology import (
 )
 from event import resources
 import nltk
+import time
 
 
 def add_entity_relations(relation_file, edl_entities, csr):
@@ -409,7 +410,10 @@ def read_source(source_folder, language, aida_ontology, onto_mapper):
         # Use the empty newline to handle different newline format.
         with open(source_text_path, newline='') as text_in:
             docid = os.path.basename(source_text_path).split('.')[0]
-            csr = CSR('Frames_hector_combined', 1, 'data',
+
+            runid = str(time.time())
+
+            csr = CSR('Frames_hector_combined', runid, 'data',
                       aida_ontology=aida_ontology, onto_mapper=onto_mapper)
 
             csr.add_doc(docid, 'text', language)
