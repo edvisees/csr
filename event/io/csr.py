@@ -560,7 +560,8 @@ class CSR:
                     'prefix': 'aida',
                     'name': aida_ontology.onto_name,
                     'version': aida_ontology.version,
-                }
+                },
+                'runid': 'r%s' % run_id,
             },
         }
 
