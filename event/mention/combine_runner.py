@@ -492,6 +492,7 @@ def add_entity_linking(csr, wiki_file, lang):
                         "Wiki mention [{}:{}] rejected.".format(span, text)
                     )
 
+            if entity:
                 if 'mid' in anno:
                     mid = mid_rdf_format(anno['mid'])
                 else:
