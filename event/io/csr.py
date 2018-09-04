@@ -208,7 +208,8 @@ class Interp(Jsonable):
 
                 field_data.append(field)
 
-            if field_name not in self.multi_value_fields:
+            if field_name not in self.multi_value_fields or len(
+                    field_data) == 1:
                 field_data = field_data[0]
             rep[field_name] = field_data
 
