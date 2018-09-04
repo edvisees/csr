@@ -3,6 +3,11 @@ from event.util import get_env
 
 output_base = get_env('output_base')
 
+if 'combine_language' in os.environ:
+    c.DetectionParams.language = get_env('combine_language')
+else:
+    c.DetectionParams.language = 'en'
+
 # '/home/zhengzhl/workspace/resources/fndata-1.7/frame'
 c.DetectionParams.frame_lexicon = get_env('frame_lex')
 
@@ -30,7 +35,7 @@ c.DetectionParams.seedling_event_mapping = 'resources/' \
 c.DetectionParams.seedling_argument_mapping = 'resources/' \
                                               'seedling_argument_mapping.txt'
 c.DetectionParams.no_sentence = True
-c.DetectionParams.language = 'en'
+
 
 c.CombineParams.output_folder = output_base
 c.CombineParams.conllu_folder = os.path.join(output_base, 'conllu')

@@ -472,7 +472,7 @@ def mid_rdf_format(mid):
     return mid.strip('/').replace('/', '.')
 
 
-def add_entity_linking(csr, wiki_file):
+def add_entity_linking(csr, wiki_file, lang):
     with open(wiki_file) as f:
         annos = json.load(f).get('annotations', [])
         for anno in annos:
@@ -491,6 +491,16 @@ def add_entity_linking(csr, wiki_file):
                     logging.info(
                         "Wiki mention [{}:{}] rejected.".format(span, text)
                     )
+
+                if 'mid' in anno:
+                    mid = mid_rdf_format(anno['mid'])
+                else:
+                    mid = None
+
+                entity.add_linking(
+                    mid, anno['title'], anno['link_probability'],
+                    component='dbpedia-spotlight-0.7', lang=lang
+                )
 
 
 def add_entity_salience(csr, entity_salience_info):
@@ -632,7 +642,7 @@ def main(config):
                     logging.info(
                         "Adding wiki linking from dbpedia spotlight: {}".format(
                             wiki_file))
-                    add_entity_linking(csr, wiki_file)
+                    add_entity_linking(csr, wiki_file, config.language)
 
         if config.salience_data:
             if not os.path.exists(config.salience_data):

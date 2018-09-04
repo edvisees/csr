@@ -422,22 +422,21 @@ class EntityMention(SpanInterpFrame):
         self.entity_types.append(onto_type)
 
     def add_linking(self, mid, wiki, score, lang='en', component=None):
-        if mid.startswith('/'):
-            mid = mid.strip('/')
+        if mid:
+            fb_link = 'freebase:' + mid
+            fb_xref = ValueFrame(None, 'db_reference', score=score,
+                                 component=component)
+            fb_xref.add_value('id', fb_link)
+            self.interp.add_field('xref', 'freebase', mid, fb_xref,
+                                  multi_value=True)
 
-        fb_link = 'freebase:' + mid
-        fb_xref = ValueFrame(None, 'db_reference', score=score,
-                             component=component)
-        fb_xref.add_value('id', fb_link)
-        self.interp.add_field('xref', 'freebase', mid, fb_xref,
-                              multi_value=True)
-
-        wiki_link = lang + '_wiki:' + wiki
-        wiki_xref = ValueFrame(None, 'db_reference',
-                               score=score, component=component)
-        wiki_xref.add_value('id', wiki_link)
-        self.interp.add_field('xref', 'wikipedia', wiki, wiki_xref,
-                              component=component, multi_value=True)
+        if wiki:
+            wiki_link = lang + '_wiki:' + wiki
+            wiki_xref = ValueFrame(None, 'db_reference',
+                                   score=score, component=component)
+            wiki_xref.add_value('id', wiki_link)
+            self.interp.add_field('xref', 'wikipedia', wiki, wiki_xref,
+                                  component=component, multi_value=True)
 
     def add_salience(self, salience_score):
         self.interp.add_field('salience', 'score', 'score', salience_score)
