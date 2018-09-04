@@ -412,7 +412,7 @@ class EntityMention(SpanInterpFrame):
             # Inherit frame component name.
             component = None
 
-        self.interp.add_field('type', 'type', entity_type, entity_type,
+        self.interp.add_field('type', 'type', onto_type, onto_type,
                               score=score, component=component, mutex=False)
         self.entity_types.append(onto_type)
 
