@@ -60,9 +60,9 @@ Justice.Sentence	Justice.Sentence_Time	Time
 Justice.Sentence	Justice.Sentence_Sentence	Sentence	
 Life.Die	Life.Die_Instrument	Commodity Vehicle Weapon	Killing_Instrument	Death_Cause
 Life.Die	Life.Die_Time	Time	
-Life.Die	Life.Die_Victim	Person	Receiving_Recipient	Killing_Victim
+Life.Die	Life.Die_Victim	Person	Receiving_Recipient	Killing_Victim	pb_ARG1
 Life.Die	Life.Die_Place	GeopoliticalEntity Facility Location	
-Life.Die	Life.Die_Agent	GeopoliticalEntity Person Organization	pb_ARG0	Death_Protagonist	Dead_or_alive_Protagonist	Killing_Killer	Execution_Executed	Killing_Cause
+Life.Die	Life.Die_Agent	GeopoliticalEntity Person Organization	pb_ARG0	Death_Protagonist	Dead_or_alive_Protagonist	Killing_Killer	Execution_Executed	Killing_Cause	
 Justice.ArrestJail	Justice.ArrestJail_Crime	Crime	
 Justice.ArrestJail	Justice.ArrestJail_Person	Person	Arrest_Suspect
 Justice.ArrestJail	Justice.ArrestJail_Time	Time	
