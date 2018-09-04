@@ -270,15 +270,20 @@ class ValueFrame(Frame):
     A frame that mainly contain values.
     """
 
-    def __init__(self, fid, frame_type, value, component=None, score=None):
+    def __init__(self, fid, frame_type, component=None, score=None):
         super().__init__(fid, frame_type, None, component=component)
         self.score = score
-        self.value = value
+        self.kv = {}
+
+    def add_value(self, key, value):
+        self.kv[key] = value
 
     def json_rep(self):
         rep = super().json_rep()
         rep['score'] = self.score
-        rep['value'] = self.value
+        for k, v in self.kv.items():
+            rep[k] = v
+
         return rep
 
 
@@ -421,14 +426,16 @@ class EntityMention(SpanInterpFrame):
             mid = mid.strip('/')
 
         fb_link = 'freebase:' + mid
-        fb_xref = ValueFrame(fb_link, 'db_reference', fb_link, score=score,
+        fb_xref = ValueFrame(None, 'db_reference', score=score,
                              component=component)
+        fb_xref.add_value('id', fb_link)
         self.interp.add_field('xref', 'freebase', mid, fb_xref,
                               multi_value=True)
 
         wiki_link = lang + '_wiki:' + wiki
-        wiki_xref = ValueFrame(wiki_link, 'db_reference', wiki_link,
+        wiki_xref = ValueFrame(None, 'db_reference',
                                score=score, component=component)
+        wiki_xref.add_value('id', wiki_link)
         self.interp.add_field('xref', 'wikipedia', wiki, wiki_xref,
                               component=component, multi_value=True)
 
