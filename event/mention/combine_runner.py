@@ -167,18 +167,25 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
             onto_name, role_name = role.split(':')
 
             arg_onto = None
-            component = None
             if onto_name == 'fn':
                 arg_onto = "framenet"
                 frame_name = rich_evm['frame']
-                component = 'Semafor'
                 # role_pair = (frame_name, role_name)
                 full_role_name = frame_name + '_' + role_name
             elif onto_name == 'pb':
                 arg_onto = "propbank"
-                component = 'Fanse'
                 # role_pair = ('pb', role_name)
                 full_role_name = 'pb_' + role_name
+
+            base_component = 'opera.events.mention.tac.hector'
+            component = base_component
+
+            if argument['compnent'] == 'FanseAnnotator':
+                component = 'Fanse'
+            elif argument['component'] == 'SemaforAnnotator':
+                component = 'Semafor'
+            elif argument['component'] == 'allenlp':
+                component = base_component
 
             if arg_onto and component:
                 csr.add_event_arg_by_span(
@@ -217,6 +224,8 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                 component = 'Semafor'
             elif rich_comp == 'StanfordCoreNlpAnnotator':
                 component = 'corenlp'
+            elif rich_comp == 'allennlp':
+                component = base_component_name
             else:
                 component = base_component_name
 
