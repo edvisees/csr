@@ -1202,6 +1202,9 @@ def fix_event_type_from_entity(evm_type, arg_entity_types):
         if ('aida:Person' not in arg_entity_types) and (
                 'aida:Vehicle' in arg_entity_types):
             evm_type = 'Movement.TransportArtifact'
+    if evm_type == 'Personnel.EndPositio':
+        if 'aida:Weapon' in arg_entity_types or 'aida:Vehicle' in arg_entity_types:
+            evm_type = 'Conflict.Attack'
     return evm_type
 
 
