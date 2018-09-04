@@ -216,7 +216,7 @@ def add_rich_events(rich_event_file, csr, provided_tokens=None):
             if rich_comp == 'FrameBasedEventDetector':
                 component = 'Semafor'
             elif rich_comp == 'StanfordCoreNlpAnnotator':
-                component = 'Stanford'
+                component = 'corenlp'
             else:
                 component = base_component_name
 

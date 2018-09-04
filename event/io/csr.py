@@ -25,7 +25,7 @@ entity_type_mapping = {
 coll_to_aida = {
     "TIME": "Time",
     "PERSON": "Person",
-    "LOCATION": "Location",
+    "LOCATION": "GeopoliticalEntity",
     "ORGANIZATION": "Organization",
 }
 
@@ -257,13 +257,15 @@ class ValueFrame(Frame):
     A frame that mainly contain values.
     """
 
-    def __init__(self, fid, frame_type, component=None, score=None):
+    def __init__(self, fid, frame_type, value, component=None, score=None):
         super().__init__(fid, frame_type, None, component=component)
         self.score = score
+        self.value = value
 
     def json_rep(self):
         rep = super().json_rep()
         rep['score'] = self.score
+        rep['value'] = self.value
         return rep
 
 
@@ -397,21 +399,24 @@ class EntityMention(SpanInterpFrame):
             # Inherit frame component name.
             component = None
 
-        self.interp.add_field('type', 'type', onto_type, onto_type,
-                              score=score, component=component)
-
+        type_value = ValueFrame(None, 'entity_type', entity_type,
+                                score=score, component=component)
+        self.interp.add_field('type', entity_type, entity_type, type_value,
+                              component=component, multi_value=True)
         self.entity_types.append(onto_type)
 
     def add_linking(self, mid, wiki, score, lang='en', component=None):
         if mid.startswith('/'):
             mid = mid.strip('/')
 
-        fb_xref = ValueFrame('freebase:' + mid, 'db_reference', score=score,
+        fb_link = 'freebase:' + mid
+        fb_xref = ValueFrame(fb_link, 'db_reference', fb_link, score=score,
                              component=component)
         self.interp.add_field('xref', 'freebase', mid, fb_xref,
                               multi_value=True)
 
-        wiki_xref = ValueFrame(lang + '_wiki:' + wiki, 'db_reference',
+        wiki_link = lang + '_wiki:' + wiki
+        wiki_xref = ValueFrame(wiki_link, 'db_reference', wiki_link,
                                score=score, component=component)
         self.interp.add_field('xref', 'wikipedia', wiki, wiki_xref,
                               component=component, multi_value=True)
@@ -964,6 +969,7 @@ class CSR:
                     component=component, score=score
                 )
                 self._frame_map[self.entity_key][entity_id] = entity_mention
+
                 self._span_frame_map[self.entity_key][
                     fitted_span] = entity_mention
                 self._span_frame_map[self.entity_key + "_head"][
