@@ -180,12 +180,15 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
             base_component = 'opera.events.mention.tac.hector'
             component = base_component
 
-            if argument['compnent'] == 'FanseAnnotator':
-                component = 'Fanse'
-            elif argument['component'] == 'SemaforAnnotator':
-                component = 'Semafor'
-            elif argument['component'] == 'allenlp':
-                component = base_component
+            rich_comp = argument.get('component', None)
+
+            if rich_comp:
+                if rich_comp == 'FanseAnnotator':
+                    component = 'Fanse'
+                elif rich_comp == 'SemaforAnnotator':
+                    component = 'Semafor'
+                elif rich_comp == 'allenlp':
+                    component = base_component
 
             if arg_onto and component:
                 csr.add_event_arg_by_span(
