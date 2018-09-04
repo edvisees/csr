@@ -39,5 +39,6 @@ c.CombineParams.rich_event = os.path.join(output_base, 'rich', 'simple_run')
 c.CombineParams.edl_json = os.path.join(output_base, 'entity')
 c.CombineParams.relation_json = os.path.join(output_base, 'relations')
 c.CombineParams.salience_data = os.path.join(output_base, 'salience')
+c.CombineParams.dbpedia_wiki_json = os.path.join(output_base, 'wiki')
 c.CombineParams.source_folder = os.path.join(output_base, 'txt')
 c.CombineParams.add_rule_detector = True

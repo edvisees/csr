@@ -187,7 +187,7 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 )
 
 
-def add_rich_events(rich_event_file, csr, provided_tokens=None):
+def add_rich_events(csr, rich_event_file, provided_tokens=None):
     base_component_name = 'opera.events.mention.tac.hector'
 
     with open(rich_event_file) as fin:
@@ -472,6 +472,27 @@ def mid_rdf_format(mid):
     return mid.strip('/').replace('/', '.')
 
 
+def add_entity_linking(csr, wiki_file):
+    with open(wiki_file) as f:
+        annos = json.load(f).get('annotations', [])
+        for anno in annos:
+            span = (anno['start'], anno['end'])
+            text = anno['spot']
+            # It is indeed dbpedia-spotlight-0.7.1.
+            entity = csr.add_entity_mention(
+                span, span, text, 'aida', None, None,
+                component='dbpedia-spotlight-0.7'
+            )
+
+            if not entity:
+                if len(text) > 20:
+                    logging.info("Wiki mention [{}] rejected.".format(span))
+                else:
+                    logging.info(
+                        "Wiki mention [{}:{}] rejected.".format(span, text)
+                    )
+
+
 def add_entity_salience(csr, entity_salience_info):
     for span, data in entity_salience_info.items():
         # entity = csr.get_by_span(csr.entity_key, span)
@@ -480,15 +501,15 @@ def add_entity_salience(csr, entity_salience_info):
         # Names that can only spot by DBpedia is considered to be nominal.
         entity = csr.add_entity_mention(
             span, data['span'], data['text'], 'aida', None,
-            entity_form='nominal', component='dbpedia-spotlight-0.7'
+            None, component='dbpedia-spotlight-0.7'
         )
 
         if not entity:
             if len(data['text']) > 20:
-                logging.info("Wikified mention [{}] rejected.".format(span))
+                logging.info("Salience mention [{}] rejected.".format(span))
             else:
                 logging.info(
-                    "Wikified mention [{}:{}] rejected.".format(
+                    "Salience mention [{}:{}] rejected.".format(
                         span, data['text'])
                 )
 
@@ -600,9 +621,18 @@ def main(config):
                     logging.info(
                         "Adding events with rich output: {}".format(
                             rich_event_file))
-                    add_rich_events(rich_event_file, csr, tokens)
+                    add_rich_events(csr, rich_event_file, tokens)
             else:
                 logging.info("No rich event output.")
+
+        if config.dbpedia_wiki_json:
+            if os.path.exists(config.dbpedia_wiki_json):
+                wiki_file = find_by_id(config.dbpedia_wiki_json, docid)
+                if wiki_file:
+                    logging.info(
+                        "Adding wiki linking from dbpedia spotlight: {}".format(
+                            wiki_file))
+                    add_entity_linking(csr, wiki_file)
 
         if config.salience_data:
             if not os.path.exists(config.salience_data):
@@ -638,6 +668,7 @@ if __name__ == '__main__':
         source_folder = Unicode(help='source text folder').tag(config=True)
         rich_event = Unicode(help='Rich event output.').tag(config=True)
         edl_json = Unicode(help='EDL json output.').tag(config=True)
+        dbpedia_wiki_json = Unicode(help='DBpedia output').tag(config=True)
         relation_json = Unicode(help='Relation json output.').tag(config=True)
         salience_data = Unicode(help='Salience output.').tag(config=True)
         rich_event_token = Bool(
