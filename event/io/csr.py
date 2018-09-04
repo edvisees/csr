@@ -106,6 +106,7 @@ class Interp(Jsonable):
         self.interp_type = interp_type
         self.__fields = defaultdict(lambda: defaultdict(dict))
         self.multi_value_fields = set()
+        self.mutex_fields = set()
         self.interp_score = score
 
     def get_field(self, name):
@@ -129,7 +130,8 @@ class Interp(Jsonable):
         }
 
     def add_field(self, name, key_name, content_rep, content,
-                  component=None, score=None, multi_value=False):
+                  component=None, score=None, multi_value=False,
+                  mutex=True):
         """
         Add an interp field.
         :param name: The name to be displayed for this field.
@@ -140,6 +142,8 @@ class Interp(Jsonable):
         :param component: The component name.
         :param score: The score of this interp field.
         :param multi_value: Whether this field can contain multiple values.
+        :param mutex: Whether multiple value of the same key are considered
+        mutually exclusive.
         :return:
         """
         # If the key and the corresponding content are the same,
@@ -149,6 +153,9 @@ class Interp(Jsonable):
         }
         if multi_value:
             self.multi_value_fields.add(name)
+
+        if mutex:
+            self.mutex_fields.add(name)
 
     def is_empty(self):
         return len(self.__fields) == 0
@@ -166,8 +173,11 @@ class Interp(Jsonable):
 
             for key_name, keyed_content in field_info.items():
                 if len(keyed_content) > 1:
-                    # Multiple interpretation found.
-                    field = {'@type': 'xor', 'args': []}
+                    if field_name in self.mutex_fields:
+                        # Multiple interpretation considered as xor.
+                        field = {'@type': 'xor', 'args': []}
+                    else:
+                        field = []
 
                     for key, value in keyed_content.items():
                         v = value['content']
@@ -184,7 +194,10 @@ class Interp(Jsonable):
                         if component:
                             r['component'] = component
 
-                        field['args'].append(r)
+                        if field_name in self.mutex_fields:
+                            field['args'].append(r)
+                        else:
+                            field.append(r)
                 else:
                     # We still do this iteration, but it will only return one
                     # single value.
@@ -208,8 +221,7 @@ class Interp(Jsonable):
 
                 field_data.append(field)
 
-            if field_name not in self.multi_value_fields or len(
-                    field_data) == 1:
+            if field_name not in self.multi_value_fields:
                 field_data = field_data[0]
             rep[field_name] = field_data
 
@@ -400,10 +412,8 @@ class EntityMention(SpanInterpFrame):
             # Inherit frame component name.
             component = None
 
-        type_value = ValueFrame(None, 'entity_type', entity_type,
-                                score=score, component=component)
-        self.interp.add_field('type', entity_type, entity_type, type_value,
-                              component=component, multi_value=True)
+        self.interp.add_field('type', 'type', entity_type, entity_type,
+                              score=score, component=component, mutex=False)
         self.entity_types.append(onto_type)
 
     def add_linking(self, mid, wiki, score, lang='en', component=None):
