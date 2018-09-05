@@ -398,9 +398,11 @@ class EntityMention(SpanInterpFrame):
                          'entity_evidence_interp', begin, length,
                          text, component=component, score=score)
         self.entity_types = []
+        self.entity_form = None
+        self.salience = None
 
-    def add_form(self, entity_form):
-        self.interp.add_field('form', 'form', entity_form, entity_form)
+    def set_form(self, entity_form):
+        self.entity_form = entity_form
 
     def get_types(self):
         return self.entity_types
@@ -439,7 +441,14 @@ class EntityMention(SpanInterpFrame):
                                   component=component, multi_value=True)
 
     def add_salience(self, salience_score):
-        self.interp.add_field('salience', 'score', 'score', salience_score)
+        self.salience = salience_score
+
+    def json_rep(self):
+        # Add these interp fields at last, so no extra xor to deal with.
+        self.interp.add_field('form', 'form', self.entity_form,
+                              self.entity_form)
+        self.interp.add_field('salience', 'score', 'score', self.salience_score)
+        return super().json_rep()
 
 
 class RelationMention(SpanInterpFrame):
@@ -996,7 +1005,7 @@ class CSR:
                     head_span] = entity_mention
 
                 if entity_form:
-                    entity_mention.add_form(entity_form)
+                    entity_mention.set_form(entity_form)
         else:
             return
 
