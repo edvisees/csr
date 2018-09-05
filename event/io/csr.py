@@ -450,8 +450,10 @@ class EntityMention(SpanInterpFrame):
 
     def json_rep(self):
         # Add these interp fields at last, so no extra xor to deal with.
+        self.interp.clear_field('form')
         self.interp.add_field('form', 'form', self.entity_form,
                               self.entity_form)
+        self.interp.clear_field('salience')
         self.interp.add_field('salience', 'score', 'score', self.salience)
         return super().json_rep()
 
@@ -563,10 +565,6 @@ class EventMention(SpanInterpFrame):
         arg = Argument(ontology + ':' + arg_role, entity_mention, arg_id,
                        component=component, score=score)
         self.arguments[ontology + ':' + arg_role].append(arg)
-        # self.interp.add_field(
-        #     'args', arg_role, entity_mention.id, arg, score=score,
-        #     component=component, multi_value=True
-        # )
         return arg
 
     def add_salience(self, salience_score):
@@ -575,7 +573,22 @@ class EventMention(SpanInterpFrame):
     def json_rep(self):
         self.interp.clear_field('args')
         for arg_role, alter_args in self.arguments.items():
-            for arg in alter_args:
+            storing_args = []
+
+            if arg_role == 'Internal:Message':
+                # Pick longer as message.
+                max_len = -1
+                longest_arg = None
+                for arg in alter_args:
+                    if len(arg.entity_mention.text) > max_len:
+                        longest_arg = arg
+                        max_len = len(arg.entity_mention.text)
+                if longest_arg:
+                    storing_args.append(longest_arg)
+            else:
+                storing_args = alter_args
+
+            for arg in storing_args:
                 self.interp.add_field(
                     'args', arg_role, arg.entity_mention.id, arg,
                     score=arg.score, component=arg.component,
