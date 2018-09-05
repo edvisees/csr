@@ -447,7 +447,7 @@ class EntityMention(SpanInterpFrame):
         # Add these interp fields at last, so no extra xor to deal with.
         self.interp.add_field('form', 'form', self.entity_form,
                               self.entity_form)
-        self.interp.add_field('salience', 'score', 'score', self.salience_score)
+        self.interp.add_field('salience', 'score', 'score', self.salience)
         return super().json_rep()
 
 
