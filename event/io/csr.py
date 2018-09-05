@@ -51,11 +51,12 @@ class Frame(Jsonable):
     Represent top level frame collection.
     """
 
-    def __init__(self, fid, frame_type, parent, component=None):
+    def __init__(self, fid, frame_type, parent, component=None, score=None):
         self.type = frame_type
         self.id = fid
         self.parent = parent
         self.component = component
+        self.score = score
 
     def json_rep(self):
         rep = {
@@ -128,6 +129,9 @@ class Interp(Jsonable):
         self.__fields[name][key_name][content_rep] = {
             'content': content, 'score': score, 'component': component,
         }
+
+    def clear_field(self, name):
+        self.__fields[name] = defaultdict(dict)
 
     def add_field(self, name, key_name, content_rep, content,
                   component=None, score=None, multi_value=False,
@@ -504,8 +508,9 @@ class Argument(Frame):
     An argument of event, which is simply a wrap around an entity,
     """
 
-    def __init__(self, arg_role, entity_mention, fid, component=None):
-        super().__init__(fid, 'argument', None, component=component)
+    def __init__(self, arg_role, entity_mention, fid, component=None,
+                 score=None):
+        super().__init__(fid, 'argument', None, component=component, score=None)
         self.entity_mention = entity_mention
         self.arg_role = arg_role
 
@@ -531,6 +536,7 @@ class EventMention(SpanInterpFrame):
         self.trigger = None
         self.event_type = None
         self.realis = None
+        self.arguments = defaultdict(list)
 
     def add_trigger(self, begin, length):
         self.trigger = Span(self.span.reference, begin, length)
@@ -554,18 +560,26 @@ class EventMention(SpanInterpFrame):
     def add_arg(self, ontology, arg_role, entity_mention, arg_id,
                 score=None, component=None):
         arg = Argument(ontology + ':' + arg_role, entity_mention, arg_id,
-                       component=component)
-        # If we use the role name as as the key name, if there are multiple
-        # entity mentions being identified for this field we consider them as
-        # alternative interpretation.
-        self.interp.add_field(
-            'args', arg_role, entity_mention.id, arg, score=score,
-            component=component, multi_value=True
-        )
+                       component=component, score=score)
+        self.arguments[ontology + ':' + arg_role] = arg
+        # self.interp.add_field(
+        #     'args', arg_role, entity_mention.id, arg, score=score,
+        #     component=component, multi_value=True
+        # )
         return arg
 
     def add_salience(self, salience_score):
         self.interp.add_field('salience', 'score', 'score', salience_score)
+
+    def json_rep(self):
+        self.interp.clear_field('args')
+        for arg_role, alter_args in self.arguments.items():
+            for arg in alter_args:
+                self.interp.add_field(
+                    'args', arg_role, arg.entity_mention.id, arg,
+                    score=arg.score, component=arg.component, multi_value=True
+                )
+        return super().json_rep()
 
 
 class CSR:
