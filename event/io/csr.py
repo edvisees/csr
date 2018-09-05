@@ -561,7 +561,7 @@ class EventMention(SpanInterpFrame):
                 score=None, component=None):
         arg = Argument(ontology + ':' + arg_role, entity_mention, arg_id,
                        component=component, score=score)
-        self.arguments[ontology + ':' + arg_role] = arg
+        self.arguments[ontology + ':' + arg_role].append(arg)
         # self.interp.add_field(
         #     'args', arg_role, entity_mention.id, arg, score=score,
         #     component=component, multi_value=True
