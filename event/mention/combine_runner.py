@@ -194,7 +194,7 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                     component = 'Fanse'
                 elif rich_comp == 'SemaforAnnotator':
                     component = 'Semafor'
-                elif rich_comp == 'allenlp':
+                elif rich_comp == 'allennlp':
                     component = 'AllenNLP.srl'
 
             if component == 'Fanse':
