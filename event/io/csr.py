@@ -131,7 +131,8 @@ class Interp(Jsonable):
         }
 
     def clear_field(self, name):
-        self.__fields[name] = defaultdict(dict)
+        if name in self.__fields:
+            self.__fields[name] = defaultdict(dict)
 
     def add_field(self, name, key_name, content_rep, content,
                   component=None, score=None, multi_value=False,
@@ -577,7 +578,8 @@ class EventMention(SpanInterpFrame):
             for arg in alter_args:
                 self.interp.add_field(
                     'args', arg_role, arg.entity_mention.id, arg,
-                    score=arg.score, component=arg.component, multi_value=True
+                    score=arg.score, component=arg.component,
+                    multi_value=True
                 )
         return super().json_rep()
 
