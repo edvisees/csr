@@ -207,7 +207,7 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 csr_arg_ent = csr_arg.entity_mention
 
                 if 'entityForm' in rich_arg_ent:
-                    csr_arg_ent.add_form(rich_arg['entityForm'])
+                    csr_arg_ent.add_form(rich_arg_ent['entityForm'])
 
                 if 'negationWord' in rich_arg_ent:
                     csr_arg_ent.add_modifier(
