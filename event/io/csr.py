@@ -553,6 +553,7 @@ class EventMention(SpanInterpFrame):
             'args', arg_role, entity_mention.id, arg, score=score,
             component=component, multi_value=True
         )
+        return arg
 
     def add_salience(self, salience_score):
         self.interp.add_field('salience', 'score', 'score', salience_score)
@@ -970,9 +971,11 @@ class CSR:
             sentence_start = parent_sent.span.begin
 
             if fitted_span in self._span_frame_map[self.entity_key]:
+                # Find an entity mention via exact span match.
                 entity_mention = self._span_frame_map[self.entity_key][
                     fitted_span]
             elif head_span in self._span_frame_map[self.entity_key + "_head"]:
+                # Find an entity mention via head word match.
                 entity_mention = self._span_frame_map[
                     self.entity_key + "_head"][head_span]
             else:
@@ -1166,7 +1169,8 @@ class CSR:
             else:
                 arg_role = full_role_name
 
-            evm.add_arg(arg_onto, arg_role, ent, arg_id, component=component)
+            return evm.add_arg(arg_onto, arg_role, ent, arg_id,
+                               component=component)
 
     def add_event_arg(self, evm, ent, ontology, arg_role, component):
         arg_id = self.get_id('arg')

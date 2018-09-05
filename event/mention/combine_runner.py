@@ -146,27 +146,26 @@ def fix_event_type_from_frame(origin_onto, origin_type, frame_type):
 
 
 def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
-    arguments = rich_evm['arguments']
+    rich_args = rich_evm['arguments']
 
-    for argument in arguments:
-        entity_id = argument['entityId']
-        roles = argument['roles']
-        arg_ent = rich_entities[entity_id]
+    for rich_arg in rich_args:
+        entity_id = rich_arg['entityId']
+        roles = rich_arg['roles']
+        rich_arg_ent = rich_entities[entity_id]
 
         if provided_tokens:
             arg_span, arg_text = recover_via_token(
-                provided_tokens, arg_ent['tokens'])
+                provided_tokens, rich_arg_ent['tokens'])
             arg_head_span, _ = recover_via_token(
-                provided_tokens, arg_ent['headWord']['tokens'])
+                provided_tokens, rich_arg_ent['headWord']['tokens'])
         else:
-            arg_span = arg_ent['span']
-            arg_head_span = arg_ent['headWord']['span']
-            arg_text = arg_ent['text']
+            arg_span = rich_arg_ent['span']
+            arg_head_span = rich_arg_ent['headWord']['span']
+            arg_text = rich_arg_ent['text']
 
         for role in roles:
             onto_name, role_name = role.split(':')
 
-            arg_onto = None
             if onto_name == 'fn':
                 arg_onto = "framenet"
                 frame_name = rich_evm['frame']
@@ -174,13 +173,21 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 full_role_name = frame_name + '_' + role_name
             elif onto_name == 'pb':
                 arg_onto = "propbank"
-                # role_pair = ('pb', role_name)
+                if role_name.startswith('R-'):
+                    # Ignoring R- style Reference Arguments.
+                    # These are normally 'which', 'what', not very useful.
+                    continue
+                elif role_name.startswith('C-'):
+                    # Ignoring C- style Discontinuous Arguments.
+                    # These are useful, but hard to represent.
+                    continue
                 full_role_name = 'pb_' + role_name
+            else:
+                # Unknown argument ontology
+                continue
 
-            base_component = 'opera.events.mention.tac.hector'
-            component = base_component
-
-            rich_comp = argument.get('component', None)
+            component = 'opera.events.mention.tac.hector'
+            rich_comp = rich_arg.get('component', None)
 
             if rich_comp:
                 if rich_comp == 'FanseAnnotator':
@@ -188,13 +195,23 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 elif rich_comp == 'SemaforAnnotator':
                     component = 'Semafor'
                 elif rich_comp == 'allenlp':
-                    component = base_component
+                    # component = 'allennlp'
+                    pass
 
             if arg_onto and component:
-                csr.add_event_arg_by_span(
+                csr_arg = csr.add_event_arg_by_span(
                     csr_evm, arg_head_span, arg_span, arg_text,
                     arg_onto, full_role_name, component=component
                 )
+
+                csr_arg_ent = csr_arg.entity_mention
+
+                if 'entityForm' in rich_arg_ent:
+                    csr_arg_ent.add_form(rich_arg['entityForm'])
+
+                if 'negationWord' in rich_arg_ent:
+                    csr_arg_ent.add_modifier(
+                        'NEG', rich_arg_ent['negationWord'])
 
 
 def add_rich_events(csr, rich_event_file, provided_tokens=None):
@@ -205,7 +222,6 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
 
         rich_entities = {}
         csr_entities = {}
-        # same_head_entities = {}
 
         for rich_ent in rich_event_info['entityMentions']:
             eid = rich_ent['id']
@@ -232,25 +248,29 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
             else:
                 component = base_component_name
 
-            ent = csr.add_entity_mention(
-                head_span, span, text, 'conll', rich_ent.get('type', None),
-                entity_form=rich_ent.get('entityForm', None),
-                component=component
-            )
+            if 'type' in rich_ent:
+                # These are typed entity mentions detected by NER.
+                ent = csr.add_entity_mention(
+                    head_span, span, text, 'conll', rich_ent['type'],
+                    entity_form=rich_ent.get('entityForm', None),
+                    component=component
+                )
 
-            if 'negationWord' in rich_ent:
-                ent.add_modifier('NEG', rich_ent['negationWord'])
+                if 'negationWord' in rich_ent:
+                    ent.add_modifier('NEG', rich_ent['negationWord'])
 
-            if ent:
-                csr_entities[eid] = ent
-            else:
-                if len(text) > 20:
-                    logging.warning("Argument mention {} rejected.".format(eid))
+                if ent:
+                    csr_entities[eid] = ent
                 else:
-                    logging.warning(
-                        ("Argument mention {}:{} rejected.".format(eid, text)))
+                    if len(text) > 20:
+                        logging.warning(
+                            "Argument mention {} rejected.".format(eid))
+                    else:
+                        logging.warning(
+                            ("Argument mention {}:{} "
+                             "rejected.".format(eid, text)))
 
-        evm_by_id = {}
+        csr_events = {}
         for rich_evm in rich_event_info['eventMentions']:
             if provided_tokens:
                 span, text = recover_via_token(provided_tokens,
@@ -275,22 +295,16 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
 
             arguments = rich_evm['arguments']
 
-            # Check which entities are in the arguments.
+            # Collect the entity types of this event's argument.
             arg_entity_types = set()
             for argument in arguments:
                 entity_id = argument['entityId']
+                if entity_id in csr_entities:
+                    csr_ent = csr_entities[entity_id]
+                    for t in csr_ent.get_types():
+                        arg_entity_types.add(t)
 
-                if entity_id not in csr_entities:
-                    logging.error(
-                        "Argument entity id {} not found in entity set, "
-                        "at doc: [{}]".format(entity_id, rich_event_file))
-                    continue
-
-                csr_ent = csr_entities[entity_id]
-
-                for t in csr_ent.get_types():
-                    arg_entity_types.add(t)
-
+            # Add an event, use the argument entity types to help debug.
             csr_evm = csr.add_event_mention(
                 head_span, span, text, ontology, evm_type,
                 realis=rich_evm.get('realis', None),
@@ -305,7 +319,7 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                     csr_evm.add_modifier('MOD', rich_evm['modalWord'])
 
                 eid = rich_evm['id']
-                evm_by_id[eid] = csr_evm
+                csr_events[eid] = csr_evm
 
                 add_rich_arguments(
                     csr, csr_evm, rich_evm, rich_entities, provided_tokens
@@ -313,8 +327,8 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
 
         for relation in rich_event_info['relations']:
             if relation['relationType'] == 'event_coreference':
-                args = [evm_by_id[i].id for i in relation['arguments'] if
-                        i in evm_by_id]
+                args = [csr_events[i].id for i in relation['arguments'] if
+                        i in csr_events]
                 csr_rel = csr.add_relation(args, component=base_component_name)
                 if csr_rel:
                     csr_rel.add_type('aida', 'event_coreference')
