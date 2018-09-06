@@ -399,9 +399,10 @@ class EntityMention(SpanInterpFrame):
 
     def __init__(self, fid, parent, begin, length, text,
                  component=None, score=None):
-        super().__init__(fid, 'entity_evidence', parent,
-                         'entity_evidence_interp', begin, length,
-                         text, component=component, score=score)
+        super().__init__(
+            fid, 'entity_evidence', parent, 'entity_evidence_interp', begin,
+            length, text, component=component, score=score
+        )
         self.entity_types = []
         self.entity_form = None
         self.salience = None
@@ -1180,11 +1181,9 @@ class CSR:
             return mapped_arg_type
 
     def add_event_arg_by_span(self, evm, arg_head_span, arg_span,
-                              arg_text, arg_onto, full_role_name, component,
-                              arg_entity_form='named'):
+                              arg_text, arg_onto, full_role_name, component):
         ent = self.add_entity_mention(
-            arg_head_span, arg_span, arg_text, 'aida', None,
-            entity_form=arg_entity_form, component=component
+            arg_head_span, arg_span, arg_text, 'aida', None, component=component
         )
 
         if ent:
