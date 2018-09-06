@@ -617,6 +617,10 @@ class EventMention(SpanInterpFrame):
                 storing_args = bad_args
                 # input("Use only %d bad args." % len(bad_args))
 
+            if good_args and bad_args:
+                print("%d goods, %d bads, use %d storing" % (
+                    len(good_args), len(bad_args), len(storing_args)))
+
         return storing_args
 
     def json_rep(self):
