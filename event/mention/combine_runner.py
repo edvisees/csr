@@ -145,13 +145,24 @@ def fix_event_type_from_frame(origin_onto, origin_type, frame_type):
     return origin_onto, origin_type
 
 
-def ok_entity_pos(head_pos):
+def ok_entity(ent):
+    head_pos = ent.get('headWord', None).get('pos', None)
+
     if not head_pos:
         return False
 
     if head_pos.startswith('N') or head_pos == 'CD' or head_pos.startswith(
             'PR') or head_pos.startswith('J'):
         return True
+
+    if head_pos == 'IN':
+        ent_len = len(ent['text'])
+        head_len = len(ent['headWord']['lemma'])
+        if ent_len > head_len:
+            return True
+        else:
+            # If the entity only contains IN, it is not OK.
+            return False
 
     return False
 
@@ -229,9 +240,8 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                     csr_arg_ent.add_modifier(
                         'NEG', rich_arg_ent['negationWord'])
 
-                head_pos = rich_arg_ent.get('headWord', None).get('pos', None)
-                if not ok_entity_pos(head_pos):
-                    print("rejected ", head_pos, csr_arg_ent.text)
+                if not ok_entity(rich_arg_ent):
+                    # print("not ok ", head_pos, csr_arg_ent.text)
                     csr_arg_ent.set_not_ok()
 
 
