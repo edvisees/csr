@@ -149,9 +149,16 @@ def ok_entity_pos(head_pos):
     if not head_pos:
         return False
 
-    if not head_pos.startswith(
-            'N') or not head_pos == 'CD' or not head_pos.startswith('PR'):
-        return False
+    if head_pos.startswith('N'):
+        return True
+
+    if head_pos == 'CD':
+        return True
+
+    if head_pos.startswith('PR'):
+        return True
+
+    return False
 
 
 def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
