@@ -136,7 +136,7 @@ Existence.DamageDestroy	Existence.DamageDestroy_Place	GeopoliticalEntity Facilit
 Existence.DamageDestroy	Existence.DamageDestroy_Instrument	Commodity Vehicle Weapon	Weapon_Weapon	Attack_Weapon
 Existence.DamageDestroy	Existence.DamageDestroy_Agent	Person Sides GeopoliticalEntity Organization	Cause_impact_Agent
 Existence.DamageDestroy	Existence.DamageDestroy_Time	Time	
-Existence.DamageDestroy	Existence.DamageDestroy_Victim	Commodity Ballot Weapon Facility Vehicle	Cause_impact_Impactor	Cause_impact_Impactors	Impact_Impactor	Cause_impact_Impactee	Impact_Impactee
+Existence.DamageDestroy	Existence.DamageDestroy_Victim	Commodity Ballot Weapon Facility Vehicle	Cause_impact_Impactor	Cause_impact_Impactors	Impact_Impactor	Cause_impact_Impactee	Impact_Impactee	pb_ARG1
 Business.End	Business.End_Time	Time	
 Business.End	Business.End_Place	GeopoliticalEntity Facility Location	
 Business.End	Business.End_Organization	Organization	
