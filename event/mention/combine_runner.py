@@ -799,6 +799,4 @@ if __name__ == '__main__':
 
     # util.set_basic_log()
 
-    # TODO: add root
-
     main(params)
