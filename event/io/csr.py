@@ -607,16 +607,20 @@ class EventMention(SpanInterpFrame):
             if good_args:
                 # If there is any good arguments, we will use only those.
                 storing_args = good_args
-                # input("Use only %d good args." % len(good_args))
             else:
                 # Otherwise we have no choice.
                 storing_args = bad_args
-                # input("Use only %d bad args." % len(bad_args))
 
             if good_args and bad_args:
-                print(self.parent)
                 print("%d goods, %d bads, use %d storing" % (
                     len(good_args), len(bad_args), len(storing_args)))
+                print('Goodies------')
+                for g in good_args:
+                    print(g)
+
+                print('Bad guys------')
+                for b in bad_args:
+                    print(b)
 
         return storing_args
 
