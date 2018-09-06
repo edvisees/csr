@@ -163,23 +163,20 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
             arg_head_span = rich_arg_ent['headWord']['span']
             arg_text = rich_arg_ent['text']
 
-        rich_comp = rich_arg.get('component', None)
+        arg_comp = rich_arg.get('component', None)
 
         component = 'opera.events.mention.tac.hector'
-        if rich_comp:
-            if rich_comp == 'FanseAnnotator':
+        if arg_comp:
+            if arg_comp == 'FanseAnnotator':
                 component = 'Fanse'
-            elif rich_comp == 'SemaforAnnotator':
+                # Fanse is noisy.
+                continue
+            elif arg_comp == 'SemaforAnnotator':
                 component = 'Semafor'
-            elif rich_comp == 'allennlp':
+            elif arg_comp == 'allennlp':
                 component = 'AllenNLP.srl'
 
         for role in roles:
-            role_component = role['component']
-
-            if role_component == 'FanseAnnotator':
-                continue
-
             onto_name, role_name = role.split(':')
 
             if onto_name == 'fn':
@@ -188,7 +185,7 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 # role_pair = (frame_name, role_name)
                 full_role_name = frame_name + '_' + role_name
             elif onto_name == 'pb':
-                if role_component == 'SemaforAnnotator':
+                if component == 'Semafor':
                     # Do not use the propbank role by Semafor.
                     continue
 
