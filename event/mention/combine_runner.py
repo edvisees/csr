@@ -614,6 +614,26 @@ def token_to_span(conll_file):
     return tokens
 
 
+def read_parent_child_info(root_file):
+    first_line = True
+
+    child2root = {}
+
+    with open(root_file) as infile:
+        for line in infile:
+            if first_line:
+                first_line = False
+                continue
+
+            fields = line.strip().split('\t')
+            parent_uid = fields[0]
+            child_file = fields[1]
+
+            child2root[child_file.split('.')[0]] = parent_uid
+
+    return child2root
+
+
 def main(config):
     assert config.conllu_folder is not None
     assert config.csr_output is not None
@@ -625,6 +645,11 @@ def main(config):
     onto_mapper = MappingLoader()
     onto_mapper.load_arg_aida_mapping(config.seedling_argument_mapping)
     onto_mapper.load_event_aida_mapping(config.seedling_event_mapping)
+
+    if config.parent_children_tab:
+        child2root = read_parent_child_info(config.parent_children_tab)
+    else:
+        child2root = {}
 
     if config.add_rule_detector:
         # Rule detector should not need existing vocabulary.
@@ -650,6 +675,9 @@ def main(config):
     for csr, docid in read_source(config.source_folder, config.language,
                                   aida_ontology, onto_mapper):
         logging.info('Working with docid: {}'.format(docid))
+
+        root_id = child2root.get(docid, None)
+        csr.set_root(root_id)
 
         if config.edl_json and not ignore_edl:
             if not os.path.exists(config.edl_json):
@@ -740,7 +768,7 @@ if __name__ == '__main__':
         relation_json = Unicode(help='Relation json output.').tag(config=True)
         salience_data = Unicode(help='Salience output.').tag(config=True)
         rich_event_token = Bool(
-            help='Whether to use tokenqs from rich event output',
+            help='Whether to use tokens from rich event output',
             default_value=False).tag(config=True)
         add_rule_detector = Bool(help='Whether to add rule detector',
                                  default_value=False).tag(config=True)
@@ -754,6 +782,8 @@ if __name__ == '__main__':
             help='Seedling event mapping to TAC-KBP').tag(config=True)
         seedling_argument_mapping = Unicode(
             help='Seedling argument mapping to TAC-KBP').tag(config=True)
+        parent_children_tab = Unicode(
+            help='File parent children relations provided').tag(config=True)
 
 
     conf = PyFileConfigLoader(sys.argv[1]).load_config()
@@ -768,5 +798,7 @@ if __name__ == '__main__':
     util.set_file_log(log_file)
 
     # util.set_basic_log()
+
+    # TODO: add root
 
     main(params)

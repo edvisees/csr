@@ -673,6 +673,7 @@ class CSR:
         self._docs = {}
 
         self.current_doc = None
+        self.root_id = None
 
         self._span_frame_map = defaultdict(dict)
         self._frame_map = defaultdict(dict)
@@ -709,6 +710,10 @@ class CSR:
             for _, arg_type in self.arg_restricts:
                 c_type = onto_mapper.canonicalize_type(arg_type)
                 self.canonical_types[c_type] = arg_type
+
+    def set_root(self, root_id):
+        self.root_id = root_id
+        self.header['meta']['root'] = root_id
 
     def load_from_file(self, csr_file):
         def get_parent_sent(this_frame):

@@ -47,13 +47,7 @@ class FrameMappingDetector(BaseRuleDetector):
     def __init__(self, config, token_vocab):
         super().__init__(config, token_vocab)
         self.lex_mapping = self.load_frame_lex(config.frame_lexicon)
-        # These word list are old word list from seedling.
-        # self.entities, self.events, self.relations = self.load_wordlist(
-        #     config.entity_list, config.event_list, config.relation_list
-        # )
-
         self.event_onto = self.onto.event_onto_text()
-
 
     def load_frame_lex(self, frame_path):
         import xml.etree.ElementTree as ET
