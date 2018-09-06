@@ -577,12 +577,16 @@ class EventMention(SpanInterpFrame):
     def pick_args(self, arg_role, alter_args):
         storing_args = []
 
-        def is_bad_arg(arg):
+        def is_good_arg(arg):
             has_type = False
             for t in arg.entity_mention.get_types():
                 if not t == 'conll:OTHER':
                     has_type = True
-            return not has_type and not arg.entity_mention.entity_form
+            return has_type or arg.entity_mention.entity_form
+
+        def is_bad_arg(arg):
+            if arg.text.startswith('wh'):
+                return True
 
         if arg_role == 'Internal:Message':
             # Pick longer as message.
@@ -596,31 +600,25 @@ class EventMention(SpanInterpFrame):
                 storing_args.append(longest_arg)
         else:
             good_args = []
+            normal_args = []
             bad_args = []
 
             for arg in alter_args:
-                if is_bad_arg(arg):
+                if is_good_arg(arg):
+                    good_args.append(arg)
+                elif is_bad_arg(arg):
                     bad_args.append(arg)
                 else:
-                    good_args.append(arg)
+                    normal_args.append(arg)
 
             if good_args:
                 # If there is any good arguments, we will use only those.
                 storing_args = good_args
+            elif normal_args:
+                storing_args = normal_args
             else:
                 # Otherwise we have no choice.
                 storing_args = bad_args
-
-            if good_args and bad_args:
-                print("%d goods, %d bads, use %d storing" % (
-                    len(good_args), len(bad_args), len(storing_args)))
-                print('Goodies------')
-                for g in good_args:
-                    print(g)
-
-                print('Bad guys------')
-                for b in bad_args:
-                    print(b)
 
         return storing_args
 
