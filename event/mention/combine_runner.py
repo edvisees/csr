@@ -150,7 +150,7 @@ def ok_entity_pos(head_pos):
         return False
 
     if not head_pos.startswith(
-            'N') and not head_pos == 'CD' and not head_pos.startswith('PR'):
+            'N') or not head_pos == 'CD' or not head_pos.startswith('PR'):
         return False
 
 
@@ -230,7 +230,7 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 head_pos = rich_arg_ent.get('headWord', None).get('pos', None)
                 if not ok_entity_pos(head_pos):
                     print("rejected ", head_pos, csr_arg_ent.text)
-                    csr_arg_ent.set_not_noun()
+                    csr_arg_ent.set_not_ok()
 
 
 def add_rich_events(csr, rich_event_file, provided_tokens=None):

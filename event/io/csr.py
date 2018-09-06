@@ -407,10 +407,10 @@ class EntityMention(SpanInterpFrame):
         self.entity_form = None
         self.salience = None
         self.head_word = None
-        self.not_noun = False
+        self.not_ok = False
 
-    def set_not_noun(self):
-        self.not_noun = True
+    def set_not_ok(self):
+        self.not_ok = True
 
     def set_form(self, entity_form):
         self.entity_form = entity_form
