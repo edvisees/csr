@@ -229,7 +229,7 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
 
                 head_pos = rich_arg_ent.get('headWord', None).get('pos', None)
                 if not ok_entity_pos(head_pos):
-                    print("rejected ", head_pos, rich_arg_ent.text)
+                    print("rejected ", head_pos, csr_arg_ent.text)
                     csr_arg_ent.set_not_noun()
 
 
