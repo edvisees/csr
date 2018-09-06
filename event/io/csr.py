@@ -574,23 +574,51 @@ class EventMention(SpanInterpFrame):
     def add_salience(self, salience_score):
         self.interp.add_field('salience', 'score', 'score', salience_score)
 
+    def pick_args(self, arg_role, alter_args):
+        storing_args = []
+
+        def is_bad_arg(arg):
+            has_type = False
+            for t in arg.entity_mention.get_types():
+                if not t == 'conll:OTHER':
+                    has_type = True
+            return not has_type and not arg.entity_mention.entity_form
+
+        if arg_role == 'Internal:Message':
+            # Pick longer as message.
+            max_len = -1
+            longest_arg = None
+            for arg in alter_args:
+                if len(arg.entity_mention.text) > max_len:
+                    longest_arg = arg
+                    max_len = len(arg.entity_mention.text)
+            if longest_arg:
+                storing_args.append(longest_arg)
+        else:
+            good_args = []
+            bad_args = []
+
+            for arg in alter_args:
+                if is_bad_arg(arg):
+                    print(arg.json_rep())
+                    input("Found bad arg.")
+                    bad_args.append(arg)
+                else:
+                    good_args.append(arg)
+
+            if good_args:
+                # If there is any good arguments, we will use only those.
+                storing_args = good_args
+            else:
+                # Otherwise we have no choice.
+                storing_args = bad_args
+
+        return storing_args
+
     def json_rep(self):
         self.interp.clear_field('args')
         for arg_role, alter_args in self.arguments.items():
-            storing_args = []
-
-            if arg_role == 'Internal:Message':
-                # Pick longer as message.
-                max_len = -1
-                longest_arg = None
-                for arg in alter_args:
-                    if len(arg.entity_mention.text) > max_len:
-                        longest_arg = arg
-                        max_len = len(arg.entity_mention.text)
-                if longest_arg:
-                    storing_args.append(longest_arg)
-            else:
-                storing_args = alter_args
+            storing_args = self.pick_args(arg_role, alter_args)
 
             for arg in storing_args:
                 self.interp.add_field(
