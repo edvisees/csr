@@ -145,6 +145,15 @@ def fix_event_type_from_frame(origin_onto, origin_type, frame_type):
     return origin_onto, origin_type
 
 
+def ok_entity_pos(head_pos):
+    if not head_pos:
+        return False
+
+    if not head_pos.startswith(
+            'N') and not head_pos == 'CD' and not head_pos.startswith('PR'):
+        return False
+
+
 def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
     rich_args = rich_evm['arguments']
 
@@ -217,6 +226,11 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 if 'negationWord' in rich_arg_ent:
                     csr_arg_ent.add_modifier(
                         'NEG', rich_arg_ent['negationWord'])
+
+                head_pos = rich_arg_ent.get('headWord', None).get('pos', None)
+                if not ok_entity_pos(head_pos):
+                    print("rejected ", head_pos, rich_arg_ent.text)
+                    csr_arg_ent.set_not_noun()
 
 
 def add_rich_events(csr, rich_event_file, provided_tokens=None):

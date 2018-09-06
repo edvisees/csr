@@ -406,6 +406,11 @@ class EntityMention(SpanInterpFrame):
         self.entity_types = []
         self.entity_form = None
         self.salience = None
+        self.head_word = None
+        self.not_noun = False
+
+    def set_not_noun(self):
+        self.not_noun = True
 
     def set_form(self, entity_form):
         self.entity_form = entity_form
@@ -586,6 +591,9 @@ class EventMention(SpanInterpFrame):
 
         def is_bad_arg(arg):
             if arg.entity_mention.text.startswith('wh'):
+                return True
+
+            if arg.entity_mention.not_noun:
                 return True
 
         if arg_role == 'Internal:Message':
