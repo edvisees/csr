@@ -149,13 +149,8 @@ def ok_entity_pos(head_pos):
     if not head_pos:
         return False
 
-    if head_pos.startswith('N'):
-        return True
-
-    if head_pos == 'CD':
-        return True
-
-    if head_pos.startswith('PR'):
+    if head_pos.startswith('N') or head_pos == 'CD' or head_pos.startswith(
+            'PR') or head_pos.startswith('J'):
         return True
 
     return False
