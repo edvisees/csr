@@ -1,6 +1,7 @@
 import os
 from event.util import get_env
 
+eval_data = get_env('ldc_eval_data')
 output_base = get_env('output_base')
 
 if 'combine_language' in os.environ:
@@ -36,7 +37,6 @@ c.DetectionParams.seedling_argument_mapping = 'resources/' \
                                               'seedling_argument_mapping.txt'
 c.DetectionParams.no_sentence = True
 
-
 c.CombineParams.output_folder = output_base
 c.CombineParams.conllu_folder = os.path.join(output_base, 'conllu')
 c.CombineParams.csr_output = os.path.join(output_base, 'csr')
@@ -47,3 +47,7 @@ c.CombineParams.salience_data = os.path.join(output_base, 'salience')
 c.CombineParams.dbpedia_wiki_json = os.path.join(output_base, 'wiki')
 c.CombineParams.source_folder = os.path.join(output_base, 'txt')
 c.CombineParams.add_rule_detector = True
+
+# This is the parent child from the eval source.
+c.CombineParams.parent_children_tab = os.path.join(
+    eval_data, 'docs', 'parent_children.tab')

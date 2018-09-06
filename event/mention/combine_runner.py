@@ -646,10 +646,12 @@ def main(config):
     onto_mapper.load_arg_aida_mapping(config.seedling_argument_mapping)
     onto_mapper.load_event_aida_mapping(config.seedling_event_mapping)
 
-    if config.parent_children_tab:
+    child2root = {}
+    if config.parent_children_tab and os.path.exists(
+            config.parent_children_tab):
+        logging.info("Reading parent child tab file: "
+                     "" + config.parent_children_tab)
         child2root = read_parent_child_info(config.parent_children_tab)
-    else:
-        child2root = {}
 
     if config.add_rule_detector:
         # Rule detector should not need existing vocabulary.
