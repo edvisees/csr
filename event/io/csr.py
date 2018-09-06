@@ -453,8 +453,10 @@ class EntityMention(SpanInterpFrame):
         self.interp.clear_field('form')
         self.interp.add_field('form', 'form', self.entity_form,
                               self.entity_form)
-        self.interp.clear_field('salience')
-        self.interp.add_field('salience', 'score', 'score', self.salience)
+
+        if self.salience:
+            self.interp.clear_field('salience')
+            self.interp.add_field('salience', 'score', 'score', self.salience)
         return super().json_rep()
 
 
