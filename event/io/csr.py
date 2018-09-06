@@ -604,6 +604,8 @@ class EventMention(SpanInterpFrame):
                     print(arg.json_rep())
                     bad_args.append(arg)
                 else:
+                    print('---- Found good -----')
+                    print(arg.json_rep())
                     good_args.append(arg)
 
             if good_args:
@@ -613,7 +615,7 @@ class EventMention(SpanInterpFrame):
             else:
                 # Otherwise we have no choice.
                 storing_args = bad_args
-                input("Use only %d good args." % len(bad_args))
+                input("Use only %d bad args." % len(bad_args))
 
 
         return storing_args
