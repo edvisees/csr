@@ -163,7 +163,23 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
             arg_head_span = rich_arg_ent['headWord']['span']
             arg_text = rich_arg_ent['text']
 
+        rich_comp = rich_arg.get('component', None)
+
+        component = 'opera.events.mention.tac.hector'
+        if rich_comp:
+            if rich_comp == 'FanseAnnotator':
+                component = 'Fanse'
+            elif rich_comp == 'SemaforAnnotator':
+                component = 'Semafor'
+            elif rich_comp == 'allennlp':
+                component = 'AllenNLP.srl'
+
         for role in roles:
+            role_component = role['component']
+
+            if role_component == 'FanseAnnotator':
+                continue
+
             onto_name, role_name = role.split(':')
 
             if onto_name == 'fn':
@@ -172,6 +188,10 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 # role_pair = (frame_name, role_name)
                 full_role_name = frame_name + '_' + role_name
             elif onto_name == 'pb':
+                if role_component == 'SemaforAnnotator':
+                    # Do not use the propbank role by Semafor.
+                    continue
+
                 arg_onto = "propbank"
                 if role_name.startswith('R-'):
                     # Ignoring R- style Reference Arguments.
@@ -184,21 +204,6 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 full_role_name = 'pb_' + role_name
             else:
                 # Unknown argument ontology
-                continue
-
-            component = 'opera.events.mention.tac.hector'
-            rich_comp = rich_arg.get('component', None)
-
-            if rich_comp:
-                if rich_comp == 'FanseAnnotator':
-                    component = 'Fanse'
-                elif rich_comp == 'SemaforAnnotator':
-                    component = 'Semafor'
-                elif rich_comp == 'allennlp':
-                    component = 'AllenNLP.srl'
-
-            if component == 'Fanse':
-                # Fanse output are noisy.
                 continue
 
             if arg_onto and component:
