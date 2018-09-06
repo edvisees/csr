@@ -585,7 +585,7 @@ class EventMention(SpanInterpFrame):
             return has_type or arg.entity_mention.entity_form
 
         def is_bad_arg(arg):
-            if arg.text.startswith('wh'):
+            if arg.entity_mention.text.startswith('wh'):
                 return True
 
         if arg_role == 'Internal:Message':
