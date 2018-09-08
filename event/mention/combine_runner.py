@@ -691,15 +691,18 @@ def main(config):
                     edl_entities = add_edl_entities(edl_file, csr)
 
                     if config.relation_json:
-                        relation_file = find_by_id(config.relation_json, docid)
-                        if relation_file:
-                            logging.info("Adding relations between entities.")
-                            add_entity_relations(
-                                relation_file, edl_entities, csr
-                            )
-                        else:
-                            logging.error("Cannot find the relation file for"
-                                          " {}".format(docid))
+                        if os.path.exists(config.relation_json):
+                            relation_file = find_by_id(
+                                config.relation_json, docid)
+                            if relation_file:
+                                logging.info("Adding relations between "
+                                             "entities.")
+                                add_entity_relations(
+                                    relation_file, edl_entities, csr
+                                )
+                            else:
+                                logging.error("Cannot find the relation file "
+                                              "for {}".format(docid))
 
         conll_file = find_by_id(config.conllu_folder, docid)
         if not conll_file:
