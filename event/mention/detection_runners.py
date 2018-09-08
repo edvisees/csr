@@ -68,14 +68,14 @@ class DetectionRunner:
                         word_index, word_type = predicted_arg
                         arg_text, arg_span = l_word_meta[word_index]
 
-                        upos = features[word_index][3]
-                        xpos = features[word_index][4]
-                        entity_form = guess_entity_form(upos, xpos)
+                        # upos = features[word_index][3]
+                        # xpos = features[word_index][4]
+                        # entity_form = guess_entity_form(upos, xpos)
 
                         arg = csr.add_event_arg_by_span(
                             evm, arg_span, arg_span, arg_text, 'aida',
                             rel_type, component=self.model_name,
                         )
 
-                        if entity_form:
-                            arg.entity_mention.set_form(entity_form)
+                        # if entity_form:
+                        #     arg.entity_mention.set_form(entity_form)
