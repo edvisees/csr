@@ -108,6 +108,18 @@ def add_edl_entities(edl_file, csr):
                 if ent:
                     edl_entities[entity['@id']] = ent
 
+            for entity in entity_sent['fillerMentions']:
+                mention_span = [entity['char_begin'], entity['char_end']]
+                head_span = entity['head_span']
+
+                ent = csr.add_entity_mention(
+                    head_span, mention_span, entity['mention'], 'aida',
+                    entity['type'], component=edl_component_id
+                )
+
+                if ent:
+                    edl_entities[entity['@id']] = ent
+
     return edl_entities
 
 
