@@ -80,6 +80,7 @@ def add_edl_entities(edl_file, csr):
 
     if not edl_file:
         return
+
     with open(edl_file) as edl:
         data = json.load(edl)
 
@@ -586,10 +587,6 @@ def add_entity_linking(csr, wiki_file, lang):
 
 def add_entity_salience(csr, entity_salience_info):
     for span, data in entity_salience_info.items():
-        # entity = csr.get_by_span(csr.entity_key, span)
-        # if not entity:
-
-        # Names that can only spot by DBpedia is considered to be nominal.
         entity = csr.add_entity_mention(
             span, data['span'], data['text'], 'aida', None,
             None, component='dbpedia-spotlight-0.7'
