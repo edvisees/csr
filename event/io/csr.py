@@ -1267,6 +1267,7 @@ class CSR:
     def get_json_rep(self):
         rep = {}
         self.header['meta']['document_id'] = self.current_doc.id
+        self.header['meta']['root'] = self.current_doc.root_id
         rep.update(self.header)
         rep['frames'] = [self.current_doc.json_rep()]
         for frame_type, frame_info in self._frame_map.items():
