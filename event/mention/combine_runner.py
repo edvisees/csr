@@ -486,7 +486,8 @@ def analyze_sentence(text):
     return negations
 
 
-def read_source(source_folder, language, aida_ontology, onto_mapper):
+def read_source(source_folder, language, aida_ontology, onto_mapper,
+                child2root):
     for source_text_path in glob.glob(source_folder + '/*.txt'):
         # Use the empty newline to handle different newline format.
         with open(source_text_path, newline='') as text_in:
@@ -497,7 +498,14 @@ def read_source(source_folder, language, aida_ontology, onto_mapper):
             csr = CSR('Frames_hector_combined', runid, 'data',
                       aida_ontology=aida_ontology, onto_mapper=onto_mapper)
 
-            csr.add_doc(docid, 'text', language)
+            # Find the root if possible, otherwise use itself.
+            if docid in child2root:
+                root_id = child2root[docid]
+            else:
+                root_id = docid
+
+            csr.add_doc(docid, 'text', language, root_id)
+
             text = text_in.read()
             sent_index = 0
 
@@ -695,11 +703,8 @@ def main(config):
             ignore_edl = True
 
     for csr, docid in read_source(config.source_folder, config.language,
-                                  aida_ontology, onto_mapper):
+                                  aida_ontology, onto_mapper, child2root):
         logging.info('Working with docid: {}'.format(docid))
-
-        root_id = child2root.get(docid, None)
-        csr.set_root(root_id)
 
         if config.edl_json and not ignore_edl:
             if not os.path.exists(config.edl_json):

@@ -77,18 +77,20 @@ class Document(Frame):
     Represent a document frame.
     """
 
-    def __init__(self, fid, doc_name, media_type, language):
+    def __init__(self, fid, doc_name, media_type, language, root_id):
         super().__init__(fid, 'document', None)
         self.doc_name = doc_name
         self.media_type = media_type
         self.language = language
         self.num_sentences = 0
+        self.root_id = root_id
 
     def json_rep(self):
         rep = super().json_rep()
         rep['media_type'] = self.media_type
         rep['language'] = self.language
         rep['num_sentences'] = self.num_sentences
+        rep['root'] = self.root_id
         return rep
 
 
@@ -852,13 +854,14 @@ class CSR:
         self._frame_map.clear()
         self._char_sent_map.clear()
 
-    def add_doc(self, doc_name, media_type, language):
-        ns_docid = self.ns_prefix + ":" + doc_name + "-" + media_type
+    def add_doc(self, doc_name, media_type, language, root_id):
+        # ns_docid = self.ns_prefix + ":" + doc_name + "-" + media_type
+        ns_docid = self.ns_prefix + ":" + doc_name
 
         if ns_docid in self._docs:
             return
 
-        doc = Document(ns_docid, doc_name, media_type, language)
+        doc = Document(ns_docid, doc_name, media_type, language, root_id)
         self.current_doc = doc
         self._docs[ns_docid] = doc
 
