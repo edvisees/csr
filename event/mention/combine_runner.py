@@ -112,13 +112,24 @@ def add_edl_entities(edl_file, csr):
                 mention_span = [entity['char_begin'], entity['char_end']]
                 head_span = entity['head_span']
 
-                ent = csr.add_entity_mention(
-                    head_span, mention_span, entity['mention'], 'aida',
-                    entity['type'], component=edl_component_id
-                )
+                ent_type = entity.get('type', None)
 
-                if ent:
-                    edl_entities[entity['@id']] = ent
+                if ent_type:
+                    ent = csr.add_entity_mention(
+                        head_span, mention_span, entity['mention'], 'aida',
+                        ent_type, component=edl_component_id
+                    )
+
+                    if ent:
+                        edl_entities[entity['@id']] = ent
+
+                        category = entity.get('category', None)
+
+                        if category:
+                            if category == 'NAM':
+                                ent.set_form('named')
+                            elif category == 'NOM':
+                                ent.set_form('nominal')
 
     return edl_entities
 
