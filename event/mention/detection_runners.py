@@ -47,9 +47,7 @@ class DetectionRunner:
             token, span = l_word_meta[center]
             this_feature = features[center]
 
-            print(features[center])
             event_type = self.model.predict(data)
-            input(event_type)
 
             if not component_name:
                 component_name = self.model_name
