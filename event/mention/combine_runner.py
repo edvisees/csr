@@ -654,8 +654,8 @@ def read_parent_child_info(root_file):
                 continue
 
             fields = line.strip().split('\t')
-            parent_uid = fields[0]
-            child_file = fields[1]
+            parent_uid = fields[2]
+            child_file = fields[3]
 
             child2root[child_file.split('.')[0]] = parent_uid
 
