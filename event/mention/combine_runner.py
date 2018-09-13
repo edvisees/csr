@@ -255,18 +255,19 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                     arg_onto, full_role_name, component=component
                 )
 
-                csr_arg_ent = csr_arg.entity_mention
+                if csr_arg:
+                    csr_arg_ent = csr_arg.entity_mention
 
-                if 'entityForm' in rich_arg_ent:
-                    csr_arg_ent.set_form(rich_arg_ent['entityForm'])
+                    if 'entityForm' in rich_arg_ent:
+                        csr_arg_ent.set_form(rich_arg_ent['entityForm'])
 
-                if 'negationWord' in rich_arg_ent:
-                    csr_arg_ent.add_modifier(
-                        'NEG', rich_arg_ent['negationWord'])
+                    if 'negationWord' in rich_arg_ent:
+                        csr_arg_ent.add_modifier(
+                            'NEG', rich_arg_ent['negationWord'])
 
-                if not ok_entity(rich_arg_ent):
-                    # print("not ok ", head_pos, csr_arg_ent.text)
-                    csr_arg_ent.set_not_ok()
+                    if not ok_entity(rich_arg_ent):
+                        # print("not ok ", head_pos, csr_arg_ent.text)
+                        csr_arg_ent.set_not_ok()
 
 
 def add_rich_events(csr, rich_event_file, provided_tokens=None):
