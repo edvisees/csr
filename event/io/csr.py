@@ -1204,9 +1204,9 @@ class CSR:
                             if not match_resitrct:
                                 logging.info(
                                     "arg is rejected because entity type "
-                                    "{} cannot fill {}".format(
+                                    "{}, role {} cannot fill {}".format(
                                         str(aida_arg_ent_types),
-                                        full_role_name)
+                                        full_role_name, arg_aida_type)
                                 )
                                 continue
                     if c_arg_aida_type in self.canonical_types:
