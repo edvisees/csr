@@ -4,6 +4,7 @@ import re
 import logging
 from event.util import remove_punctuation
 from collections import defaultdict
+import json
 
 
 class MappingLoader:
@@ -72,6 +73,37 @@ class MappingLoader:
 
     def canonicalize_type(self, event_type):
         return remove_punctuation(event_type).lower()
+
+
+class JsonOntologyLoader:
+    def __init__(self, ontology_file):
+        with open(ontology_file) as o:
+            ontology = json.load(o)
+
+            self.event_onto = {}
+            self.onto_types = set()
+
+            self.prefix = 'ldcOnt'
+            self.name = ontology['@context'][0]['ldcOnt']
+            self.version = 0.3
+
+            for f in ontology['frames']:
+                if f['@type'] == 'event_type':
+                    t = f['@id']
+                    self.event_onto[t] = {'args': {}}
+                    for arg_t in f['argument_role']:
+                        self.event_onto[t]['args'][arg_t] = {
+                            'restrictions': set()
+                        }
+
+                self.onto_types.add(f['@type'])
+
+            for f in ontology['frames']:
+                if f['@type'] == 'event_argument_role_type':
+                    a_t = f['@id']
+                    e_t = f['domain']
+                    for r in f['rangeIncludes']:
+                        self.event_onto[e_t]['args'][a_t]['restrictions'].add(r)
 
 
 class OntologyLoader:

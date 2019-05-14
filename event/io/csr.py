@@ -12,30 +12,30 @@ class Constants:
     GENERAL_REL_TYPE = 'aida:General_Rel'
 
 
-entity_type_mapping = {
-    "Fac": "Facility",
-    "Gpe": "GeopoliticalEntity",
-    "Loc": "Location",
-    "Org": "Organization",
-    "Per": "Person",
-    "Veh": "Vehicle",
-    "Wea": "Weapon",
+# entity_type_mapping = {
+#     "Fac": "Facility",
+#     "Gpe": "GeopoliticalEntity",
+#     "Loc": "Location",
+#     "Org": "Organization",
+#     "Per": "Person",
+#     "Veh": "Vehicle",
+#     "Wea": "Weapon",
+# }
+
+conll_to_target = {
+    # "TIME": "Time",
+    "PERSON": ("ldcOnt", "PER"),
+    "LOCATION": ("ldcOnt", "GPE"),
+    "ORGANIZATION": {"ldcOnt", "ORG"},
 }
 
-coll_to_aida = {
-    "TIME": "Time",
-    "PERSON": "Person",
-    "LOCATION": "GeopoliticalEntity",
-    "ORGANIZATION": "Organization",
-}
 
-
-def fix_entity_type(t):
-    t_l = t.lower().title()
-    if t_l in entity_type_mapping:
-        return entity_type_mapping[t_l]
-    else:
-        return t
+# def fix_entity_type(t):
+#     t_l = t.lower().title()
+#     if t_l in entity_type_mapping:
+#         return entity_type_mapping[t_l]
+#     else:
+#         return t
 
 
 class Jsonable:
@@ -425,16 +425,15 @@ class EntityMention(SpanInterpFrame):
         if entity_type == "null":
             return
 
-        entity_type = fix_entity_type(entity_type)
-        onto_type = ontology + ":" + entity_type
+        full_type = ontology + ":" + entity_type
 
         if component == self.component:
             # Inherit frame component name.
             component = None
 
-        self.interp.add_field('type', 'type', onto_type, onto_type,
+        self.interp.add_field('type', 'type', full_type, entity_type,
                               score=score, component=component, mutex=False)
-        self.entity_types.append(onto_type)
+        self.entity_types.append(full_type)
 
     def add_linking(self, mid, wiki, score, lang='en', component=None):
         if mid:
@@ -555,20 +554,19 @@ class EventMention(SpanInterpFrame):
     def add_trigger(self, begin, length):
         self.trigger = Span(self.span.reference, begin, length)
 
-    def add_interp(self, ontology, event_type, realis, score=None,
+    def add_interp(self, full_type, realis, score=None,
                    component=None):
-        # interp = Interp(self.interp_type)
-        onto_type = ontology + ":" + event_type
+        onto_type, event_type = full_type.split(":")
 
         if component == self.component:
             # Inherit frame component name.
             component = None
 
-        self.interp.add_field('type', 'type', onto_type, onto_type,
+        self.interp.add_field('type', 'type', onto_type, full_type,
                               score=score, component=component)
         self.interp.add_field('realis', 'realis', realis, realis, score=score,
                               component=component)
-        self.event_type = onto_type
+        self.event_type = full_type
         self.realis = realis
 
     def add_arg(self, ontology, arg_role, entity_mention, arg_id,
@@ -649,7 +647,7 @@ class CSR:
     """
 
     def __init__(self, component_name, run_id, namespace,
-                 media_type='text', aida_ontology=None, onto_mapper=None):
+                 media_type='text', ontology=None):
         self.header = {
             "@context": [
                 "https://www.isi.edu/isd/LOOM/opera/"
@@ -664,9 +662,9 @@ class CSR:
                 'organization': 'CMU',
                 'media_type': media_type,
                 'ontology': {
-                    'prefix': 'aida',
-                    'name': aida_ontology.onto_name,
-                    'version': aida_ontology.version,
+                    'prefix': ontology.prefix,
+                    'name': ontology.name,
+                    'version': ontology.version,
                 },
                 'runid': 'r%s' % run_id,
             },
@@ -698,20 +696,28 @@ class CSR:
 
         self.base_onto_name = 'aida'
 
-        self.onto_mapper = onto_mapper
-
-        if aida_ontology:
-            self.event_onto = aida_ontology.event_onto_text()
-            self.arg_restricts = aida_ontology.get_arg_restricts()
-
-            self.canonical_types = {}
-            for event_type in self.event_onto:
-                c_type = onto_mapper.canonicalize_type(event_type)
-                self.canonical_types[c_type] = event_type
-
-            for _, arg_type in self.arg_restricts:
-                c_type = onto_mapper.canonicalize_type(arg_type)
-                self.canonical_types[c_type] = arg_type
+        self.ontology = ontology
+        # if ontology:
+        #     self.event_onto = {}
+        #     self.onto_types = set()
+        #
+        #     for f in ontology['frames']:
+        #         if f['@type'] == 'event_type':
+        #             t = f['@id']
+        #             self.event_onto[t] = {'args': {}}
+        #             for arg_t in f['argument_role']:
+        #                 self.event_onto[t]['args'][arg_t] = {
+        #                     'restrictions': set()
+        #                 }
+        #
+        #         self.onto_types.add(f['@type'])
+        #
+        #     for f in ontology['frames']:
+        #         if f['@type'] == 'event_argument_role_type':
+        #             a_t = f['@id']
+        #             e_t = f['domain']
+        #             for r in f['rangeIncludes']:
+        #                 self.event_onto[e_t]['args'][a_t]['restrictions'].add(r)
 
     def set_root(self, root_id):
         self.root_id = root_id
@@ -761,14 +767,14 @@ class CSR:
             for frame in frame_data['entity_evidence']:
                 parent_sent = get_parent_sent(frame['provenance']['reference'])
                 interp = frame['interp']
-                onto, t = interp['type'].split(':')
+                # onto, t = interp['type'].split(':')
                 text = frame["provenance"]['text']
                 span = compute_span(frame)
                 eid = frame['@id']
 
                 csr_ent = self.add_entity_mention(
-                    span, span, text, onto, t, parent_sent, interp['form'],
-                    frame['component'], entity_id=eid
+                    span, span, text, interp['type'], parent_sent,
+                    interp['form'], frame['component'], entity_id=eid
                 )
 
                 entities[eid] = csr_ent
@@ -776,12 +782,12 @@ class CSR:
             for frame in frame_data['event_evidence']:
                 parent_sent = get_parent_sent(frame['provenance']['reference'])
                 interp = frame['interp']
-                onto, t = interp['type'].split(':')
+                # onto, t = interp['type'].split(':')
                 text = frame["provenance"]['text']
                 span = compute_span(frame)
 
                 csr_evm = self.add_event_mention(
-                    span, span, text, onto, t, realis=interp['realis'],
+                    span, span, text, interp['type'], realis=interp['realis'],
                     parent_sent=parent_sent, component=frame['component'],
                     event_id=frame['@id']
                 )
@@ -838,16 +844,6 @@ class CSR:
                     )
 
                 rel.add_type(onto, rel_type)
-
-    def __canonicalize_event_type(self):
-        canonical_map = {}
-        for event_type in self.event_onto:
-            c_type = self.__cannonicalize_one_type(event_type)
-            canonical_map[c_type] = event_type
-        return canonical_map
-
-    def __cannonicalize_one_type(self, event_type):
-        return remove_punctuation(event_type).lower()
 
     def clear(self):
         self._span_frame_map.clear()
@@ -978,8 +974,8 @@ class CSR:
 
     def map_entity_type(self, onto_name, entity_type):
         if onto_name == 'conll':
-            if entity_type in coll_to_aida:
-                return 'aida', coll_to_aida[entity_type]
+            if entity_type in conll_to_target:
+                return conll_to_target[entity_type]
         return onto_name, entity_type
 
     def add_relation(self, arguments, arg_names=None, component=None,
@@ -988,8 +984,6 @@ class CSR:
         Adding a relation mention to CSR. If the span is not provided, it will
         not have a provenance.
 
-        :param ontology: The ontology name of the relation.
-        :param relation_type: The relation type for this relation.
         :param arguments: List of arguments (their frame ids).
         :param arg_names: If provided, the arguments will be named
         accordingly.
@@ -1038,19 +1032,24 @@ class CSR:
 
         return rel
 
-    def add_entity_mention(self, head_span, span, text, ontology, entity_type,
+    def add_entity_mention(self, head_span, span, text, entity_type,
                            parent_sent=None, entity_form=None, component=None,
                            entity_id=None, score=None):
+        ent_onto_type = entity_type.split(':', 1)
+
+        if len(ent_onto_type) == 2:
+            onto = ent_onto_type[0]
+            t = ent_onto_type[1]
+        else:
+            onto = 'aida'
+            t = entity_type
+
         if span is None:
-            logging.warning("None span provided")
+            logging.warning("None span provided for entity")
             return
 
         if text is None:
-            logging.warning("None text provided")
-            return
-
-        if ontology is None:
-            logging.warning("None ontology provided")
+            logging.warning("None text provided for entity")
             return
 
         head_span = tuple(head_span)
@@ -1090,31 +1089,36 @@ class CSR:
         else:
             return
 
-        ontology, entity_type = self.map_entity_type(ontology, entity_type)
+        onto_type, entity_type = self.map_entity_type(onto, t)
 
         if entity_type:
-            entity_mention.add_type(ontology, entity_type, component=component)
+            entity_mention.add_type(onto_type, entity_type, component=component)
         else:
-            if len(entity_mention.get_types()) < 1:
-                entity_mention.add_type('conll', 'OTHER', component=component)
+            if len(entity_mention.get_types()) == 0:
+                entity_mention.add_type('aida', 'OTHER', component=component)
+
         return entity_mention
 
-    def map_event_type(self, evm_type, onto_name):
-        if self.onto_mapper:
-            if onto_name == 'tac':
-                mapped_evm_type = self.__cannonicalize_one_type(evm_type)
-                if mapped_evm_type in self.canonical_types:
-                    return self.canonical_types[mapped_evm_type]
-            elif self.onto_mapper:
-                full_type = onto_name + ':' + evm_type
-                event_map = self.onto_mapper.get_aida_event_map()
-                if full_type in event_map:
-                    return self.canonical_types[event_map[full_type]]
-        return None
-
-    def add_event_mention(self, head_span, span, text, onto_name, evm_type,
+    def add_event_mention(self, head_span, span, text, full_evm_type,
                           realis=None, parent_sent=None, component=None,
                           arg_entity_types=None, event_id=None):
+        evm_onto_type = full_evm_type.split(':', 1)
+
+        if len(evm_onto_type) == 2:
+            onto_name = evm_onto_type[0]
+            evm_type = evm_onto_type[1]
+
+            if onto_name == self.ontology.prefix:
+                if not full_evm_type in self.ontology.event_onto:
+                    logging.warning(f"Event type {full_evm_type} rejected "
+                                    f"because of ontology")
+                    return
+        else:
+            onto_name = 'aida'
+            evm_type = full_evm_type
+
+        full_evm_type = onto_name + ':' + evm_type
+
         # Annotation on the same span will be reused.
         head_span = tuple(head_span)
         span = tuple(span)
@@ -1148,20 +1152,15 @@ class CSR:
         else:
             return
 
-        if evm_type:
+        if full_evm_type:
             realis = 'UNK' if not realis else realis
 
-            mapped_type = self.map_event_type(evm_type, onto_name)
-
             if arg_entity_types:
-                mapped_type = fix_event_type_from_entity(
-                    mapped_type, arg_entity_types
+                full_evm_type = fix_event_type_from_entity(
+                    full_evm_type, arg_entity_types
                 )
 
-            if mapped_type:
-                evm.add_interp('aida', mapped_type, realis, component=component)
-            else:
-                evm.add_interp(onto_name, evm_type, realis, component=component)
+            evm.add_interp(full_evm_type, realis, component=component)
 
         return evm
 
@@ -1178,58 +1177,57 @@ class CSR:
             index,
         )
 
-    def map_event_arg_type(self, event_onto, evm_type, full_role_name,
-                           aida_arg_ent_types):
-        map_to_aida = self.onto_mapper.get_aida_arg_map()
-
-        if event_onto == 'aida':
-            key = (self.onto_mapper.canonicalize_type(evm_type), full_role_name)
-
-            mapped_arg_type = None
-
-            if key in map_to_aida:
-                candidate_aida_types = map_to_aida[key]
-
-                for arg_aida_type, type_res in candidate_aida_types:
-                    c_arg_aida_type = self.onto_mapper.canonicalize_type(
-                        arg_aida_type)
-
-                    if type_res:
-                        if len(aida_arg_ent_types) > 0:
-                            match_resitrct = False
-                            for t in aida_arg_ent_types:
-                                if t in type_res:
-                                    match_resitrct = True
-
-                            if not match_resitrct:
-                                logging.info(
-                                    "arg is rejected because entity type "
-                                    "{}, role {} cannot fill {}".format(
-                                        str(aida_arg_ent_types),
-                                        full_role_name, arg_aida_type)
-                                )
-                                continue
-                    if c_arg_aida_type in self.canonical_types:
-                        mapped_arg_type = self.canonical_types[c_arg_aida_type]
-                        break
-                    elif arg_aida_type.startswith('Internal.'):
-                        mapped_arg_type = arg_aida_type
-                        break
-            elif full_role_name == 'pb_ARGM-TMP' or 'Time' in full_role_name:
-                arg_aida_type = evm_type + '_Time'
-                full_arg = (evm_type, arg_aida_type)
-                if full_arg in self.arg_restricts:
-                    mapped_arg_type = arg_aida_type
-            elif full_role_name == 'pb_ARGM-LOC' or 'Place' in full_role_name:
-                arg_aida_type = evm_type + '_Place'
-                full_arg = (evm_type, arg_aida_type)
-                if full_arg in self.arg_restricts:
-                    mapped_arg_type = arg_aida_type
-
-            return mapped_arg_type
+    # def map_event_arg_type(self, event_onto, evm_type, full_role_name,
+    #                        aida_arg_ent_types):
+    #
+    #     if event_onto == 'aida':
+    #         key = (self.onto_mapper.canonicalize_type(evm_type), full_role_name)
+    #
+    #         mapped_arg_type = None
+    #
+    #         if key in map_to_aida:
+    #             candidate_aida_types = map_to_aida[key]
+    #
+    #             for arg_aida_type, type_res in candidate_aida_types:
+    #                 c_arg_aida_type = self.onto_mapper.canonicalize_type(
+    #                     arg_aida_type)
+    #
+    #                 if type_res:
+    #                     if len(aida_arg_ent_types) > 0:
+    #                         match_resitrct = False
+    #                         for t in aida_arg_ent_types:
+    #                             if t in type_res:
+    #                                 match_resitrct = True
+    #
+    #                         if not match_resitrct:
+    #                             logging.info(
+    #                                 "arg is rejected because entity type "
+    #                                 "{}, role {} cannot fill {}".format(
+    #                                     str(aida_arg_ent_types),
+    #                                     full_role_name, arg_aida_type)
+    #                             )
+    #                             continue
+    #                 if c_arg_aida_type in self.canonical_types:
+    #                     mapped_arg_type = self.canonical_types[c_arg_aida_type]
+    #                     break
+    #                 elif arg_aida_type.startswith('Internal.'):
+    #                     mapped_arg_type = arg_aida_type
+    #                     break
+    #         elif full_role_name == 'pb_ARGM-TMP' or 'Time' in full_role_name:
+    #             arg_aida_type = evm_type + '_Time'
+    #             full_arg = (evm_type, arg_aida_type)
+    #             if full_arg in self.arg_restricts:
+    #                 mapped_arg_type = arg_aida_type
+    #         elif full_role_name == 'pb_ARGM-LOC' or 'Place' in full_role_name:
+    #             arg_aida_type = evm_type + '_Place'
+    #             full_arg = (evm_type, arg_aida_type)
+    #             if full_arg in self.arg_restricts:
+    #                 mapped_arg_type = arg_aida_type
+    #
+    #         return mapped_arg_type
 
     def add_event_arg_by_span(self, evm, arg_head_span, arg_span,
-                              arg_text, arg_onto, full_role_name, component):
+                              arg_text, role, component):
         ent = self.add_entity_mention(
             arg_head_span, arg_span, arg_text, 'aida', None, component=component
         )
@@ -1244,20 +1242,30 @@ class CSR:
                 if t.startswith('aida:'):
                     aida_arg_entity_types.append(t.split(':')[1])
 
-            in_domain_arg = self.map_event_arg_type(
-                evm_onto, evm_type, full_role_name, aida_arg_entity_types
-            )
+            # in_domain_arg = self.map_event_arg_type(
+            #     evm_onto, evm_type, full_role_name, aida_arg_entity_types
+            # )
 
-            if in_domain_arg:
-                if in_domain_arg.startswith('Internal.'):
-                    arg_onto, arg_role = in_domain_arg.split('.')
-                else:
-                    arg_onto = self.base_onto_name
-                    arg_role = in_domain_arg
-            else:
-                arg_role = full_role_name
+            # if in_domain_arg:
+            #     if in_domain_arg.startswith('Internal.'):
+            #         arg_onto, arg_role = in_domain_arg.split('.')
+            #     else:
+            #         arg_onto = self.base_onto_name
+            #         arg_role = in_domain_arg
+            # else:
+            #     arg_role = full_role_name
 
-            return evm.add_arg(arg_onto, arg_role, ent, arg_id,
+            arg_onto_name, sub_role = role.split(':')
+
+            arg_onto = None
+            if arg_onto_name == 'fn':
+                arg_onto = 'framenet'
+            elif arg_onto_name == 'pb':
+                arg_onto = 'propbank'
+            elif arg_onto_name == self.ontology.prefix:
+                arg_onto = arg_onto_name
+
+            return evm.add_arg(arg_onto, sub_role, ent, arg_id,
                                component=component)
 
     def add_event_arg(self, evm, ent, ontology, arg_role, component):
@@ -1291,13 +1299,14 @@ class CSR:
 
 
 def fix_event_type_from_entity(evm_type, arg_entity_types):
-    if evm_type == 'Movement.TransportPerson':
-        if ('aida:Person' not in arg_entity_types) and (
-                'aida:Vehicle' in arg_entity_types):
-            evm_type = 'Movement.TransportArtifact'
-    if evm_type == 'Personnel.EndPositio':
-        if 'aida:Weapon' in arg_entity_types or 'aida:Vehicle' in arg_entity_types:
-            evm_type = 'Conflict.Attack'
+    if evm_type == 'ldcOnt:Movement.TransportPerson':
+        if ('ldcOnt:PER' not in arg_entity_types) and (
+                'ldcOnt:VEH.MilitaryVehicle' in arg_entity_types):
+            evm_type = 'ldcOnt:Movement.TransportArtifact'
+    if evm_type == 'ldcOnt:Personnel.EndPosition':
+        if 'ldcOnt:WEA' in arg_entity_types or \
+                'ldcOnt:VEH.MilitaryVehicle' in arg_entity_types:
+            evm_type = 'ldcOnt:Conflict.Attack'
     return evm_type
 
 

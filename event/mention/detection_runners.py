@@ -32,12 +32,13 @@ class DetectionRunner:
         elif self.model_name == 'frame_rule':
             from event.mention.models.rule_detectors import \
                 FrameMappingDetector
-            self.model = FrameMappingDetector(config, token_vocab)
+            self.model = FrameMappingDetector(config, self.ontology,
+                                              token_vocab)
             self.trainable = False
         elif self.model_name == 'marked_field':
             from event.mention.models.rule_detectors import \
                 MarkedDetector
-            self.model = MarkedDetector(config, token_vocab)
+            self.model = MarkedDetector(config, self.ontology, token_vocab)
             self.trainable = False
 
     def predict(self, test_reader, csr, component_name=None):

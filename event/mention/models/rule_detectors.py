@@ -12,9 +12,9 @@ class MentionDetector:
 
 
 class BaseRuleDetector(MentionDetector):
-    def __init__(self, config, token_vocab):
+    def __init__(self, config, ontology, token_vocab):
         super().__init__()
-        self.onto = OntologyLoader(config.ontology_path)
+        self.ontology = ontology
         self.token_vocab = token_vocab
 
     def predict(self, *input):
@@ -33,8 +33,8 @@ class MarkedDetector(BaseRuleDetector):
     Assume there is one field already marked with event type.
     """
 
-    def __init__(self, config, token_vocab, marked_field_index=-2):
-        super().__init__(config, token_vocab)
+    def __init__(self, config, ontology, token_vocab, marked_field_index=-2):
+        super().__init__(config, ontology, token_vocab)
         self.marked_field_index = marked_field_index
 
     def predict(self, *input):
@@ -44,10 +44,10 @@ class MarkedDetector(BaseRuleDetector):
 
 
 class FrameMappingDetector(BaseRuleDetector):
-    def __init__(self, config, token_vocab):
-        super().__init__(config, token_vocab)
+    def __init__(self, config, ontology, token_vocab):
+        super().__init__(config, ontology, token_vocab)
         self.lex_mapping = self.load_frame_lex(config.frame_lexicon)
-        self.event_onto = self.onto.event_onto_text()
+        self.ontology = ontology
 
     def load_frame_lex(self, frame_path):
         import xml.etree.ElementTree as ET
@@ -115,16 +115,16 @@ class FrameMappingDetector(BaseRuleDetector):
         center = math.floor(len(words) / 2)
         extracted_type = l_feature[center][-1]
 
-        if extracted_type in self.event_onto:
+        if extracted_type in self.ontology.onto_types:
             return extracted_type
         else:
             return None
 
     def predict_args(self, center, event_type, data):
-        if event_type not in self.event_onto:
+        if event_type not in self.ontology.onto_types:
             return {}
 
-        expected_args = self.event_onto[event_type]['args']
+        expected_args = self.ontology.event_onto[event_type]['args']
 
         filled_args = dict([(k, None) for k in expected_args])
         num_to_fill = len(filled_args)
@@ -148,18 +148,12 @@ class FrameMappingDetector(BaseRuleDetector):
             left_type = onto_types[left]
             right_type = onto_types[right]
 
-            # if left_lemma and left_type in self.entities:
-            #     arg_type = self.check_arg(lemmas[center], event_type,
-            #                               left_lemma, deps)
             if left_type in relation_lookup:
                 possible_rel = relation_lookup[left_type]
                 if filled_args[possible_rel] is None:
                     filled_args[possible_rel] = (left, left_type)
                     num_to_fill -= 1
 
-            # if right_lemma and right_lemma in self.entities:
-            #     arg_type = self.check_arg(context[center], event_type,
-            #                               right_lemma, deps)
             if right_type in relation_lookup:
                 possible_rel = relation_lookup[right_type]
                 if filled_args[possible_rel] is None:
@@ -170,15 +164,3 @@ class FrameMappingDetector(BaseRuleDetector):
                 break
 
         return filled_args
-
-    def check_arg(self, predicate, event_type, arg_lemma, features):
-        unknown_type = "O"
-
-        entity_type = unknown_type
-        if arg_lemma in self.entities:
-            entity_type = self.entities[arg_lemma]
-
-        if not entity_type == unknown_type:
-            return entity_type
-
-        return None

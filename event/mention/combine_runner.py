@@ -20,6 +20,7 @@ from event.mention.detection_runners import DetectionRunner
 from event.io.ontology import (
     OntologyLoader,
     MappingLoader,
+    JsonOntologyLoader,
 )
 from event import resources
 import nltk
@@ -90,9 +91,9 @@ def add_edl_entities(edl_file, csr):
                 head_span = entity['head_span']
 
                 ent = csr.add_entity_mention(
-                    head_span, mention_span, entity['mention'], 'aida',
-                    entity['type'], entity_form='named',
-                    component=edl_component_id)
+                    head_span, mention_span, entity['mention'], entity['type'],
+                    entity_form='named', component=edl_component_id
+                )
 
                 if ent:
                     edl_entities[entity['@id']] = ent
@@ -102,36 +103,12 @@ def add_edl_entities(edl_file, csr):
                 head_span = entity['head_span']
 
                 ent = csr.add_entity_mention(
-                    head_span, mention_span, entity['mention'], 'aida',
+                    head_span, mention_span, entity['mention'],
                     entity['type'], entity_form='nominal',
                     component=edl_component_id)
 
                 if ent:
                     edl_entities[entity['@id']] = ent
-
-            for entity in entity_sent['fillerMentions']:
-                mention_span = [entity['char_begin'], entity['char_end']]
-                head_span = entity['head_span']
-
-                ent_type = entity.get('type', None)
-
-                if ent_type:
-                    ent = csr.add_entity_mention(
-                        head_span, mention_span, entity['mention'], 'aida',
-                        ent_type, component=edl_component_id
-                    )
-
-                    if ent:
-                        edl_entities[entity['@id']] = ent
-
-                        category = entity.get('category', None)
-
-                        if category:
-                            if category == 'NAM':
-                                ent.set_form('named')
-                            elif category == 'NOM':
-                                ent.set_form('nominal')
-
     return edl_entities
 
 
@@ -159,14 +136,14 @@ def recover_via_token(tokens, token_ids):
     return (first_token[0][0], last_token[0][1]), text
 
 
-def fix_event_type_from_frame(origin_onto, origin_type, frame_type):
-    if 'Contact' in origin_type:
-        if frame_type == 'Quantity':
-            return 'framenet', frame_type
-    if 'Movement_Transportperson' == origin_type:
-        if frame_type == 'Arranging':
-            return 'aida', 'Movement_TransportArtifact'
-    return origin_onto, origin_type
+# def fix_event_type_from_frame(origin_onto, origin_type, frame_type):
+#     if 'Contact' in origin_type:
+#         if frame_type == 'Quantity':
+#             return 'framenet', frame_type
+#     if 'Movement_Transportperson' == origin_type:
+#         if frame_type == 'Arranging':
+#             return 'aida', 'Movement_TransportArtifact'
+#     return origin_onto, origin_type
 
 
 def ok_entity(ent):
@@ -225,34 +202,34 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
         for role in roles:
             onto_name, role_name = role.split(':')
 
-            if onto_name == 'fn':
-                arg_onto = "framenet"
-                frame_name = rich_evm['frame']
-                # role_pair = (frame_name, role_name)
-                full_role_name = frame_name + '_' + role_name
-            elif onto_name == 'pb':
-                if component == 'Semafor':
-                    # Do not use the propbank role by Semafor.
-                    continue
+            # if onto_name == 'fn':
+            #     arg_onto = "framenet"
+            #     frame_name = rich_evm['frame']
+            #     # role_pair = (frame_name, role_name)
+            #     full_role_name = frame_name + '_' + role_name
+            # elif onto_name == 'pb':
+            #     if component == 'Semafor':
+            #         # Do not use the propbank role by Semafor.
+            #         continue
+            #
+            #     arg_onto = "propbank"
+            #     if role_name.startswith('R-'):
+            #         # Ignoring R- style Reference Arguments.
+            #         # These are normally 'which', 'what', not very useful.
+            #         continue
+            #     elif role_name.startswith('C-'):
+            #         # Ignoring C- style Discontinuous Arguments.
+            #         # These are useful, but hard to represent.
+            #         continue
+            #     full_role_name = 'pb_' + role_name
+            # else:
+            #     # Unknown argument ontology
+            #     continue
 
-                arg_onto = "propbank"
-                if role_name.startswith('R-'):
-                    # Ignoring R- style Reference Arguments.
-                    # These are normally 'which', 'what', not very useful.
-                    continue
-                elif role_name.startswith('C-'):
-                    # Ignoring C- style Discontinuous Arguments.
-                    # These are useful, but hard to represent.
-                    continue
-                full_role_name = 'pb_' + role_name
-            else:
-                # Unknown argument ontology
-                continue
-
-            if arg_onto and component:
+            if component:
                 csr_arg = csr.add_event_arg_by_span(
-                    csr_evm, arg_head_span, arg_span, arg_text,
-                    arg_onto, full_role_name, component=component
+                    csr_evm, arg_head_span, arg_span, arg_text, role,
+                    component=component
                 )
 
                 if csr_arg:
@@ -295,6 +272,7 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
 
             rich_comp = rich_ent.get('component')
 
+            # Component name for historical reasons.
             if rich_comp == 'FrameBasedEventDetector':
                 component = 'Semafor'
             elif rich_comp == 'StanfordCoreNlpAnnotator':
@@ -307,7 +285,7 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
             if 'type' in rich_ent:
                 # These are typed entity mentions detected by NER.
                 ent = csr.add_entity_mention(
-                    head_span, span, text, 'conll', rich_ent['type'],
+                    head_span, span, text, 'conll:' + rich_ent['type'],
                     entity_form=rich_ent.get('entityForm', None),
                     component=component
                 )
@@ -338,16 +316,28 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                 text = rich_evm['text']
                 head_span = rich_evm['headWord']['span']
 
-            ontology = 'tac'
+            raw_evm_type = rich_evm['type']
+
+            split_type = raw_evm_type.split(':', 1)
+
+            if len(split_type) == 2:
+                full_type = raw_evm_type
+            else:
+                if rich_evm['component'] == "FrameBasedEventDetector":
+                    full_type = 'framenet:' + raw_evm_type
+                else:
+                    if raw_evm_type == 'Verbal':
+                        if 'frame' in rich_evm:
+                            full_type = 'framenet:' + rich_evm['frame']
+                        else:
+                            full_type = 'tac:OTHER'
+                    else:
+                        full_type = 'tac:' + raw_evm_type
 
             if rich_evm['component'] == "FrameBasedEventDetector":
                 component = 'Semafor'
-                ontology = 'framenet'
             else:
                 component = base_component_name
-
-            ontology, evm_type = fix_event_type_from_frame(
-                ontology, rich_evm['type'], rich_evm.get('frame', ''))
 
             arguments = rich_evm['arguments']
 
@@ -362,9 +352,9 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
 
             # Add an event, use the argument entity types to help debug.
             csr_evm = csr.add_event_mention(
-                head_span, span, text, ontology, evm_type,
-                realis=rich_evm.get('realis', None),
-                component=component, arg_entity_types=arg_entity_types
+                head_span, span, text, full_type,
+                realis=rich_evm.get('realis', None), component=component,
+                arg_entity_types=arg_entity_types
             )
 
             if csr_evm:
@@ -487,8 +477,7 @@ def analyze_sentence(text):
     return negations
 
 
-def read_source(source_folder, language, aida_ontology, onto_mapper,
-                child2root):
+def read_source(source_folder, language, ontology, child2root):
     for source_text_path in glob.glob(source_folder + '/*.txt'):
         # Use the empty newline to handle different newline format.
         with open(source_text_path, newline='') as text_in:
@@ -497,7 +486,7 @@ def read_source(source_folder, language, aida_ontology, onto_mapper,
             runid = time.strftime("%Y%m%d%H%M")
 
             csr = CSR('Frames_hector_combined', runid, 'data',
-                      aida_ontology=aida_ontology, onto_mapper=onto_mapper)
+                      ontology=ontology)
 
             # Find the root if possible, otherwise use itself.
             if docid in child2root:
@@ -570,7 +559,7 @@ def add_entity_linking(csr, wiki_file, lang):
             text = anno['spot']
             # It is indeed dbpedia-spotlight-0.7.1.
             entity = csr.add_entity_mention(
-                span, span, text, 'aida', None, None,
+                span, span, text, 'aida:OTHER',
                 component='dbpedia-spotlight-0.7'
             )
 
@@ -597,8 +586,8 @@ def add_entity_linking(csr, wiki_file, lang):
 def add_entity_salience(csr, entity_salience_info):
     for span, data in entity_salience_info.items():
         entity = csr.add_entity_mention(
-            span, data['span'], data['text'], 'aida', None,
-            None, component='dbpedia-spotlight-0.7'
+            span, data['span'], data['text'], 'aida:OTHER',
+            component='dbpedia-spotlight-0.7'
         )
 
         if not entity:
@@ -670,10 +659,8 @@ def main(config):
     if not os.path.exists(config.csr_output):
         os.makedirs(config.csr_output)
 
-    aida_ontology = OntologyLoader(config.ontology_path)
-    onto_mapper = MappingLoader()
-    onto_mapper.load_arg_aida_mapping(config.seedling_argument_mapping)
-    onto_mapper.load_event_aida_mapping(config.seedling_event_mapping)
+    # The JSON-LD version ontology.
+    ontology = JsonOntologyLoader(config.ontology_path)
 
     child2root = {}
     if config.parent_children_tab and os.path.exists(
@@ -681,6 +668,8 @@ def main(config):
         logging.info("Reading parent child tab file: "
                      "" + config.parent_children_tab)
         child2root = read_parent_child_info(config.parent_children_tab)
+    else:
+        logging.warning("Will not read parent child tab file")
 
     if config.add_rule_detector:
         # Rule detector should not need existing vocabulary.
@@ -691,8 +680,7 @@ def main(config):
         tag_vocab = Vocab(config.resource_folder, 'tag',
                           embedding_path=config.tag_list,
                           ignore_existing=True)
-        detector = DetectionRunner(config, token_vocab, tag_vocab,
-                                   aida_ontology)
+        detector = DetectionRunner(config, token_vocab, tag_vocab, ontology)
 
     ignore_edl = False
     if config.edl_json:
@@ -704,7 +692,7 @@ def main(config):
             ignore_edl = True
 
     for csr, docid in read_source(config.source_folder, config.language,
-                                  aida_ontology, onto_mapper, child2root):
+                                  ontology, child2root):
         logging.info('Working with docid: {}'.format(docid))
 
         if config.edl_json and not ignore_edl:
@@ -730,16 +718,20 @@ def main(config):
                                 logging.error("Cannot find the relation file "
                                               "for {}".format(docid))
 
-        conll_file = find_by_id(config.conllu_folder, docid)
-        if not conll_file:
-            logging.warning("CoNLL file for doc {} is missing, please "
-                            "check your paths.".format(docid))
-            continue
+        conll_tokens = None
 
-        tokens = None
-
-        if config.rich_event_token:
-            tokens = token_to_span(conll_file)
+        if config.conllu_folder:
+            if os.path.exists(config.conllu_folder):
+                conll_file = find_by_id(config.conllu_folder, docid)
+                if not conll_file:
+                    logging.warning("CoNLL file for doc {} is missing, please "
+                                    "check your paths.".format(docid))
+                    continue
+                if config.rich_event_token:
+                    conll_tokens = token_to_span(conll_file)
+            else:
+                logging.warning(
+                    f"File file not found at {config.conllu_folder}")
 
         if config.rich_event:
             if os.path.exists(config.rich_event):
@@ -748,7 +740,7 @@ def main(config):
                     logging.info(
                         "Adding events with rich output: {}".format(
                             rich_event_file))
-                    add_rich_events(csr, rich_event_file, tokens)
+                    add_rich_events(csr, rich_event_file, conll_tokens)
             else:
                 logging.info("No rich event output.")
 
@@ -777,10 +769,9 @@ def main(config):
         test_reader = ConllUReader([conll_file], config, token_vocab,
                                    tag_vocab, config.language)
 
+        # TODO: the rules are not updated to the newer version yet.
         if config.add_rule_detector:
             logging.info("Adding from ontology based rule detector.")
-            # Adding rule detector. This is the last detector that use other
-            # information from the CSR, including entity and events.
             detector.predict(test_reader, csr, 'maria_multilingual')
 
         csr.write(os.path.join(config.csr_output, docid + '.csr.json'))
@@ -807,12 +798,14 @@ if __name__ == '__main__':
         conllu_folder = Unicode(help='CoNLLU directory').tag(config=True)
         csr_output = Unicode(help='Main CSR output directory').tag(config=True)
 
-        # Aida specific
         ontology_path = Unicode(help='Ontology url or path.').tag(config=True)
-        seedling_event_mapping = Unicode(
-            help='Seedling event mapping to TAC-KBP').tag(config=True)
-        seedling_argument_mapping = Unicode(
-            help='Seedling argument mapping to TAC-KBP').tag(config=True)
+
+        # Aida specific
+        # seedling_event_mapping = Unicode(
+        #     help='Seedling event mapping to TAC-KBP').tag(config=True)
+        # seedling_argument_mapping = Unicode(
+        #     help='Seedling argument mapping to TAC-KBP').tag(config=True)
+
         parent_children_tab = Unicode(
             help='File parent children relations provided').tag(config=True)
 
