@@ -188,6 +188,8 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
 
         arg_comp = rich_arg.get('component', None)
 
+        arg_score = rich_arg.get('score', None)
+
         component = 'opera.events.mention.tac.hector'
         if arg_comp:
             if arg_comp == 'FanseAnnotator':
@@ -198,38 +200,18 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 component = 'Semafor'
             elif arg_comp == 'allennlp':
                 component = 'AllenNLP.srl'
+                # The confidence we can put on AllenNLP
+                if arg_score is None:
+                    arg_score = 0.7
+
+        if arg_score is None:
+            arg_score = 0.4
 
         for role in roles:
-            onto_name, role_name = role.split(':')
-
-            # if onto_name == 'fn':
-            #     arg_onto = "framenet"
-            #     frame_name = rich_evm['frame']
-            #     # role_pair = (frame_name, role_name)
-            #     full_role_name = frame_name + '_' + role_name
-            # elif onto_name == 'pb':
-            #     if component == 'Semafor':
-            #         # Do not use the propbank role by Semafor.
-            #         continue
-            #
-            #     arg_onto = "propbank"
-            #     if role_name.startswith('R-'):
-            #         # Ignoring R- style Reference Arguments.
-            #         # These are normally 'which', 'what', not very useful.
-            #         continue
-            #     elif role_name.startswith('C-'):
-            #         # Ignoring C- style Discontinuous Arguments.
-            #         # These are useful, but hard to represent.
-            #         continue
-            #     full_role_name = 'pb_' + role_name
-            # else:
-            #     # Unknown argument ontology
-            #     continue
-
             if component:
                 csr_arg = csr.add_event_arg_by_span(
                     csr_evm, arg_head_span, arg_span, arg_text, role,
-                    component=component
+                    component=component, score=arg_score,
                 )
 
                 if csr_arg:
@@ -354,7 +336,8 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
             csr_evm = csr.add_event_mention(
                 head_span, span, text, full_type,
                 realis=rich_evm.get('realis', None), component=component,
-                arg_entity_types=arg_entity_types
+                arg_entity_types=arg_entity_types,
+                score=rich_evm.get('score', 0.5)
             )
 
             if csr_evm:

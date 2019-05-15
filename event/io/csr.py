@@ -1101,7 +1101,7 @@ class CSR:
 
     def add_event_mention(self, head_span, span, text, full_evm_type,
                           realis=None, parent_sent=None, component=None,
-                          arg_entity_types=None, event_id=None):
+                          arg_entity_types=None, event_id=None, score=None):
         evm_onto_type = full_evm_type.split(':', 1)
 
         if len(evm_onto_type) == 2:
@@ -1141,7 +1141,7 @@ class CSR:
 
                 evm = EventMention(
                     event_id, parent_sent, relative_begin, length, valid_text,
-                    component=component
+                    component=component, score=score
                 )
                 evm.add_trigger(relative_begin, length)
 
@@ -1227,7 +1227,7 @@ class CSR:
     #         return mapped_arg_type
 
     def add_event_arg_by_span(self, evm, arg_head_span, arg_span,
-                              arg_text, role, component):
+                              arg_text, role, component, score=None):
         ent = self.add_entity_mention(
             arg_head_span, arg_span, arg_text, 'aida', None, component=component
         )
@@ -1266,7 +1266,7 @@ class CSR:
                 arg_onto = arg_onto_name
 
             return evm.add_arg(arg_onto, sub_role, ent, arg_id,
-                               component=component)
+                               component=component, score=score)
 
     def add_event_arg(self, evm, ent, ontology, arg_role, component):
         arg_id = self.get_id('arg')
