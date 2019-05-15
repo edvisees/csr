@@ -30,14 +30,6 @@ conll_to_target = {
 }
 
 
-# def fix_entity_type(t):
-#     t_l = t.lower().title()
-#     if t_l in entity_type_mapping:
-#         return entity_type_mapping[t_l]
-#     else:
-#         return t
-
-
 class Jsonable:
     def json_rep(self):
         raise NotImplementedError
@@ -523,7 +515,8 @@ class Argument(Frame):
 
     def __init__(self, arg_role, entity_mention, fid, component=None,
                  score=None):
-        super().__init__(fid, 'argument', None, component=component, score=None)
+        super().__init__(fid, 'argument', None, component=component,
+                         score=score)
         self.entity_mention = entity_mention
         self.arg_role = arg_role
 
@@ -1233,7 +1226,6 @@ class CSR:
         )
 
         if ent:
-            evm_onto, evm_type = evm.event_type.split(':')
             arg_id = self.get_id('arg')
 
             aida_arg_entity_types = []
@@ -1241,19 +1233,6 @@ class CSR:
             for t in ent.get_types():
                 if t.startswith('aida:'):
                     aida_arg_entity_types.append(t.split(':')[1])
-
-            # in_domain_arg = self.map_event_arg_type(
-            #     evm_onto, evm_type, full_role_name, aida_arg_entity_types
-            # )
-
-            # if in_domain_arg:
-            #     if in_domain_arg.startswith('Internal.'):
-            #         arg_onto, arg_role = in_domain_arg.split('.')
-            #     else:
-            #         arg_onto = self.base_onto_name
-            #         arg_role = in_domain_arg
-            # else:
-            #     arg_role = full_role_name
 
             arg_onto_name, sub_role = role.split(':')
 

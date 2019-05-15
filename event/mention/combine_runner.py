@@ -198,6 +198,8 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                 continue
             elif arg_comp == 'SemaforAnnotator':
                 component = 'Semafor'
+                # Thr original semafor score is not normalized nor comparable.
+                arg_score = 0.6
             elif arg_comp == 'allennlp':
                 component = 'AllenNLP.srl'
                 # The confidence we can put on AllenNLP
