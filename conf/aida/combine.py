@@ -43,7 +43,8 @@ c.CombineParams.add_rule_detector = True
 
 # This is the parent child from the eval source.
 if 'parent_child_tab' in os.environ:
+    c.CombineParams.parent_children_tab = get_env('parent_child_tab')
+else:
     print(
         "Env variable [parent_child_tab] not provided, will not write parent"
         " information in CSR.")
-    c.CombineParams.parent_children_tab = get_env('parent_child_tab')
