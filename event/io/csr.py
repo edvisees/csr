@@ -555,12 +555,15 @@ class EventMention(SpanInterpFrame):
             # Inherit frame component name.
             component = None
 
-        self.interp.add_field('type', 'type', onto_type, full_type,
-                              score=score, component=component)
-        self.interp.add_field('realis', 'realis', realis, realis, score=score,
-                              component=component)
-        self.event_type = full_type
-        self.realis = realis
+        if full_type is not None:
+            self.interp.add_field('type', 'type', onto_type, full_type,
+                                  score=score, component=component)
+            self.event_type = full_type
+
+        if realis is not None:
+            self.interp.add_field('realis', 'realis', realis, realis,
+                                  score=score, component=component)
+            self.realis = realis
 
     def add_arg(self, ontology, arg_role, entity_mention, arg_id,
                 score=None, component=None):
@@ -1095,22 +1098,24 @@ class CSR:
     def add_event_mention(self, head_span, span, text, full_evm_type,
                           realis=None, parent_sent=None, component=None,
                           arg_entity_types=None, event_id=None, score=None):
-        evm_onto_type = full_evm_type.split(':', 1)
-
-        if len(evm_onto_type) == 2:
-            onto_name = evm_onto_type[0]
-            evm_type = evm_onto_type[1]
-
-            if onto_name == self.ontology.prefix:
-                if not full_evm_type in self.ontology.event_onto:
-                    logging.warning(f"Event type {full_evm_type} rejected "
-                                    f"because of ontology")
-                    return
+        if full_evm_type is None:
+            onto_name = None
+            evm_type = None
         else:
-            onto_name = 'aida'
-            evm_type = full_evm_type
+            evm_onto_type = full_evm_type.split(':', 1)
 
-        full_evm_type = onto_name + ':' + evm_type
+            if len(evm_onto_type) == 2:
+                onto_name = evm_onto_type[0]
+                evm_type = evm_onto_type[1]
+
+                if onto_name == self.ontology.prefix:
+                    if full_evm_type not in self.ontology.event_onto:
+                        logging.warning(f"Event type {full_evm_type} rejected "
+                                        f"because of ontology name mismatch.")
+                        return
+            else:
+                logging.warning(f"Event type {full_evm_type} rejected "
+                                f"because there is not ontology.")
 
         # Annotation on the same span will be reused.
         head_span = tuple(head_span)
@@ -1146,8 +1151,6 @@ class CSR:
             return
 
         if full_evm_type:
-            realis = 'UNK' if not realis else realis
-
             if arg_entity_types:
                 full_evm_type = fix_event_type_from_entity(
                     full_evm_type, arg_entity_types
