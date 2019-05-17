@@ -704,27 +704,6 @@ class CSR:
         self.image_detection_key = 'image_detection'
 
         self.ontology = ontology
-        # if ontology:
-        #     self.event_onto = {}
-        #     self.onto_types = set()
-        #
-        #     for f in ontology['frames']:
-        #         if f['@type'] == 'event_type':
-        #             t = f['@id']
-        #             self.event_onto[t] = {'args': {}}
-        #             for arg_t in f['argument_role']:
-        #                 self.event_onto[t]['args'][arg_t] = {
-        #                     'restrictions': set()
-        #                 }
-        #
-        #         self.onto_types.add(f['@type'])
-        #
-        #     for f in ontology['frames']:
-        #         if f['@type'] == 'event_argument_role_type':
-        #             a_t = f['@id']
-        #             e_t = f['domain']
-        #             for r in f['rangeIncludes']:
-        #                 self.event_onto[e_t]['args'][a_t]['restrictions'].add(r)
 
     def set_root(self, root_id):
         self.root_id = root_id

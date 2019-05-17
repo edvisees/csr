@@ -121,7 +121,7 @@ class FrameMappingDetector(BaseRuleDetector):
             return None
 
     def predict_args(self, center, event_type, data):
-        if event_type not in self.ontology.onto_types:
+        if event_type not in self.ontology.event_onto:
             return {}
 
         expected_args = self.ontology.event_onto[event_type]['args']

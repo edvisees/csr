@@ -80,11 +80,16 @@ class JsonOntologyLoader:
         with open(ontology_file) as o:
             ontology = json.load(o)
 
+            # Holds event ontology structure.
             self.event_onto = {}
+
+            # Holds all possible ontology labels.
             self.onto_types = set()
 
             self.prefix = 'ldcOnt'
             self.name = ontology['@context'][0]['ldcOnt']
+
+            # TODO: Fixed version is not good, but how do I read it?
             self.version = 0.3
 
             for f in ontology['frames']:
@@ -96,7 +101,7 @@ class JsonOntologyLoader:
                             'restrictions': set()
                         }
 
-                self.onto_types.add(f['@type'])
+                self.onto_types.add(f['@id'])
 
             for f in ontology['frames']:
                 if f['@type'] == 'event_argument_role_type':
