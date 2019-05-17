@@ -252,7 +252,12 @@ class RelArgFrame(Frame):
 
     def __init__(self, fid, arg_type, arg_ent_id):
         super().__init__(fid, 'argument', None)
-        self.arg_type = arg_type
+
+        if ":" in arg_type:
+            self.arg_type = arg_type
+        else:
+            self.arg_type = 'aida:' + arg_type
+
         self.arg_ent_id = arg_ent_id
 
     def json_rep(self):
@@ -397,7 +402,7 @@ class EntityMention(SpanInterpFrame):
             fid, 'entity_evidence', parent, 'entity_evidence_interp', begin,
             length, text, component=component, score=score
         )
-        self.entity_types = []
+        self.entity_types = set()
         self.entity_form = None
         self.salience = None
         self.head_word = None
@@ -423,9 +428,9 @@ class EntityMention(SpanInterpFrame):
             # Inherit frame component name.
             component = None
 
-        self.interp.add_field('type', 'type', full_type, entity_type,
+        self.interp.add_field('type', 'type', full_type, full_type,
                               score=score, component=component, mutex=False)
-        self.entity_types.append(full_type)
+        self.entity_types.add(full_type)
 
     def add_linking(self, mid, wiki, score, lang='en', component=None):
         if mid:
@@ -472,22 +477,29 @@ class RelationMention(SpanInterpFrame):
             begin, length, text, component=component, score=score)
 
         self.arguments = []
-        self.rel_types = []
+        self.rel_types = set()
         self.score = score
 
     def get_types(self):
         return self.rel_types
 
-    def add_type(self, ontology, rel_type, score=None, component=None):
-        onto_type = ontology + ":" + rel_type
-        self.rel_types.append(onto_type)
+    def add_type(self, full_type, score=None, component=None):
+        if '/' in full_type:
+            logging.warning(f"Rejected relation type {full_type}")
+            entity_type = None
+
+        # Some backward compatibility.
+        if ':' not in full_type:
+            full_type = "aida:" + full_type
+
+        self.rel_types.add(full_type)
 
         if component == self.component:
             # Inherit frame component name.
             component = None
 
         self.interp.add_field(
-            'type', 'type', onto_type, onto_type, component=component,
+            'type', 'type', full_type, full_type, component=component,
             score=score
         )
 
@@ -540,7 +552,7 @@ class EventMention(SpanInterpFrame):
             fid, 'event_evidence', parent, 'event_evidence_interp',
             begin, length, text, component=component, score=score)
         self.trigger = None
-        self.event_type = None
+        self.event_type = set()
         self.realis = None
         self.arguments = defaultdict(list)
 
@@ -558,7 +570,8 @@ class EventMention(SpanInterpFrame):
         if full_type is not None:
             self.interp.add_field('type', 'type', onto_type, full_type,
                                   score=score, component=component)
-            self.event_type = full_type
+            # Allow multiple event types.
+            self.event_type.add(full_type)
 
         if realis is not None:
             self.interp.add_field('realis', 'realis', realis, realis,
@@ -1031,15 +1044,6 @@ class CSR:
     def add_entity_mention(self, head_span, span, text, entity_type,
                            parent_sent=None, entity_form=None, component=None,
                            entity_id=None, score=None):
-        ent_onto_type = entity_type.split(':', 1)
-
-        if len(ent_onto_type) == 2:
-            onto = ent_onto_type[0]
-            t = ent_onto_type[1]
-        else:
-            onto = 'aida'
-            t = entity_type
-
         if span is None:
             logging.warning("None span provided for entity")
             return
@@ -1085,28 +1089,41 @@ class CSR:
         else:
             return
 
-        onto_type, entity_type = self.map_entity_type(onto, t)
+        type_ok = False
+        if entity_type is not None:
+            if '/' not in entity_type:
+                ent_onto_type = entity_type.split(':', 1)
 
-        if entity_type:
-            entity_mention.add_type(onto_type, entity_type, component=component)
-        else:
-            if len(entity_mention.get_types()) == 0:
-                entity_mention.add_type('aida', 'OTHER', component=component)
+                if len(ent_onto_type) == 2:
+                    onto = ent_onto_type[0]
+                    t = ent_onto_type[1]
+                else:
+                    # For types without a prefix, add the "aida" prefix.
+                    onto = 'aida'
+                    t = entity_type
+
+                # This maps from some other ontology to the target ontology.
+                onto_type, t = self.map_entity_type(onto, t)
+                entity_mention.add_type(onto_type, t, component=component)
+                type_ok = True
+            else:
+                logging.warning(f"Ignoring entity type {entity_type}")
+
+        if not type_ok and len(entity_mention.get_types()) == 0:
+            # print('entity mention do not have types ', span, text)
+            entity_mention.add_type('aida', 'OTHER', component=component)
+            # input('huh')
 
         return entity_mention
 
     def add_event_mention(self, head_span, span, text, full_evm_type,
                           realis=None, parent_sent=None, component=None,
                           arg_entity_types=None, event_id=None, score=None):
-        if full_evm_type is None:
-            onto_name = None
-            evm_type = None
-        else:
+        if full_evm_type is not None:
             evm_onto_type = full_evm_type.split(':', 1)
 
             if len(evm_onto_type) == 2:
-                onto_name = evm_onto_type[0]
-                evm_type = evm_onto_type[1]
+                onto_name, evm_type = evm_onto_type
 
                 if onto_name == self.ontology.prefix:
                     if full_evm_type not in self.ontology.event_onto:
@@ -1150,12 +1167,11 @@ class CSR:
         else:
             return
 
-        if full_evm_type:
+        if full_evm_type is not None and '/' not in full_evm_type:
             if arg_entity_types:
                 full_evm_type = fix_event_type_from_entity(
                     full_evm_type, arg_entity_types
                 )
-
             evm.add_interp(full_evm_type, realis, component=component)
 
         return evm
@@ -1173,59 +1189,10 @@ class CSR:
             index,
         )
 
-    # def map_event_arg_type(self, event_onto, evm_type, full_role_name,
-    #                        aida_arg_ent_types):
-    #
-    #     if event_onto == 'aida':
-    #         key = (self.onto_mapper.canonicalize_type(evm_type), full_role_name)
-    #
-    #         mapped_arg_type = None
-    #
-    #         if key in map_to_aida:
-    #             candidate_aida_types = map_to_aida[key]
-    #
-    #             for arg_aida_type, type_res in candidate_aida_types:
-    #                 c_arg_aida_type = self.onto_mapper.canonicalize_type(
-    #                     arg_aida_type)
-    #
-    #                 if type_res:
-    #                     if len(aida_arg_ent_types) > 0:
-    #                         match_resitrct = False
-    #                         for t in aida_arg_ent_types:
-    #                             if t in type_res:
-    #                                 match_resitrct = True
-    #
-    #                         if not match_resitrct:
-    #                             logging.info(
-    #                                 "arg is rejected because entity type "
-    #                                 "{}, role {} cannot fill {}".format(
-    #                                     str(aida_arg_ent_types),
-    #                                     full_role_name, arg_aida_type)
-    #                             )
-    #                             continue
-    #                 if c_arg_aida_type in self.canonical_types:
-    #                     mapped_arg_type = self.canonical_types[c_arg_aida_type]
-    #                     break
-    #                 elif arg_aida_type.startswith('Internal.'):
-    #                     mapped_arg_type = arg_aida_type
-    #                     break
-    #         elif full_role_name == 'pb_ARGM-TMP' or 'Time' in full_role_name:
-    #             arg_aida_type = evm_type + '_Time'
-    #             full_arg = (evm_type, arg_aida_type)
-    #             if full_arg in self.arg_restricts:
-    #                 mapped_arg_type = arg_aida_type
-    #         elif full_role_name == 'pb_ARGM-LOC' or 'Place' in full_role_name:
-    #             arg_aida_type = evm_type + '_Place'
-    #             full_arg = (evm_type, arg_aida_type)
-    #             if full_arg in self.arg_restricts:
-    #                 mapped_arg_type = arg_aida_type
-    #
-    #         return mapped_arg_type
-
     def add_event_arg_by_span(self, evm, arg_head_span, arg_span,
                               arg_text, role, component, score=None):
         ent = self.add_entity_mention(
-            arg_head_span, arg_span, arg_text, 'aida', None, component=component
+            arg_head_span, arg_span, arg_text, None, component=component
         )
 
         if ent:

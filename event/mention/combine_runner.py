@@ -40,7 +40,8 @@ def add_entity_relations(relation_file, edl_entities, csr):
                 mention_span = rel['span']
                 score = rel['score']
                 for arg_name, relen in rel.items():
-                    if arg_name == 'rel' or arg_name == 'span' or arg_name == 'score':
+                    if (arg_name == 'rel' or arg_name == 'span' or
+                            arg_name == 'score'):
                         # Not an argument field.
                         continue
 
@@ -69,9 +70,7 @@ def add_entity_relations(relation_file, edl_entities, csr):
                 )
 
                 if csr_rel:
-                    csr_rel.add_type('aida', rel['rel'])
-                    # Adding a score here will create facet.
-                    # csr_rel.add_type('aida', rel['rel'],score=score)
+                    csr_rel.add_type(rel['rel'])
 
 
 def add_edl_entities(edl_file, csr):
@@ -227,7 +226,6 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                             'NEG', rich_arg_ent['negationWord'])
 
                     if not ok_entity(rich_arg_ent):
-                        # print("not ok ", head_pos, csr_arg_ent.text)
                         csr_arg_ent.set_not_ok()
 
 
@@ -362,14 +360,14 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                         i in csr_events]
                 csr_rel = csr.add_relation(args, component=base_component_name)
                 if csr_rel:
-                    csr_rel.add_type('aida', 'event_coreference')
+                    csr_rel.add_type('aida:event_coreference')
 
             if relation['relationType'] == 'entity_coreference':
                 args = [csr_entities[i].id for i in relation['arguments'] if
                         i in csr_entities]
                 csr_rel = csr.add_relation(args, component='corenlp')
                 if csr_rel:
-                    csr_rel.add_type('aida', 'entity_coreference')
+                    csr_rel.add_type('aida:entity_coreference')
 
 
 def load_salience(salience_folder):
@@ -544,7 +542,7 @@ def add_entity_linking(csr, wiki_file, lang):
             text = anno['spot']
             # It is indeed dbpedia-spotlight-0.7.1.
             entity = csr.add_entity_mention(
-                span, span, text, 'aida:OTHER',
+                span, span, text, None,
                 component='dbpedia-spotlight-0.7'
             )
 
@@ -571,7 +569,7 @@ def add_entity_linking(csr, wiki_file, lang):
 def add_entity_salience(csr, entity_salience_info):
     for span, data in entity_salience_info.items():
         entity = csr.add_entity_mention(
-            span, data['span'], data['text'], 'aida:OTHER',
+            span, data['span'], data['text'], None,
             component='dbpedia-spotlight-0.7'
         )
 
