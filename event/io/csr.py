@@ -263,7 +263,7 @@ class RelArgFrame(Frame):
     def json_rep(self):
         rep = {
             '@type': 'argument',
-            'type': 'aida:' + self.arg_type,
+            'type': self.arg_type,
             'arg': self.arg_ent_id
         }
         return rep
@@ -486,7 +486,7 @@ class RelationMention(SpanInterpFrame):
     def add_type(self, full_type, score=None, component=None):
         if '/' in full_type:
             logging.warning(f"Rejected relation type {full_type}")
-            entity_type = None
+            full_type = None
 
         # Some backward compatibility.
         if ':' not in full_type:
@@ -702,8 +702,6 @@ class CSR:
         self.sent_key = 'sentence'
         self.rel_key = 'relation'
         self.image_detection_key = 'image_detection'
-
-        self.base_onto_name = 'aida'
 
         self.ontology = ontology
         # if ontology:
