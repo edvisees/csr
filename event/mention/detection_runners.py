@@ -55,7 +55,7 @@ class DetectionRunner:
 
             if event_type:
                 evm = csr.add_event_mention(
-                    span, span, token, 'aida', this_feature[-1],
+                    span, span, token, this_feature[-1],
                     component=component_name
                 )
 
