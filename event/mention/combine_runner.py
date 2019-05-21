@@ -91,7 +91,8 @@ def add_edl_entities(edl_file, csr):
 
                 ent = csr.add_entity_mention(
                     head_span, mention_span, entity['mention'], entity['type'],
-                    entity_form='named', component=edl_component_id
+                    entity_form='named', component=edl_component_id,
+                    score=entity.get('confidence', entity.get('score'))
                 )
 
                 if ent:
@@ -104,7 +105,9 @@ def add_edl_entities(edl_file, csr):
                 ent = csr.add_entity_mention(
                     head_span, mention_span, entity['mention'],
                     entity['type'], entity_form='nominal',
-                    component=edl_component_id)
+                    component=edl_component_id,
+                    score=entity.get('confidence', entity.get('score'))
+                )
 
                 if ent:
                     edl_entities[entity['@id']] = ent
