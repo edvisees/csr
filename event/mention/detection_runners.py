@@ -74,7 +74,7 @@ class DetectionRunner:
                         # entity_form = guess_entity_form(upos, xpos)
 
                         arg = csr.add_event_arg_by_span(
-                            evm, arg_span, arg_span, arg_text, 'aida',
+                            evm, arg_span, arg_span, arg_text,
                             rel_type, component=self.model_name,
                         )
 
