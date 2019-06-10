@@ -95,8 +95,16 @@ def add_edl_entities(edl_file, csr):
                     score=entity.get('confidence', entity.get('score'))
                 )
 
+
                 if ent:
                     edl_entities[entity['@id']] = ent
+                    if isinstance(entity.get("link_lorelei"), list):
+                        for link in entity["link_lorelei"]:
+                            ent.add_linking(
+                                None, None, link["confidence"], refkbid=link["id"],
+                                component='opera.entities.edl.refkb.xianyang',
+                                canonical_name=link["CannonicalName"]
+                            )
 
             for entity in entity_sent['nominalMentions']:
                 mention_span = [entity['char_begin'], entity['char_end']]
@@ -111,6 +119,14 @@ def add_edl_entities(edl_file, csr):
 
                 if ent:
                     edl_entities[entity['@id']] = ent
+                    if isinstance(entity.get("link_lorelei"), list):
+                        for link in entity["link_lorelei"]:
+                            ent.add_linking(
+                                None, None, link["confidence"], refkbid=link["id"],
+                                component='opera.entities.edl.refkb.xianyang',
+                                canonical_name=link["CannonicalName"]
+                            )
+
     return edl_entities
 
 
