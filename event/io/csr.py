@@ -347,8 +347,10 @@ class SpanInterpFrame(InterpFrame):
         self.modifiers[modifier_type] = modifier_text
 
     def add_canonical(self, canonical_id):
+        # Add a canonical mention for this mention. We do not want to have
+        # multiple value here for sure.
         self.interp.add_field('canonical_evidence', 'canonical_evidence',
-                              canonical_id, canonical_id)
+                              canonical_id, canonical_id, multi_value=False)
 
     def json_rep(self):
         rep = super().json_rep()

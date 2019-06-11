@@ -590,6 +590,8 @@ def mid_rdf_format(mid):
 
 
 def add_entity_linking(csr, wiki_file, lang):
+    link_to_ent = defaultdict(list)
+
     with open(wiki_file) as f:
         annos = json.load(f).get('annotations', [])
         for anno in annos:
@@ -619,6 +621,13 @@ def add_entity_linking(csr, wiki_file, lang):
                     mid, anno['title'], anno['link_probability'],
                     component='dbpedia-spotlight-0.7', lang=lang
                 )
+
+                link_to_ent[mid].append(entity)
+
+        # For entities sharing the same wiki id, we use the first appearance.
+        for link, l_ent in link_to_ent.items():
+            for ent in l_ent:
+                ent.add_canonical(l_ent[0].id)
 
 
 def add_entity_salience(csr, entity_salience_info):
