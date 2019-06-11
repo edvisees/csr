@@ -86,6 +86,10 @@ class JsonOntologyLoader:
             # Holds all possible ontology labels.
             self.onto_types = set()
 
+            # Added relation ontology structure and entity types
+            self.relation_onto = {}
+            self.entity_types = set()
+
             self.prefix = 'ldcOnt'
             self.name = ontology['@context'][0]['ldcOnt']
 
@@ -100,6 +104,15 @@ class JsonOntologyLoader:
                         self.event_onto[t]['args'][arg_t] = {
                             'restrictions': set()
                         }
+                elif f['@type'] == 'reified_relation_type':
+                    t = f['@id']
+                    self.relation_onto[t] = {'args': {}}
+                    for arg_t in f['argument_role']:
+                        self.relation_onto[t]['args'][arg_t] = {
+                            'restrictions': set()
+                        }
+                elif f['@type'] == 'entity_type':
+                    self.entity_types.add(f['@id'])
 
                 self.onto_types.add(f['@id'])
 
@@ -109,6 +122,11 @@ class JsonOntologyLoader:
                     e_t = f['domain']
                     for r in f['rangeIncludes']:
                         self.event_onto[e_t]['args'][a_t]['restrictions'].add(r)
+                elif f['@type'] == 'relation_argument_role_type':
+                    a_t = f['@id']
+                    e_t = f['domain']
+                    for r in f['rangeIncludes']:
+                        self.relation_onto[e_t]['args'][a_t]['restrictions'].add(r)
 
 
 class OntologyLoader:
