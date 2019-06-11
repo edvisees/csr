@@ -95,13 +95,14 @@ def add_edl_entities(edl_file, csr):
                     score=entity.get('confidence', entity.get('score'))
                 )
 
-
                 if ent:
                     edl_entities[entity['@id']] = ent
                     if isinstance(entity.get("link_lorelei"), list):
-                        link = max(entity["link_lorelei"], key=lambda l: float(l["confidence"]))
+                        link = max(entity["link_lorelei"],
+                                   key=lambda l: float(l["confidence"]))
                         ent.add_linking(
-                            None, None, float(link["confidence"]), refkbid=link["id"],
+                            None, None, float(link["confidence"]),
+                            refkbid=link["id"],
                             component='opera.entities.edl.refkb.xianyang',
                             canonical_name=link["CannonicalName"]
                         )
@@ -120,9 +121,11 @@ def add_edl_entities(edl_file, csr):
                 if ent:
                     edl_entities[entity['@id']] = ent
                     if isinstance(entity.get("link_lorelei"), list):
-                        link = max(entity["link_lorelei"], key=lambda l: float(l["confidence"]))
+                        link = max(entity["link_lorelei"],
+                                   key=lambda l: float(l["confidence"]))
                         ent.add_linking(
-                            None, None, float(link["confidence"]), refkbid=link["id"],
+                            None, None, float(link["confidence"]),
+                            refkbid=link["id"],
                             component='opera.entities.edl.refkb.xianyang',
                             canonical_name=link["CannonicalName"]
                         )
@@ -373,20 +376,53 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                     csr, csr_evm, rich_evm, rich_entities, provided_tokens
                 )
 
-        for relation in rich_event_info['relations']:
-            if relation['relationType'] == 'event_coreference':
-                args = [csr_events[i].id for i in relation['arguments'] if
+        repr_map = {}
+        for cluster in rich_event_info['clusters']:
+            if cluster['clusterType'] == 'event_coreference':
+                args = [csr_events[i].id for i in cluster['arguments'] if
                         i in csr_events]
+
+                repr_event = csr_events.get(cluster['representative'], None)
+
+                for aid in cluster['arguments']:
+                    if aid in csr_events:
+                        csr_event_id = csr_events[aid].id
+                        args.append(csr_events[aid].id)
+                        if repr_event:
+                            repr_map[csr_event_id] = repr_event
+
                 csr_rel = csr.add_relation(args, component=base_component_name)
                 if csr_rel:
                     csr_rel.add_type('aida:event_coreference')
 
-            if relation['relationType'] == 'entity_coreference':
-                args = [csr_entities[i].id for i in relation['arguments'] if
+            if cluster['clusterType'] == 'entity_coreference':
+                args = [csr_entities[i].id for i in cluster['arguments'] if
                         i in csr_entities]
+
+                repr_entity = csr_entities.get(cluster['representative'], None)
+
+                for aid in cluster['arguments']:
+                    if aid in csr_entities:
+                        csr_entity_id = csr_entities[aid].id
+                        args.append(csr_entities[aid].id)
+                        if repr_entity:
+                            repr_map[csr_entity_id] = repr_entity
+
                 csr_rel = csr.add_relation(args, component='corenlp')
                 if csr_rel:
                     csr_rel.add_type('aida:entity_coreference')
+
+        for csr_ent in csr_entities.values():
+            if csr_ent.id in repr_map:
+                csr_ent.add_canonical(repr_map[csr_ent.id].id)
+            else:
+                csr_ent.add_canonical(csr_ent.id)
+
+        for csr_event in csr_events.values():
+            if csr_event.id in repr_map:
+                csr_event.add_canonical(repr_map[csr_event.id].id)
+            else:
+                csr_event.add_canonical(csr_event.id)
 
 
 def load_salience(salience_folder):
@@ -766,13 +802,12 @@ def main(config):
                 if docid in scored_events:
                     add_event_salience(csr, scored_events[docid])
 
-        logging.info("Reading on CoNLLU: {}".format(conll_file))
-        # The conll files may contain information from another language.
-        test_reader = ConllUReader([conll_file], config, token_vocab,
-                                   tag_vocab, config.language)
-
-        # TODO: the rules are not updated to the newer version yet.
+        # TODO: we could possibly remove all conll related stuff.
         if config.add_rule_detector:
+            logging.info("Reading on CoNLLU: {}".format(conll_file))
+            # The conll files may contain information from another language.
+            test_reader = ConllUReader([conll_file], config, token_vocab,
+                                       tag_vocab, config.language)
             logging.info("Adding from ontology based rule detector.")
             detector.predict(test_reader, csr, 'maria_multilingual')
 
