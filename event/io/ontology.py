@@ -120,13 +120,19 @@ class JsonOntologyLoader:
                 if f['@type'] == 'event_argument_role_type':
                     a_t = f['@id']
                     e_t = f['domain']
-                    for r in f['rangeIncludes']:
-                        self.event_onto[e_t]['args'][a_t]['restrictions'].add(r)
+                    if isinstance(f['rangeIncludes'], str):
+                        self.event_onto[e_t]['args'][a_t]['restrictions'].add(f['rangeIncludes'])
+                    else:
+                        for r in f['rangeIncludes']:
+                            self.event_onto[e_t]['args'][a_t]['restrictions'].add(r)
                 elif f['@type'] == 'relation_argument_role_type':
                     a_t = f['@id']
                     e_t = f['domain']
-                    for r in f['rangeIncludes']:
-                        self.relation_onto[e_t]['args'][a_t]['restrictions'].add(r)
+                    if isinstance(f['rangeIncludes'], str):
+                        self.relation_onto[e_t]['args'][a_t]['restrictions'].add(f['rangeIncludes'])
+                    else:
+                        for r in f['rangeIncludes']:
+                            self.relation_onto[e_t]['args'][a_t]['restrictions'].add(r)
 
 
 class OntologyLoader:
