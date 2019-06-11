@@ -39,7 +39,7 @@ c.CombineParams.relation_json = os.path.join(output_base, 'relations')
 c.CombineParams.salience_data = os.path.join(output_base, 'salience')
 c.CombineParams.dbpedia_wiki_json = os.path.join(output_base, 'wiki')
 c.CombineParams.source_folder = os.path.join(output_base, 'txt')
-c.CombineParams.add_rule_detector = True
+c.CombineParams.add_rule_detector = False
 
 # This is the parent child from the eval source.
 if 'parent_child_tab' in os.environ:

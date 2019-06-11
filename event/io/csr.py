@@ -244,6 +244,10 @@ class InterpFrame(Frame):
             rep['interp'] = self.interp.json_rep()
         return rep
 
+    def add_justification(self, justification):
+        self.interp.add_field('justification', 'justification',
+                              justification, justification, multi_value=False)
+
 
 class RelArgFrame(Frame):
     """
@@ -346,6 +350,12 @@ class SpanInterpFrame(InterpFrame):
     def add_modifier(self, modifier_type, modifier_text):
         self.modifiers[modifier_type] = modifier_text
 
+    def add_canonical(self, canonical_id):
+        # Add a canonical mention for this mention. We do not want to have
+        # multiple value here for sure.
+        self.interp.add_field('canonical_evidence', 'canonical_evidence',
+                              canonical_id, canonical_id, multi_value=False)
+
     def json_rep(self):
         rep = super().json_rep()
         if self.span:
@@ -432,7 +442,8 @@ class EntityMention(SpanInterpFrame):
                               score=score, component=component, mutex=False)
         self.entity_types.add(full_type)
 
-    def add_linking(self, mid, wiki, score, refkbid=None, lang='en', component=None, canonical_name=None):
+    def add_linking(self, mid, wiki, score, refkbid=None, lang='en',
+                    component=None, canonical_name=None):
         if mid:
             fb_link = 'freebase:' + mid
             fb_xref = ValueFrame(None, 'db_reference', score=score,
@@ -452,13 +463,11 @@ class EntityMention(SpanInterpFrame):
         if refkbid:
             refkb_link = 'refkb:' + refkbid
             refkb_xref = ValueFrame(None, 'db_reference',
-                                   score=score, component=component)
+                                    score=score, component=component)
             refkb_xref.add_value('id', refkb_link)
             refkb_xref.add_value('canonical_name', canonical_name)
             self.interp.add_field('xref', 'refkb', refkbid, refkb_xref,
                                   component=component, multi_value=True)
-
-
 
     def add_salience(self, salience_score):
         self.salience = salience_score
@@ -542,6 +551,7 @@ class Argument(Frame):
                          score=score)
         self.entity_mention = entity_mention
         self.arg_role = arg_role
+        self.justification = None
 
     def json_rep(self):
         rep = super().json_rep()
@@ -549,7 +559,13 @@ class Argument(Frame):
         rep['text'] = self.entity_mention.text
         rep['arg'] = self.entity_mention.id
 
+        if self.justification:
+            rep['justification'] = self.justification
+
         return rep
+
+    def add_justification(self, justification):
+        self.justification = justification
 
 
 class EventMention(SpanInterpFrame):
