@@ -244,6 +244,10 @@ class InterpFrame(Frame):
             rep['interp'] = self.interp.json_rep()
         return rep
 
+    def add_justification(self, justification):
+        self.interp.add_field('justification', 'justification',
+                              justification, justification, multi_value=False)
+
 
 class RelArgFrame(Frame):
     """
@@ -547,6 +551,7 @@ class Argument(Frame):
                          score=score)
         self.entity_mention = entity_mention
         self.arg_role = arg_role
+        self.justification = None
 
     def json_rep(self):
         rep = super().json_rep()
@@ -554,7 +559,13 @@ class Argument(Frame):
         rep['text'] = self.entity_mention.text
         rep['arg'] = self.entity_mention.id
 
+        if self.justification:
+            rep['justification'] = self.justification
+
         return rep
+
+    def add_justification(self, justification):
+        self.justification = justification
 
 
 class EventMention(SpanInterpFrame):

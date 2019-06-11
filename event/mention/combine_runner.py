@@ -247,6 +247,9 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                         csr_arg_ent.add_modifier(
                             'NEG', rich_arg_ent['negationWord'])
 
+                    if 'justification' in rich_arg:
+                        csr_arg.add_justification(rich_arg['justification'])
+
                     if not ok_entity(rich_arg_ent):
                         csr_arg_ent.set_not_ok()
 
@@ -362,12 +365,16 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                 score=rich_evm.get('score', 0.5)
             )
 
+
             if csr_evm:
                 if 'negationWord' in rich_evm:
                     csr_evm.add_modifier('NEG', rich_evm['negationWord'])
 
                 if 'modalWord' in rich_evm:
                     csr_evm.add_modifier('MOD', rich_evm['modalWord'])
+
+                if 'justification' in rich_evm:
+                    csr_evm.add_justification(rich_evm['justification'])
 
                 eid = rich_evm['id']
                 csr_events[eid] = csr_evm
