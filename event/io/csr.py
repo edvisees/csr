@@ -311,6 +311,7 @@ class Span:
         )
 
 
+#TODO may allow multiple provenances if all TA2 people agree.
 class SpanInterpFrame(InterpFrame):
     """
     Commonly used frame to represent a mention, has both spans and

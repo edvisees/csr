@@ -375,9 +375,6 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                 if 'modalWord' in rich_evm:
                     csr_evm.add_modifier('MOD', rich_evm['modalWord'])
 
-                # if 'justification' in rich_evm:
-                #     csr_evm.add_justification(rich_evm['justification'])
-
                 eid = rich_evm['id']
                 csr_events[eid] = csr_evm
 
