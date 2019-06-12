@@ -11,17 +11,6 @@ class Constants:
     GENERAL_EVENT_TYPE = 'aida:General_Event'
     GENERAL_REL_TYPE = 'aida:General_Rel'
 
-
-# entity_type_mapping = {
-#     "Fac": "Facility",
-#     "Gpe": "GeopoliticalEntity",
-#     "Loc": "Location",
-#     "Org": "Organization",
-#     "Per": "Person",
-#     "Veh": "Vehicle",
-#     "Wea": "Weapon",
-# }
-
 conll_to_target = {
     # "TIME": "Time",
     "PERSON": ("ldcOnt", "PER"),
@@ -244,9 +233,9 @@ class InterpFrame(Frame):
             rep['interp'] = self.interp.json_rep()
         return rep
 
-    def add_justification(self, justification):
-        self.interp.add_field('justification', 'justification',
-                              justification, justification, multi_value=False)
+    # def add_justification(self, justification):
+    #     self.interp.add_field('justification', 'justification',
+    #                           justification, justification, multi_value=False)
 
 
 class RelArgFrame(Frame):
@@ -330,7 +319,7 @@ class SpanInterpFrame(InterpFrame):
 
     def __init__(
             self, fid, frame_type, parent, interp_type, begin,
-            length, text, component=None, score=None
+            length, text, component=None, score=None, justification=None
     ):
         super().__init__(fid, frame_type, parent, interp_type, component, score)
         if parent:
@@ -347,14 +336,16 @@ class SpanInterpFrame(InterpFrame):
         else:
             self.keyframe = None
 
+        self.justification = justification
+
     def add_modifier(self, modifier_type, modifier_text):
         self.modifiers[modifier_type] = modifier_text
 
-    def add_canonical(self, canonical_id):
-        # Add a canonical mention for this mention. We do not want to have
-        # multiple value here for sure.
-        self.interp.add_field('canonical_evidence', 'canonical_evidence',
-                              canonical_id, canonical_id, multi_value=False)
+    # def add_canonical(self, canonical_id):
+    #     # Add a canonical mention for this mention. We do not want to have
+    #     # multiple value here for sure.
+    #     self.interp.add_field('canonical_evidence', 'canonical_evidence',
+    #                           canonical_id, canonical_id, multi_value=False)
 
     def json_rep(self):
         rep = super().json_rep()
@@ -373,6 +364,9 @@ class SpanInterpFrame(InterpFrame):
 
             if self.keyframe:
                 info['provenance']['keyframe'] = self.keyframe
+
+            if self.justification:
+                info['provenance']['justification'] = self.justification
 
             rep.update(info)
         return rep
@@ -407,10 +401,11 @@ class EntityMention(SpanInterpFrame):
     """
 
     def __init__(self, fid, parent, begin, length, text,
-                 component=None, score=None):
+                 component=None, score=None, justification=None):
         super().__init__(
             fid, 'entity_evidence', parent, 'entity_evidence_interp', begin,
-            length, text, component=component, score=score
+            length, text, component=component, score=score,
+            justification=justification
         )
         self.entity_types = set()
         self.entity_form = None
@@ -428,7 +423,6 @@ class EntityMention(SpanInterpFrame):
         return self.entity_types
 
     def add_type(self, ontology, entity_type, score=None, component=None):
-        # type_interp = Interp(self.interp_type)
         if entity_type == "null":
             return
 
@@ -473,6 +467,12 @@ class EntityMention(SpanInterpFrame):
         self.salience = salience_score
 
     def json_rep(self):
+        # If no type information added.
+        if len(self.entity_types) == 0:
+            dummy_type = 'conll:MISC'
+            self.interp.add_field('type', 'type', dummy_type, dummy_type,
+                                  score=0, component=None, mutex=False)
+
         # Add these interp fields at last, so no extra xor to deal with.
         if self.entity_form:
             self.interp.clear_field('form')
@@ -491,10 +491,11 @@ class RelationMention(SpanInterpFrame):
     """
 
     def __init__(self, fid, parent, begin, length, text,
-                 component=None, score=None):
+                 component=None, score=None, justification=None):
         super().__init__(
             fid, 'relation_evidence', parent, 'relation_evidence_interp',
-            begin, length, text, component=component, score=score)
+            begin, length, text, component=component, score=score,
+            justification=justification)
 
         self.arguments = []
         self.rel_types = set()
@@ -564,8 +565,8 @@ class Argument(Frame):
 
         return rep
 
-    def add_justification(self, justification):
-        self.justification = justification
+    # def add_justification(self, justification):
+    #     self.justification = justification
 
 
 class EventMention(SpanInterpFrame):
@@ -574,10 +575,11 @@ class EventMention(SpanInterpFrame):
     """
 
     def __init__(self, fid, parent, begin, length, text, component=None,
-                 score=None):
+                 score=None, justification=None):
         super().__init__(
             fid, 'event_evidence', parent, 'event_evidence_interp',
-            begin, length, text, component=component, score=score)
+            begin, length, text, component=component, score=score,
+            justification=justification)
         self.trigger = None
         self.event_type = set()
         self.realis = None
@@ -1093,7 +1095,6 @@ class CSR:
         else:
             return
 
-        type_ok = False
         if entity_type is not None:
             if '/' not in entity_type:
                 ent_onto_type = entity_type.split(':', 1)
@@ -1109,20 +1110,15 @@ class CSR:
                 # This maps from some other ontology to the target ontology.
                 onto_type, t = self.map_entity_type(onto, t)
                 entity_mention.add_type(onto_type, t, component=component)
-                type_ok = True
             else:
                 logging.warning(f"Ignoring entity type {entity_type}")
-
-        if not type_ok and len(entity_mention.get_types()) == 0:
-            # print('entity mention do not have types ', span, text)
-            entity_mention.add_type('aida', 'OTHER', component=component)
-            # input('huh')
 
         return entity_mention
 
     def add_event_mention(self, head_span, span, text, full_evm_type,
                           realis=None, parent_sent=None, component=None,
-                          arg_entity_types=None, event_id=None, score=None):
+                          arg_entity_types=None, event_id=None, score=None,
+                          justification=None):
         if full_evm_type is not None:
             evm_onto_type = full_evm_type.split(':', 1)
 
@@ -1160,7 +1156,8 @@ class CSR:
 
                 evm = EventMention(
                     event_id, parent_sent, relative_begin, length, valid_text,
-                    component=component, score=score
+                    component=component, score=score,
+                    justification=justification
                 )
                 evm.add_trigger(relative_begin, length)
 

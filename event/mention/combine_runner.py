@@ -247,8 +247,8 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                         csr_arg_ent.add_modifier(
                             'NEG', rich_arg_ent['negationWord'])
 
-                    if 'justification' in rich_arg:
-                        csr_arg.add_justification(rich_arg['justification'])
+                    # if 'justification' in rich_arg:
+                    #     csr_arg.add_justification(rich_arg['justification'])
 
                     if not ok_entity(rich_arg_ent):
                         csr_arg_ent.set_not_ok()
@@ -289,27 +289,29 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
             else:
                 component = base_component_name
 
-            if 'type' in rich_ent:
-                # These are typed entity mentions detected by NER.
-                ent = csr.add_entity_mention(
-                    head_span, span, text, 'conll:' + rich_ent['type'],
-                    entity_form=rich_ent.get('entityForm', None),
-                    component=component
-                )
+            # if 'type' in rich_ent:
+            # These are typed entity mentions detected by NER.
+            ner_type = 'conll:' + rich_ent[
+                'type'] if 'type' in rich_ent else None
+            ent = csr.add_entity_mention(
+                head_span, span, text, ner_type,
+                entity_form=rich_ent.get('entityForm', None),
+                component=component
+            )
 
-                if 'negationWord' in rich_ent:
-                    ent.add_modifier('NEG', rich_ent['negationWord'])
+            if 'negationWord' in rich_ent:
+                ent.add_modifier('NEG', rich_ent['negationWord'])
 
-                if ent:
-                    csr_entities[eid] = ent
+            if ent:
+                csr_entities[eid] = ent
+            else:
+                if len(text) > 20:
+                    logging.warning(
+                        "Argument mention {} rejected.".format(eid))
                 else:
-                    if len(text) > 20:
-                        logging.warning(
-                            "Argument mention {} rejected.".format(eid))
-                    else:
-                        logging.warning(
-                            ("Argument mention {}:{} "
-                             "rejected.".format(eid, text)))
+                    logging.warning(
+                        ("Argument mention {}:{} "
+                         "rejected.".format(eid, text)))
 
         csr_events = {}
         for rich_evm in rich_event_info['eventMentions']:
@@ -362,9 +364,9 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                 head_span, span, text, full_type,
                 realis=rich_evm.get('realis', None), component=component,
                 arg_entity_types=arg_entity_types,
-                score=rich_evm.get('score', 0.5)
+                score=rich_evm.get('score', 0.5),
+                justification=rich_evm.get('justification', None)
             )
-
 
             if csr_evm:
                 if 'negationWord' in rich_evm:
@@ -373,8 +375,8 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                 if 'modalWord' in rich_evm:
                     csr_evm.add_modifier('MOD', rich_evm['modalWord'])
 
-                if 'justification' in rich_evm:
-                    csr_evm.add_justification(rich_evm['justification'])
+                # if 'justification' in rich_evm:
+                #     csr_evm.add_justification(rich_evm['justification'])
 
                 eid = rich_evm['id']
                 csr_events[eid] = csr_evm
@@ -383,7 +385,7 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                     csr, csr_evm, rich_evm, rich_entities, provided_tokens
                 )
 
-        repr_map = {}
+        # repr_map = {}
         for cluster in rich_event_info['clusters']:
             if cluster['clusterType'] == 'event_coreference':
                 args = [csr_events[i].id for i in cluster['arguments'] if
@@ -391,16 +393,10 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
 
                 repr_event = csr_events.get(cluster['representative'], None)
 
-                for aid in cluster['arguments']:
-                    if aid in csr_events:
-                        csr_event_id = csr_events[aid].id
-                        args.append(csr_events[aid].id)
-                        if repr_event:
-                            repr_map[csr_event_id] = repr_event
-
                 csr_rel = csr.add_relation(args, component=base_component_name)
                 if csr_rel:
                     csr_rel.add_type('aida:event_coreference')
+                    csr_rel.add_named_arg('representative', repr_event.id)
 
             if cluster['clusterType'] == 'entity_coreference':
                 args = [csr_entities[i].id for i in cluster['arguments'] if
@@ -408,28 +404,10 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
 
                 repr_entity = csr_entities.get(cluster['representative'], None)
 
-                for aid in cluster['arguments']:
-                    if aid in csr_entities:
-                        csr_entity_id = csr_entities[aid].id
-                        args.append(csr_entities[aid].id)
-                        if repr_entity:
-                            repr_map[csr_entity_id] = repr_entity
-
                 csr_rel = csr.add_relation(args, component='corenlp')
                 if csr_rel:
                     csr_rel.add_type('aida:entity_coreference')
-
-        for csr_ent in csr_entities.values():
-            if csr_ent.id in repr_map:
-                csr_ent.add_canonical(repr_map[csr_ent.id].id)
-            else:
-                csr_ent.add_canonical(csr_ent.id)
-
-        for csr_event in csr_events.values():
-            if csr_event.id in repr_map:
-                csr_event.add_canonical(repr_map[csr_event.id].id)
-            else:
-                csr_event.add_canonical(csr_event.id)
+                    csr_rel.add_named_arg('representative', repr_entity.id)
 
 
 def load_salience(salience_folder):
