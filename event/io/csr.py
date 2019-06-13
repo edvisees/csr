@@ -359,8 +359,7 @@ class SpanInterpFrame(InterpFrame):
             if self.keyframe:
                 default_provenance['keyframe'] = self.keyframe
 
-            # Change the provenance to a list.
-            rep['provenance'] = [default_provenance]
+            rep['provenance'] = default_provenance
         return rep
 
 
@@ -576,6 +575,8 @@ class EventMention(SpanInterpFrame):
         self.arguments = defaultdict(list)
         self.extent_span = None
 
+    # If you call this add_extent function, then the provenance
+    # will be the longer extent passed by it.
     def add_extent(self, extent_span):
         self.extent_span = extent_span
 
@@ -680,7 +681,12 @@ class EventMention(SpanInterpFrame):
                 'parent_scope': self.parent.id,
                 'modifiers': self.modifiers,
             }
-            rep['provenance'].append(extent_provenance)
+
+            if self.keyframe:
+                extent_provenance['keyframe'] = self.keyframe
+
+            rep['provenance'] = extent_provenance
+
         return rep
 
 
@@ -1124,6 +1130,25 @@ class CSR:
                           realis=None, parent_sent=None, component=None,
                           arg_entity_types=None, event_id=None, score=None,
                           extent_text=None, extent_span=None):
+        """
+        Add a event mention.
+        :param head_span: The span (begin, end) of the head word.
+        :param span: The span of the whole mention.
+        :param text: The text for this event mention.
+        :param full_evm_type: The event type for this event.
+        :param realis: The realis status (actual, generic, other) for this event.
+        :param parent_sent: The parent sentence containing this mention.
+        :param component: The component id that creates this.
+        :param arg_entity_types: The set of entity types of this event's arguments.
+        :param event_id: The id of this event.
+        :param score:  A score for event detection.
+        :param extent_text: The extent is the full span of the event, this
+        is the extent text.
+        :param extent_span: And this is the extent span (begin, end), if both
+        the extent_text and extent_span are supplied, the CSR will create an
+        extent based provenance instead of the triger based provenance.
+        :return:
+        """
         if full_evm_type is not None:
             evm_onto_type = full_evm_type.split(':', 1)
 
@@ -1178,8 +1203,8 @@ class CSR:
                         evm.add_extent(extent_span)
                     else:
                         logging.warning(f"Extent {extent_text}"
-                                     f"[{extent_span[0]}: {extent_span[1]}] "
-                                     f"not aligned well with text")
+                                        f"[{extent_span[0]}: {extent_span[1]}] "
+                                        f"not aligned well with text")
 
                 self._frame_map[self.event_key][event_id] = evm
 
