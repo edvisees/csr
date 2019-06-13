@@ -365,7 +365,8 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                 realis=rich_evm.get('realis', None), component=component,
                 arg_entity_types=arg_entity_types,
                 score=rich_evm.get('score', 0.5),
-                justification=rich_evm.get('justification', None)
+                extent_text=rich_evm.get('extentText', None),
+                extent_span=rich_evm.get('extentSpan', None)
             )
 
             if csr_evm:

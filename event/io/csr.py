@@ -11,6 +11,7 @@ class Constants:
     GENERAL_EVENT_TYPE = 'aida:General_Event'
     GENERAL_REL_TYPE = 'aida:General_Rel'
 
+
 conll_to_target = {
     # "TIME": "Time",
     "PERSON": ("ldcOnt", "PER"),
@@ -289,14 +290,16 @@ class Span:
     Represent text span (begin and end), according to the reference.
     """
 
-    def __init__(self, reference, begin, length):
+    def __init__(self, reference, begin, length, text):
         self.reference = reference
         self.begin = begin
         self.length = length
+        self.text = text
 
     def json_rep(self):
         return {
             '@type': 'text_span',
+            'text': self.text,
             'reference': self.reference,
             'start': self.begin,
             'length': self.length,
@@ -311,7 +314,6 @@ class Span:
         )
 
 
-#TODO may allow multiple provenances if all TA2 people agree.
 class SpanInterpFrame(InterpFrame):
     """
     Commonly used frame to represent a mention, has both spans and
@@ -320,15 +322,15 @@ class SpanInterpFrame(InterpFrame):
 
     def __init__(
             self, fid, frame_type, parent, interp_type, begin,
-            length, text, component=None, score=None, justification=None
-    ):
+            length, text, component=None, score=None):
         super().__init__(fid, frame_type, parent, interp_type, component, score)
         if parent:
-            self.span = Span(parent.id, begin, length)
+            self.span = Span(parent.id, begin, length, text)
         else:
             self.span = None
 
         self.text = text
+
         self.modifiers = {}
 
         if parent and parent.type == 'sentence':
@@ -337,39 +339,28 @@ class SpanInterpFrame(InterpFrame):
         else:
             self.keyframe = None
 
-        self.justification = justification
-
     def add_modifier(self, modifier_type, modifier_text):
         self.modifiers[modifier_type] = modifier_text
-
-    # def add_canonical(self, canonical_id):
-    #     # Add a canonical mention for this mention. We do not want to have
-    #     # multiple value here for sure.
-    #     self.interp.add_field('canonical_evidence', 'canonical_evidence',
-    #                           canonical_id, canonical_id, multi_value=False)
 
     def json_rep(self):
         rep = super().json_rep()
         if self.span:
-            info = {
-                'provenance': {
-                    '@type': 'text_span',
-                    'reference': self.span.reference,
-                    'start': self.span.begin,
-                    'length': self.span.length,
-                    'text': self.text,
-                    'parent_scope': self.parent.id,
-                    'modifiers': self.modifiers,
-                }
+            default_provenance = {
+                '@type': 'text_span',
+                'type': 'aida:base_provenance',
+                'reference': self.span.reference,
+                'start': self.span.begin,
+                'length': self.span.length,
+                'text': self.span.text,
+                'parent_scope': self.parent.id,
+                'modifiers': self.modifiers,
             }
 
             if self.keyframe:
-                info['provenance']['keyframe'] = self.keyframe
+                default_provenance['keyframe'] = self.keyframe
 
-            if self.justification:
-                info['provenance']['justification'] = self.justification
-
-            rep.update(info)
+            # Change the provenance to a list.
+            rep['provenance'] = [default_provenance]
         return rep
 
 
@@ -393,7 +384,7 @@ class Sentence(SpanInterpFrame):
         """
         begin = span[0] - self.span.begin
         end = span[1] - self.span.begin
-        return self.text[begin: end]
+        return self.span.text[begin: end]
 
 
 class EntityMention(SpanInterpFrame):
@@ -402,11 +393,10 @@ class EntityMention(SpanInterpFrame):
     """
 
     def __init__(self, fid, parent, begin, length, text,
-                 component=None, score=None, justification=None):
+                 component=None, score=None):
         super().__init__(
             fid, 'entity_evidence', parent, 'entity_evidence_interp', begin,
             length, text, component=component, score=score,
-            justification=justification
         )
         self.entity_types = set()
         self.entity_form = None
@@ -495,8 +485,7 @@ class RelationMention(SpanInterpFrame):
                  component=None, score=None, justification=None):
         super().__init__(
             fid, 'relation_evidence', parent, 'relation_evidence_interp',
-            begin, length, text, component=component, score=score,
-            justification=justification)
+            begin, length, text, component=component, score=score)
 
         self.arguments = []
         self.rel_types = set()
@@ -576,18 +565,19 @@ class EventMention(SpanInterpFrame):
     """
 
     def __init__(self, fid, parent, begin, length, text, component=None,
-                 score=None, justification=None):
+                 score=None):
         super().__init__(
             fid, 'event_evidence', parent, 'event_evidence_interp',
             begin, length, text, component=component, score=score,
-            justification=justification)
-        self.trigger = None
+        )
+        # self.trigger = None
         self.event_type = set()
         self.realis = None
         self.arguments = defaultdict(list)
+        self.extent_span = None
 
-    def add_trigger(self, begin, length):
-        self.trigger = Span(self.span.reference, begin, length)
+    def add_extent(self, extent_span):
+        self.extent_span = extent_span
 
     def add_interp(self, full_type, realis, score=None,
                    component=None):
@@ -677,7 +667,21 @@ class EventMention(SpanInterpFrame):
                     score=arg.score, component=arg.component,
                     multi_value=True
                 )
-        return super().json_rep()
+        rep = super().json_rep()
+
+        if self.extent_span:
+            extent_provenance = {
+                '@type': 'text_span',
+                'type': 'aida:extent_provenance',
+                'reference': self.extent_span.reference,
+                'start': self.extent_span.begin,
+                'length': self.extent_span.length,
+                'text': self.extent_span.text,
+                'parent_scope': self.parent.id,
+                'modifiers': self.modifiers,
+            }
+            rep['provenance'].append(extent_provenance)
+        return rep
 
 
 class CSR:
@@ -911,7 +915,7 @@ class CSR:
         return sent
 
     def set_sentence_text(self, sent_id, text):
-        self._frame_map[self.sent_key][sent_id].text = text
+        self._frame_map[self.sent_key][sent_id].span.text = text
 
     def align_to_text(self, span, text, sent):
         """
@@ -1119,7 +1123,7 @@ class CSR:
     def add_event_mention(self, head_span, span, text, full_evm_type,
                           realis=None, parent_sent=None, component=None,
                           arg_entity_types=None, event_id=None, score=None,
-                          justification=None):
+                          extent_text=None, extent_span=None):
         if full_evm_type is not None:
             evm_onto_type = full_evm_type.split(':', 1)
 
@@ -1139,10 +1143,10 @@ class CSR:
         head_span = tuple(head_span)
         span = tuple(span)
 
-        align_res = self.align_to_text(span, text, parent_sent)
+        span_aligned = self.align_to_text(span, text, parent_sent)
 
-        if align_res:
-            parent_sent, fitted_span, valid_text = align_res
+        if span_aligned:
+            parent_sent, fitted_span, valid_text = span_aligned
 
             if span in self._span_frame_map[self.event_key]:
                 evm = self._span_frame_map[self.event_key][span]
@@ -1157,10 +1161,25 @@ class CSR:
 
                 evm = EventMention(
                     event_id, parent_sent, relative_begin, length, valid_text,
-                    component=component, score=score,
-                    justification=justification
+                    component=component, score=score
                 )
-                evm.add_trigger(relative_begin, length)
+
+                if extent_text and extent_span:
+                    extent_aligned = self.align_to_text(
+                        extent_span, extent_text, parent_sent)
+
+                    if extent_aligned:
+                        e_parent, e_span_fit, e_text_valid = extent_aligned
+                        e_relative_begin = e_span_fit[0] - e_parent.span.begin
+                        e_length = e_span_fit[1] - e_span_fit[0]
+                        extent_span = Span(
+                            e_parent.id, e_relative_begin, e_length,
+                            e_text_valid)
+                        evm.add_extent(extent_span)
+                    else:
+                        logging.warning(f"Extent {extent_text}"
+                                     f"[{extent_span[0]}: {extent_span[1]}] "
+                                     f"not aligned well with text")
 
                 self._frame_map[self.event_key][event_id] = evm
 
