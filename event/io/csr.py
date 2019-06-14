@@ -339,6 +339,10 @@ class SpanInterpFrame(InterpFrame):
         else:
             self.keyframe = None
 
+    def set_text(self, text):
+        self.text = text
+        self.span.text = text
+
     def add_modifier(self, modifier_type, modifier_text):
         self.modifiers[modifier_type] = modifier_text
 
@@ -921,51 +925,41 @@ class CSR:
         return sent
 
     def set_sentence_text(self, sent_id, text):
-        self._frame_map[self.sent_key][sent_id].span.text = text
+        self._frame_map[self.sent_key][sent_id].set_text(text)
 
     def align_to_text(self, span, text, sent):
         """
         Hacking the correct spans.
         :param span: The origin mention span.
         :param text: The origin mention text.
-        :param sent: The sentence if provided.
+        :param sent: User can specify the hosting sentence.
         :return:
         """
-
         span = tuple(span)
         if not sent:
             # Find the sentence if not provided.
-            res = self.fit_to_sentence(span)
-            if res:
-                sent, fitted_span = res
-        else:
-            # Use the provided sentence.
-            fitted_span = span
+            sent = self.find_parent_sent(span)
 
-        if not sent or not fitted_span:
-            # No suitable sentence found.
+        if not sent:
             logging.warning("No suitable sentence for entity {}".format(span))
-        else:
-            if (not fitted_span == span) or (not text):
-                # If the fitted span changes, we will simply use the doc text.
-                valid_text = sent.substring(fitted_span)
-            else:
-                # The fitted span has not changed, validate it.
-                valid_text = self.validate_span(sent, fitted_span, text)
+            return
 
-            if valid_text is not None:
-                return sent, fitted_span, valid_text
+        fitted_span = self.fit_to_sentence(span, sent)
+
+        if (not fitted_span == span) or (not text):
+            # If the fitted span changes, we will simply use the doc text.
+            valid_text = sent.substring(fitted_span)
+        else:
+            # The fitted span has not changed, validate it.
+            valid_text = self.validate_span(sent, fitted_span, text)
+
+        if valid_text is not None:
+            return sent, fitted_span, valid_text
 
     def validate_span(self, sent, span, text):
         span_text = sent.substring(span)
 
         if not span_text == text:
-            logging.warning(
-                "Span text: [{}] not matching given text [{}]"
-                ", at span [{}] at sent [{}]".format(
-                    span_text, text, span, sent.id)
-            )
-
             if "".join(span_text.split()) == "".join(text.split()):
                 logging.warning('only white space difference, accepting.')
                 return span_text
@@ -973,19 +967,30 @@ class CSR:
 
         return text
 
-    def fit_to_sentence(self, span):
+    def find_parent_sent(self, span):
         if span[0] in self._char_sent_map:
             sentence = self._frame_map[self.sent_key][
                 self._char_sent_map[span[0]]]
-            sent_begin = sentence.span.begin
-            sent_end = sentence.span.length + sent_begin
+            return sentence
 
-            if span[1] <= sent_end:
-                return sentence, span
-            else:
-                logging.warning("Force span {} end at sentence end {} of "
-                                "{}".format(span, sent_end, sentence.id))
-                return sentence, (span[0], sent_end)
+    def fit_to_sentence(self, span, sentence):
+        sent_begin = sentence.span.begin
+        sent_end = sentence.span.length + sent_begin
+
+        begin = span[0]
+        if begin < sent_begin:
+            begin = sent_begin
+            logging.warning("Force span {} start at sentence star {} of "
+                            "{}".format(span, sent_begin, sentence.id))
+
+        end = span[1]
+        if end > sent_end:
+            end = sent_end
+            logging.warning("Force span {} end at sentence end {} of "
+                            "{}".format(span, sent_end, sentence.id))
+
+        return begin, end
+
 
     def get_by_span(self, object_type, span):
         span = tuple(span)
@@ -1202,9 +1207,9 @@ class CSR:
                             e_text_valid)
                         evm.add_extent(extent_span)
                     else:
-                        logging.warning(f"Extent {extent_text}"
-                                        f"[{extent_span[0]}: {extent_span[1]}] "
-                                        f"not aligned well with text")
+                        logging.warning(
+                            f"Extent [{extent_text}][{extent_span[0]}: "
+                            f"{extent_span[1]}] does not aligned well")
 
                 self._frame_map[self.event_key][event_id] = evm
 
