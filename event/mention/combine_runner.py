@@ -608,9 +608,9 @@ def add_entity_linking(csr, wiki_file, lang):
                 link_to_ent[mid].append(entity)
 
         # For entities sharing the same wiki id, we use the first appearance.
-        for link, l_ent in link_to_ent.items():
-            for ent in l_ent:
-                ent.add_canonical(l_ent[0].id)
+        # for link, l_ent in link_to_ent.items():
+            # for ent in l_ent:
+                # ent.add_canonical(l_ent[0].id)
 
 
 def add_entity_salience(csr, entity_salience_info):
