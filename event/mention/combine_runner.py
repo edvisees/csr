@@ -847,6 +847,9 @@ if __name__ == '__main__':
     params = CombineParams(config=conf)
 
     log_file = os.path.join(params.output_folder, 'combiner.log')
+    if os.path.exists(log_file):
+        os.remove(log_file)
+
     print("Logs will be output at {}".format(log_file))
     util.set_file_log(log_file)
 
