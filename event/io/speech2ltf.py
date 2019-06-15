@@ -34,9 +34,11 @@ def write_ltf(outfile, lang, doc_id, segments):
       words = [w for w in segments[utt_id].split() if w.lower() != "<unk>"]
       if len(words) == 0:
          continue
+      words.append(".")
       segment_text = " ".join(words)
       seg = ET.SubElement(text, "SEG", {
          "id": utt_id,
+         "keyframe": utt_id,
          "start_char": str(start_char),
          "end_char": str(start_char + len(segment_text) - 1)
       })
