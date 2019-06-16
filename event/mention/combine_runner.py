@@ -57,9 +57,9 @@ def add_entity_relations(relation_file, edl_entities, csr):
 
                 if len(args) < 2:
                     logging.error(
-                        "Insufficient number of fields {} in relation "
-                        "at {}. some might be filtered".format(
-                            len(args), relation_file))
+                        "Insufficient number of fields ({}) in relation"
+                        "at doc {}, sent {}. some might be filtered".format(
+                            len(args), relation_file, relation['inputSentence']))
                     continue
 
                 # Adding a score here will create a interp level score.
@@ -771,6 +771,8 @@ def main(config):
                         "Adding events with rich output: {}".format(
                             rich_event_file))
                     add_rich_events(csr, rich_event_file, conll_tokens)
+                else:
+                    logging.error(f"Cannot find rich output for {docid}")
             else:
                 logging.info("No rich event output.")
 
