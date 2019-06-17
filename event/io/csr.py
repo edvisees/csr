@@ -100,6 +100,9 @@ class Interp(Jsonable):
         else:
             return None
 
+    def get_field_names(self):
+        return self.__fields.keys()
+
     def modify_field(self, name, key_name, content_rep, content, component=None,
                      score=None):
         original = self.__fields[name][key_name][content_rep]
@@ -414,7 +417,7 @@ class EntityMention(SpanInterpFrame):
         self.entity_form = entity_form
 
     def get_types(self):
-        return self.entity_types
+        return list(self.entity_types)
 
     def add_type(self, ontology, entity_type, score=None, component=None):
         if entity_type == "null":
@@ -603,6 +606,9 @@ class EventMention(SpanInterpFrame):
                                   score=score, component=component)
             self.realis = realis
 
+    def get_types(self):
+        return list(self.event_type)
+
     def add_arg(self, ontology, arg_role, entity_mention, arg_id,
                 score=None, component=None):
         arg = Argument(ontology + ':' + arg_role, entity_mention, arg_id,
@@ -771,11 +777,18 @@ class CSR:
             e = this_frame["provenance"]["length"] + s
             return (s, e)
 
+        def handle_xor(group):
+            if isinstance(group, dict):
+                return [g['value'] for g in group['args']]
+            else:
+                return [g['value'] for g in group]
+
         with open(csr_file) as fin:
             csr_json = json.load(fin)
-            docid = csr_json['meta']['document_id']
             media_type = csr_json['meta']['media_type']
-            docname = ''.join(docid.split(':')[1].split('-')[:-1])
+
+            docname = csr_json['meta']['document_id'].replace(
+                f"{self.ns_prefix}:", "")
 
             frame_data = defaultdict(list)
 
@@ -784,10 +797,11 @@ class CSR:
                 fid = frame['@id']
 
                 if frame_type == 'document':
-                    self.add_doc(docname, media_type, frame['language'])
+                    self.add_doc(docname, media_type, frame['language'], docname)
                 elif frame_type == 'sentence':
                     start = frame["provenance"]["start"]
                     end = frame["provenance"]["length"] + start
+
                     self.add_sentence(
                         (start, end), frame["provenance"]['text'], sent_id=fid)
                 else:
@@ -795,32 +809,49 @@ class CSR:
 
             entities = {}
             for frame in frame_data['entity_evidence']:
-                parent_sent = get_parent_sent(frame['provenance']['reference'])
+                parent_sent = get_parent_sent(frame)
                 interp = frame['interp']
                 # onto, t = interp['type'].split(':')
                 text = frame["provenance"]['text']
                 span = compute_span(frame)
                 eid = frame['@id']
 
-                csr_ent = self.add_entity_mention(
-                    span, span, text, interp['type'], parent_sent,
-                    interp['form'], frame['component'], entity_id=eid
-                )
+                raw_type = interp["type"]
 
-                entities[eid] = csr_ent
+                if isinstance(raw_type, str):
+                    entity_types = [raw_type]
+                else:
+                    entity_types = handle_xor(raw_type)
+
+                for t in entity_types:
+                    csr_ent = self.add_entity_mention(
+                        span, span, text, t, parent_sent,
+                        interp.get('form', None), frame['component'],
+                        entity_id=eid
+                    )
+
+                    entities[eid] = csr_ent
 
             for frame in frame_data['event_evidence']:
-                parent_sent = get_parent_sent(frame['provenance']['reference'])
+                parent_sent = get_parent_sent(frame)
                 interp = frame['interp']
                 # onto, t = interp['type'].split(':')
                 text = frame["provenance"]['text']
                 span = compute_span(frame)
 
-                csr_evm = self.add_event_mention(
-                    span, span, text, interp['type'], realis=interp['realis'],
-                    parent_sent=parent_sent, component=frame['component'],
-                    event_id=frame['@id']
-                )
+                raw_type = interp.get("type", None)
+
+                if raw_type is None or isinstance(raw_type, str):
+                    event_types = [raw_type]
+                else:
+                    event_types = handle_xor(raw_type)
+
+                for t in event_types:
+                    csr_evm = self.add_event_mention(
+                        span, span, text, t, realis=interp.get('realis', None),
+                        parent_sent=parent_sent, component=frame['component'],
+                        event_id=frame['@id']
+                    )
 
                 for mod, v in frame["provenance"]["modifiers"].items():
                     csr_evm.add_modifier(mod, v)
@@ -829,14 +860,19 @@ class CSR:
                     arg_values = []
                     if arg['@type'] == 'xor':
                         for sub_arg in arg['args']:
-                            arg_values.append(sub_arg['value'])
+                            arg_values.append(sub_arg)
                     else:
                         arg_values.append(arg)
 
                     for arg_val in arg_values:
-                        arg_onto, arg_type = arg_val['type'].split(':')
-                        arg_id = arg_val['@id']
-                        arg_entity_id = arg_val['arg']
+                        if arg_val['@type'] == 'facet':
+                            arg_detail = arg_val['value']
+                        else:
+                            arg_detail = arg_val
+
+                        arg_onto, arg_type = arg_detail['type'].split(':')
+                        arg_id = arg_detail['@id']
+                        arg_entity_id = arg_detail['arg']
                         ent = entities[arg_entity_id]
 
                         csr_evm.add_arg(
@@ -847,33 +883,23 @@ class CSR:
             for frame in frame_data['relation_evidence']:
                 fid = frame['@id']
                 interp = frame['interp']
-                onto, rel_type = interp['type'].split(':')
 
                 args = [arg['arg'] for arg in interp['args']]
                 arg_names = [arg['type'] for arg in interp['args']]
 
-                span = None
-                if 'provenance' in frame:
-                    start = frame['provenance']['start']
-                    end = start + frame['provenance']['length']
-                    span = (start, end)
+                if "provenance" in frame:
+                    span = compute_span(frame)
+                    parent_sent = get_parent_sent(frame)
 
-                if len(set(arg_names)) == 1 and arg_names[0] == 'aida:member':
-                    # i.e. all arguments are the same, unordered.
-                    rel = self.add_relation(
-                        args, component=frame['component'],
-                        relation_id=fid, span=span,
-                        score=frame.get('score', None)
-                    )
-                else:
+                rel = self.add_relation(
+                    args, arg_names,
+                    parent_sent=parent_sent,
+                    component=frame['component'],
+                    relation_id=fid, span=span,
+                    score=frame.get('score', None)
+                )
 
-                    rel = self.add_relation(
-                        args, arg_names, component=frame['component'],
-                        relation_id=fid, span=span,
-                        score=frame.get('score', None)
-                    )
-
-                rel.add_type(onto, rel_type)
+                rel.add_type(interp['type'])
 
     def clear(self):
         self._span_frame_map.clear()
@@ -938,6 +964,7 @@ class CSR:
         span = tuple(span)
         if not sent:
             # Find the sentence if not provided.
+            print("Finding sentences for span ", span)
             sent = self.find_parent_sent(span)
 
         if not sent:
@@ -991,7 +1018,6 @@ class CSR:
 
         return begin, end
 
-
     def get_by_span(self, object_type, span):
         span = tuple(span)
         head_span_type = object_type + '_head'
@@ -1010,11 +1036,13 @@ class CSR:
         return onto_name, entity_type
 
     def add_relation(self, arguments, arg_names=None, component=None,
-                     relation_id=None, span=None, score=None):
+                     parent_sent=None, relation_id=None, span=None,
+                     score=None):
         """
         Adding a relation mention to CSR. If the span is not provided, it will
         not have a provenance.
 
+        :param parent_sent: The parent sentence of the relation mention.
         :param arguments: List of arguments (their frame ids).
         :param arg_names: If provided, the arguments will be named
         accordingly.
@@ -1034,8 +1062,10 @@ class CSR:
             # We didn't provide text for validation, this may result in
             # incorrect spans. But relations are build on other mentions, so
             # it should generally be OK.
-            align_res = self.align_to_text(span, None, None)
+
+            align_res = self.align_to_text(span, None, parent_sent)
             if not align_res:
+                print('no align result')
                 return
 
             sent, fitted_span, valid_text = align_res

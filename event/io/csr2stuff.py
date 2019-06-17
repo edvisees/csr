@@ -3,6 +3,7 @@ from collections import defaultdict
 import os
 import sys
 from event.io.csr import Constants, CSR
+from event.io.ontology import JsonOntologyLoader
 
 
 def get_span(frame):
@@ -66,11 +67,12 @@ def make_text_bound(text_bound_index, t, start, end, text):
 
 
 class CrsConverter:
-    def __init__(self):
+    def __init__(self, ontology):
         self.data = []
+        self.ontology = ontology
 
     def read_csr(self, path):
-        csr = CSR('Read_from_file', 1, 'data')
+        csr = CSR('Load_from_Disk', 1, 'data', ontology=self.ontology)
         csr.load_from_file(path)
 
         doc_sentences = defaultdict(list)
@@ -80,40 +82,57 @@ class CrsConverter:
         relations = []
 
         for fid, sent_frame in csr.get_frames(csr.sent_key).items():
-            parent = sent_frame.parent
+            parent = sent_frame.parent.id
             doc_sentences[parent].append(
                 (sent_frame.span.get(), sent_frame.text, sent_frame.id)
             )
 
         for fid, event_frame in csr.get_frames(csr.event_key).items():
-            parent = event_frame.parent
+            parent = event_frame.parent.id
             event_id = event_frame.id
             event_mentions[parent][event_id] = (
                 event_frame.span.get(),
-                event_frame.event_type,
+                event_frame.get_types(),
                 event_frame.text
             )
 
             arg_interps = event_frame.interp.get_field('args')
 
-            if arg_interps:
-                for arg_slot, arg_entities in arg_interps.items():
-                    for entity_id, arg_entry in arg_entities.items():
-                        arg = arg_entry['content']
-                        entity_mention = arg.entity_mention
-                        full_arg_role = arg.arg_role
-                        arg_entity_id = entity_mention.id
-                        event_args[event_id].append(
-                            (arg_entity_id, full_arg_role)
+            # print(event_frame.interp)
+            # print(event_frame.interp.get_field_names())
+            # print(arg_interps)
+            # input('event frame?')
+
+            for arg_slot, arguments in event_frame.arguments.items():
+                for arg in arguments:
+                    event_args[event_id].append(
+                        (
+                            arg.entity_mention.id,
+                            arg.arg_role
                         )
+                    )
+
+            # if arg_interps:
+            #     print(arg_interps)
+            #     input('yes arg interps')
+            #
+            #     for arg_slot, arg_entities in arg_interps.items():
+            #         for entity_id, arg_entry in arg_entities.items():
+            #             arg = arg_entry['content']
+            #             entity_mention = arg.entity_mention
+            #             full_arg_role = arg.arg_role
+            #             arg_entity_id = entity_mention.id
+            #             event_args[event_id].append(
+            #                 (arg_entity_id, full_arg_role)
+            #             )
 
         for fid, entity_frame in csr.get_frames(csr.entity_key).items():
-            parent = entity_frame.parent
+            parent = entity_frame.parent.id
             entity_id = entity_frame.id
 
             entity_mentions[parent][entity_id] = (
                 entity_frame.span.get(),
-                entity_frame.entity_types[0],
+                entity_frame.get_types(),
                 entity_frame.text,
             )
 
@@ -121,11 +140,10 @@ class CrsConverter:
             for rt in rel_frame.get_types():
                 relations.append((rt, rel_frame.arguments))
 
-        self.data = doc_sentences, event_mentions, event_args, \
-                    entity_mentions, relations
+        self.data = (doc_sentences, event_mentions, event_args,
+                     entity_mentions, relations)
 
-    def write_brat(self, output_dir, keep_onto=False, onto_set=None,
-                   extension='.ltf.xml'):
+    def write_brat(self, output_dir, keep_onto=False, onto_set=None):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 
@@ -134,16 +152,21 @@ class CrsConverter:
         doc_texts = construct_text(doc_sentences)
 
         for docid, doc_text in doc_texts.items():
-            doc_name, media = docid.split('-')
-            doc_name = doc_name.replace(extension, '')
-
-            src_output = os.path.join(output_dir, strip_ns(doc_name) + '.txt')
+            src_output = os.path.join(output_dir, strip_ns(docid) + '.txt')
             text_bound_index = 0
             event_index = 0
             with open(src_output, 'w') as out:
                 out.write(doc_text)
 
-            ann_output = os.path.join(output_dir, strip_ns(doc_name) + '.ann')
+            print(f'Doc {docid} contains '
+                  f'{len(doc_sentences[docid])} sentences, '
+                  f'{len(event_mentions)} events, '
+                  f'{len(entity_mentions)} entities, '
+                  f'{len(event_args)} event args, '
+                  f'{len(relations)} relations.'
+                  )
+
+            ann_output = os.path.join(output_dir, strip_ns(docid) + '.ann')
 
             with open(ann_output, 'w') as out:
                 entity2tid = {}
@@ -152,86 +175,120 @@ class CrsConverter:
                     (sent_start, sent_end), sent_text, sid = sent
 
                     for entity_id, ent in entity_mentions[sid].items():
-                        span, entity_type, text = ent
+                        span, entity_types, text = ent
 
-                        onto, raw_type = entity_type.split(':')
+                        for entity_type in entity_types:
+                            onto, raw_type = entity_type.split(':')
 
-                        if onto_set and onto not in onto_set:
-                            full_type = 'OTHER'
-                        else:
-                            full_type = onto + '_' + raw_type if keep_onto \
-                                else raw_type
+                            if onto_set and onto not in onto_set:
+                                # print(entity_type, 'not in ontology')
+                                # full_type = 'OTHER'
+                                continue
+                            else:
+                                full_type = onto + '_' + raw_type if keep_onto \
+                                    else raw_type
 
-                        full_type = full_type.replace('.', '_')
+                            full_type = full_type.replace('.', '_')
 
-                        text_bound = make_text_bound(
-                            text_bound_index, full_type,
-                            sent_start + span[0], sent_start + span[1],
-                            text
-                        )
+                            text_bound = make_text_bound(
+                                text_bound_index, full_type,
+                                sent_start + span[0], sent_start + span[1],
+                                text
+                            )
 
-                        entity2tid[entity_id] = "T{}".format(text_bound_index)
+                            entity2tid[entity_id] = "T{}".format(
+                                text_bound_index)
 
-                        text_bound_index += 1
+                            text_bound_index += 1
 
-                        out.write(text_bound)
+                            out.write(text_bound)
 
                 for sent in doc_sentences[docid]:
                     (sent_start, sent_end), sent_text, sid = sent
 
                     for event_id, evm in event_mentions[sid].items():
-                        span, event_type, text = evm
+                        span, event_types, text = evm
 
-                        onto, raw_type = event_type.split(':')
+                        for event_type in event_types:
+                            onto, raw_type = event_type.split(':')
 
-                        if onto_set and onto not in onto_set:
-                            continue
+                            if onto_set and onto not in onto_set:
+                                continue
 
-                        full_type = onto + '_' + raw_type if keep_onto \
-                            else raw_type
+                            full_type = onto + '_' + raw_type if keep_onto \
+                                else raw_type
 
-                        full_type = full_type.replace('.', '_')
+                            full_type = full_type.replace('.', '_')
 
-                        text_bound = make_text_bound(
-                            text_bound_index, full_type,
-                            sent_start + span[0], sent_start + span[1], text
-                        )
+                            text_bound = make_text_bound(
+                                text_bound_index, full_type,
+                                sent_start + span[0], sent_start + span[1], text
+                            )
 
-                        event_anno = 'E{}\t{}:T{}'.format(
-                            event_index, full_type, text_bound_index
-                        )
+                            event_anno = 'E{}\t{}:T{}'.format(
+                                event_index, full_type, text_bound_index
+                            )
 
-                        if event_id in event_args:
-                            args = event_args[event_id]
+                            if event_id in event_args:
+                                args = event_args[event_id]
 
-                            for arg_entity, full_arg_role in args:
-                                onto, arg_role = full_arg_role.split(':')
+                                for arg_entity, full_arg_role in args:
+                                    onto, arg_role = full_arg_role.split(':')
 
-                                if onto_set and onto in onto_set:
-                                    arg_role = arg_role.replace('.', '_')
-                                else:
-                                    arg_role = 'Arg'
+                                    if onto_set and onto in onto_set:
+                                        arg_role = arg_role.replace('.', '_')
+                                    else:
+                                        # Ignore out of ontology arguments.
+                                        # arg_role = 'Arg'
+                                        continue
 
-                                if arg_entity in entity2tid:
-                                    arg_anno = arg_role + ':' + entity2tid[
-                                        arg_entity]
-                                    event_anno += ' ' + arg_anno
+                                    if arg_entity in entity2tid:
+                                        arg_anno = arg_role + ':' + entity2tid[
+                                            arg_entity]
+                                        event_anno += ' ' + arg_anno
 
-                        event_anno += '\n'
+                            event_anno += '\n'
 
-                        text_bound_index += 1
-                        event_index += 1
+                            text_bound_index += 1
+                            event_index += 1
 
-                        out.write(text_bound)
-                        out.write(event_anno)
+                            out.write(text_bound)
+                            out.write(event_anno)
+
+                r_id = 1
+                for rel_type, rel_args in relations:
+                    # Like this  "R1	Origin Arg1:T3 Arg2:T4"
+                    if 'coreference' in rel_type:
+                        continue
+
+                    onto, raw_type = rel_type.split(':')
+                    if onto not in onto_set:
+                        continue
+
+                    r_str = f'R{r_id}\t' + raw_type
+                    r_id += 1
+
+                    i = 0
+                    for rel_arg in rel_args:
+                        i += 1
+                        arg_name = f'Arg{i}'
+                        arg_type = rel_arg.arg_type.split(':')[1]
+                        r_str += ' ' + arg_name + ':' + entity2tid[
+                            rel_arg.arg_ent_id]
+
+                    out.write(r_str + '\n')
 
 
 if __name__ == '__main__':
-    csr_in, brat_out = sys.argv[1:3]
+    csr_in, brat_out, onto_path = sys.argv[1:4]
+    ontology = JsonOntologyLoader(onto_path)
 
-    converter = CrsConverter()
+    converter = CrsConverter(ontology)
+
+    print("Input directory is ", csr_in)
+    print("Brat output directory is ", brat_out)
 
     for fn in os.listdir(csr_in):
         if fn.endswith('.csr.json'):
             converter.read_csr(os.path.join(csr_in, fn))
-            converter.write_brat(brat_out, False, onto_set={'aida'})
+            converter.write_brat(brat_out, False, onto_set={'ldcOnt'})
