@@ -2,7 +2,7 @@ CSR (Central Semantic Representation)
 ===
 
 The CSR format is a format for storing text analysis results, which is mainly
-mainly developed for the AIDA (Active Interpretation of Disparate Alternatives) 
+ developed for the AIDA (Active Interpretation of Disparate Alternatives) 
 project.
 
 This repository contains several toolkit for CSR analysis.
