@@ -66,7 +66,7 @@ def make_text_bound(text_bound_index, t, start, end, text):
     )
 
 
-class CrsConverter:
+class CsrConverter:
     def __init__(self, ontology):
         self.data = []
         self.ontology = ontology
@@ -74,6 +74,9 @@ class CrsConverter:
     def read_csr(self, path):
         csr = CSR('Load_from_Disk', 1, 'data', ontology=self.ontology)
         csr.load_from_file(path)
+        self.load_csr(csr)
+
+    def load_csr(self, csr):
 
         doc_sentences = defaultdict(list)
         event_mentions = defaultdict(dict)
@@ -96,13 +99,6 @@ class CrsConverter:
                 event_frame.text
             )
 
-            arg_interps = event_frame.interp.get_field('args')
-
-            # print(event_frame.interp)
-            # print(event_frame.interp.get_field_names())
-            # print(arg_interps)
-            # input('event frame?')
-
             for arg_slot, arguments in event_frame.arguments.items():
                 for arg in arguments:
                     event_args[event_id].append(
@@ -111,20 +107,6 @@ class CrsConverter:
                             arg.arg_role
                         )
                     )
-
-            # if arg_interps:
-            #     print(arg_interps)
-            #     input('yes arg interps')
-            #
-            #     for arg_slot, arg_entities in arg_interps.items():
-            #         for entity_id, arg_entry in arg_entities.items():
-            #             arg = arg_entry['content']
-            #             entity_mention = arg.entity_mention
-            #             full_arg_role = arg.arg_role
-            #             arg_entity_id = entity_mention.id
-            #             event_args[event_id].append(
-            #                 (arg_entity_id, full_arg_role)
-            #             )
 
         for fid, entity_frame in csr.get_frames(csr.entity_key).items():
             parent = entity_frame.parent.id
@@ -283,7 +265,7 @@ if __name__ == '__main__':
     csr_in, brat_out, onto_path = sys.argv[1:4]
     ontology = JsonOntologyLoader(onto_path)
 
-    converter = CrsConverter(ontology)
+    converter = CsrConverter(ontology)
 
     print("Input directory is ", csr_in)
     print("Brat output directory is ", brat_out)

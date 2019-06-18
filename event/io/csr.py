@@ -488,7 +488,7 @@ class RelationMention(SpanInterpFrame):
     """
 
     def __init__(self, fid, parent, begin, length, text,
-                 component=None, score=None, justification=None):
+                 component=None, score=None):
         super().__init__(
             fid, 'relation_evidence', parent, 'relation_evidence_interp',
             begin, length, text, component=component, score=score)
@@ -705,8 +705,8 @@ class CSR:
     Main class that collect and output frames.
     """
 
-    def __init__(self, component_name, run_id, namespace,
-                 media_type='text', ontology=None):
+    def __init__(self, component_name, run_id, namespace, ontology,
+                 media_type='text', onto_check=True):
         self.header = {
             "@context": [
                 "https://www.isi.edu/isd/LOOM/opera/"
@@ -728,6 +728,7 @@ class CSR:
                 'runid': 'r%s' % run_id,
             },
         }
+        self.onto_check = onto_check
 
         self._docs = {}
 
@@ -754,6 +755,12 @@ class CSR:
         self.image_detection_key = 'image_detection'
 
         self.ontology = ontology
+
+    def turnoff_onto_check(self):
+        self.onto_check = False
+
+    def turnon_onto_check(self):
+        self.onto_check = True
 
     def set_root(self, root_id):
         self.root_id = root_id
@@ -797,7 +804,8 @@ class CSR:
                 fid = frame['@id']
 
                 if frame_type == 'document':
-                    self.add_doc(docname, media_type, frame['language'], docname)
+                    self.add_doc(docname, media_type, frame['language'],
+                                 docname)
                 elif frame_type == 'sentence':
                     start = frame["provenance"]["start"]
                     end = frame["provenance"]["length"] + start
@@ -964,11 +972,10 @@ class CSR:
         span = tuple(span)
         if not sent:
             # Find the sentence if not provided.
-            print("Finding sentences for span ", span)
             sent = self.find_parent_sent(span)
 
         if not sent:
-            logging.warning("No suitable sentence for entity {}".format(span))
+            logging.warning("No suitable sentence for span {}".format(span))
             return
 
         fitted_span = self.fit_to_sentence(span, sent)
@@ -990,11 +997,17 @@ class CSR:
             if "".join(span_text.split()) == "".join(text.split()):
                 logging.warning('only white space difference, accepting.')
                 return span_text
+
+            logging.warning(
+                f"Span text [{span_text}] not aligned with provided [{text}]")
             return None
 
         return text
 
     def find_parent_sent(self, span):
+        # print('trying on char sent map of size ', len(self._char_sent_map))
+        # print('trying with', span, span[0])
+        # input('huh')
         if span[0] in self._char_sent_map:
             sentence = self._frame_map[self.sent_key][
                 self._char_sent_map[span[0]]]
@@ -1191,13 +1204,15 @@ class CSR:
                 onto_name, evm_type = evm_onto_type
 
                 if onto_name == self.ontology.prefix:
-                    if full_evm_type not in self.ontology.event_onto:
-                        logging.warning(f"Event type {full_evm_type} rejected "
-                                        f"because of ontology name mismatch.")
-                        return
+                    if self.onto_check:
+                        if full_evm_type not in self.ontology.event_onto:
+                            logging.warning(
+                                f"Event type {full_evm_type} rejected "
+                                f"because of ontology name mismatch.")
+                            return
             else:
                 logging.warning(f"Event type {full_evm_type} rejected "
-                                f"because there is not ontology.")
+                                f"because there is no ontology provided.")
 
         # Annotation on the same span will be reused.
         head_span = tuple(head_span)
@@ -1285,7 +1300,7 @@ class CSR:
                 if t.startswith('aida:'):
                     aida_arg_entity_types.append(t.split(':')[1])
 
-            arg_onto_name, sub_role = role.split(':')
+            arg_onto_name, slot_type = role.split(':')
 
             arg_onto = None
             if arg_onto_name == 'fn':
@@ -1295,7 +1310,7 @@ class CSR:
             elif arg_onto_name == self.ontology.prefix:
                 arg_onto = arg_onto_name
 
-            return evm.add_arg(arg_onto, sub_role, ent, arg_id,
+            return evm.add_arg(arg_onto, slot_type, ent, arg_id,
                                component=component, score=score)
 
     def add_event_arg(self, evm, ent, ontology, arg_role, component):

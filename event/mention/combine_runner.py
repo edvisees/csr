@@ -59,7 +59,8 @@ def add_entity_relations(relation_file, edl_entities, csr):
                     logging.error(
                         "Insufficient number of fields ({}) in relation"
                         "at doc {}, sent {}. some might be filtered".format(
-                            len(args), relation_file, relation['inputSentence']))
+                            len(args), relation_file,
+                            relation['inputSentence']))
                     continue
 
                 # Adding a score here will create a interp level score.
@@ -498,7 +499,8 @@ def analyze_sentence(text):
     return negations
 
 
-def read_source(source_folder, language, ontology, child2root):
+def read_source(source_folder, language, ontology, child2root,
+                csr_component_name):
     for source_text_path in glob.glob(source_folder + '/*.txt'):
         # Use the empty newline to handle different newline format.
         with open(source_text_path, newline='') as text_in:
@@ -506,7 +508,7 @@ def read_source(source_folder, language, ontology, child2root):
 
             runid = time.strftime("%Y%m%d%H%M")
 
-            csr = CSR('Frames_hector_combined', runid, 'data',
+            csr = CSR(csr_component_name, runid, 'data',
                       ontology=ontology)
 
             # Find the root if possible, otherwise use itself.
@@ -609,8 +611,8 @@ def add_entity_linking(csr, wiki_file, lang):
 
         # For entities sharing the same wiki id, we use the first appearance.
         # for link, l_ent in link_to_ent.items():
-            # for ent in l_ent:
-                # ent.add_canonical(l_ent[0].id)
+        # for ent in l_ent:
+        # ent.add_canonical(l_ent[0].id)
 
 
 def add_entity_salience(csr, entity_salience_info):
@@ -722,7 +724,8 @@ def main(config):
             ignore_edl = True
 
     for csr, docid in read_source(config.source_folder, config.language,
-                                  ontology, child2root):
+                                  ontology, child2root,
+                                  'Frames_hector_combined'):
         logging.info('Working with docid: {}'.format(docid))
 
         if config.edl_json and not ignore_edl:
@@ -808,38 +811,31 @@ def main(config):
         csr.write(os.path.join(config.csr_output, docid + '.csr.json'))
 
 
+class CombineParams(DetectionParams):
+    source_folder = Unicode(help='source text folder').tag(config=True)
+    rich_event = Unicode(help='Rich event output.').tag(config=True)
+    edl_json = Unicode(help='EDL json output.').tag(config=True)
+    dbpedia_wiki_json = Unicode(help='DBpedia output').tag(config=True)
+    relation_json = Unicode(help='Relation json output.').tag(config=True)
+    salience_data = Unicode(help='Salience output.').tag(config=True)
+    rich_event_token = Bool(
+        help='Whether to use tokens from rich event output',
+        default_value=False).tag(config=True)
+    add_rule_detector = Bool(help='Whether to add rule detector',
+                             default_value=False).tag(config=True)
+    output_folder = Unicode(help='Parent output directory').tag(config=True)
+    conllu_folder = Unicode(help='CoNLLU directory').tag(config=True)
+    csr_output = Unicode(help='Main CSR output directory').tag(config=True)
+
+    ontology_path = Unicode(help='Ontology url or path.').tag(config=True)
+
+    parent_children_tab = Unicode(
+        help='File parent children relations provided').tag(config=True)
+
+
 if __name__ == '__main__':
     from event import util
     import sys
-
-
-    class CombineParams(DetectionParams):
-        source_folder = Unicode(help='source text folder').tag(config=True)
-        rich_event = Unicode(help='Rich event output.').tag(config=True)
-        edl_json = Unicode(help='EDL json output.').tag(config=True)
-        dbpedia_wiki_json = Unicode(help='DBpedia output').tag(config=True)
-        relation_json = Unicode(help='Relation json output.').tag(config=True)
-        salience_data = Unicode(help='Salience output.').tag(config=True)
-        rich_event_token = Bool(
-            help='Whether to use tokens from rich event output',
-            default_value=False).tag(config=True)
-        add_rule_detector = Bool(help='Whether to add rule detector',
-                                 default_value=False).tag(config=True)
-        output_folder = Unicode(help='Parent output directory').tag(config=True)
-        conllu_folder = Unicode(help='CoNLLU directory').tag(config=True)
-        csr_output = Unicode(help='Main CSR output directory').tag(config=True)
-
-        ontology_path = Unicode(help='Ontology url or path.').tag(config=True)
-
-        # Aida specific
-        # seedling_event_mapping = Unicode(
-        #     help='Seedling event mapping to TAC-KBP').tag(config=True)
-        # seedling_argument_mapping = Unicode(
-        #     help='Seedling argument mapping to TAC-KBP').tag(config=True)
-
-        parent_children_tab = Unicode(
-            help='File parent children relations provided').tag(config=True)
-
 
     conf = PyFileConfigLoader(sys.argv[1]).load_config()
 
