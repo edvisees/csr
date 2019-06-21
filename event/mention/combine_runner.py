@@ -57,7 +57,7 @@ def add_entity_relations(relation_file, edl_entities, csr):
 
                 if len(args) < 2:
                     logging.error(
-                        "Insufficient number of fields ({}) in relation"
+                        "Insufficient number of fields ({}) in relation "
                         "at doc {}, sent {}. some might be filtered".format(
                             len(args), relation_file,
                             relation['inputSentence']))

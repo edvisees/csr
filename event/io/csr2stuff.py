@@ -247,18 +247,19 @@ class CsrConverter:
                     if onto not in onto_set:
                         continue
 
-                    r_str = f'R{r_id}\t' + raw_type
-                    r_id += 1
+                    if len(rel_args) == 2:
+                        r_str = f'R{r_id}\t' + raw_type
+                        r_id += 1
 
-                    i = 0
-                    for rel_arg in rel_args:
-                        i += 1
-                        arg_name = f'Arg{i}'
-                        arg_type = rel_arg.arg_type.split(':')[1]
-                        r_str += ' ' + arg_name + ':' + entity2tid[
-                            rel_arg.arg_ent_id]
+                        i = 0
+                        for rel_arg in rel_args:
+                            i += 1
+                            arg_name = f'Arg{i}'
+                            arg_type = rel_arg.arg_type.split(':')[1]
+                            r_str += ' ' + arg_name + ':' + entity2tid[
+                                rel_arg.arg_ent_id]
 
-                    out.write(r_str + '\n')
+                        out.write(r_str + '\n')
 
 
 if __name__ == '__main__':

@@ -8,9 +8,14 @@ if 'combine_language' in os.environ:
 else:
     c.DetectionParams.language = 'en'
 
+csr_resource_folder = get_env('csr_resources')
+
+# '/home/zhengzhl/workspace/aida/domain_frames/'
 c.DetectionParams.resource_folder = get_env('csr_resources')
+
 # '/home/zhengzhl/workspace/resources/fndata-1.7/frame'
-c.DetectionParams.frame_lexicon = get_env('frame_lex')
+c.DetectionParams.frame_lexicon = os.path.join(
+    csr_resource_folder, 'fn-1.7_frames')
 
 c.DetectionParams.word_embedding_dim = 300
 c.DetectionParams.position_embedding_dim = 50
@@ -19,8 +24,6 @@ c.DetectionParams.input_format = 'conllu'
 c.DetectionParams.no_punct = True
 c.DetectionParams.model_name = 'frame_rule'
 
-# '/home/zhengzhl/workspace/aida/domain_frames/'
-c.DetectionParams.resource_folder = get_env('csr_resources')
 
 c.DetectionParams.tag_list = os.path.join(c.DetectionParams.resource_folder,
                                           'target_frames.txt')
