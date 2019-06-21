@@ -31,7 +31,7 @@ def write_ltf(outfile, lang, doc_id, segments):
    text = ET.SubElement(doc, "TEXT")
    start_char = 1
    for utt_id in sorted(segments.keys()):
-      words = [w for w in segments[utt_id].split() if w.lower() != "<unk>"]
+      words = [w for w in segments[utt_id].split() if w.lower() not in ["<unk>", "<sil>"]]
       if len(words) == 0:
          continue
       words.append(".")
