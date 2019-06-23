@@ -162,13 +162,16 @@ class CsrConverter:
                         for entity_type in entity_types:
                             onto, raw_type = entity_type.split(':')
 
-                            if onto_set and onto not in onto_set:
-                                # print(entity_type, 'not in ontology')
-                                # full_type = 'OTHER'
-                                continue
-                            else:
-                                full_type = onto + '_' + raw_type if keep_onto \
-                                    else raw_type
+                            # if onto_set and onto not in onto_set:
+                            #     # print(entity_type, 'not in ontology')
+                            #     # full_type = 'OTHER'
+                            #     continue
+                            # else:
+                            #     full_type = onto + '_' + raw_type if keep_onto \
+                            #         else raw_type
+
+                            full_type = onto + '_' + raw_type if keep_onto \
+                                else raw_type
 
                             full_type = full_type.replace('.', '_')
 
@@ -211,8 +214,11 @@ class CsrConverter:
                                 event_index, full_type, text_bound_index
                             )
 
+                            # print('writing event ', event_index, full_type, text)
+
                             if event_id in event_args:
                                 args = event_args[event_id]
+                                # print('possible args ', args)
 
                                 for arg_entity, full_arg_role in args:
                                     onto, arg_role = full_arg_role.split(':')
