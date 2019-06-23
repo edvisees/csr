@@ -48,13 +48,15 @@ def ltf2txt(in_dir, out_dir):
                     seg_attr = seg.attrib
                     seg_id = seg_attr['id']
                     key_frame = seg_attr.get('keyframe', '-')
+                    score = seg_attr.get('score', '-')
 
                     sents.append(
-                        "{} {} {} {}".format(
+                        "{} {} {} {} {}".format(
                             int(seg_attr['start_char']) - 1,
                             int(seg_attr['end_char']) + 1,
                             seg_id,
                             key_frame,
+                            score
                         )
                     )
 

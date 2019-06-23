@@ -542,8 +542,16 @@ def read_source(source_folder, language, ontology, child2root,
                         if kf == '-':
                             kf = None
 
+                        if len(span_parts) >= 5:
+                            score = span_parts[4]
+                        else:
+                            score = None
+
+                        if score == '-':
+                            score = None
+
                         sent = csr.add_sentence(
-                            span, text=sent_text, keyframe=kf)
+                            span, text=sent_text, keyframe=kf, score=score)
 
                         negations = analyze_sentence(sent_text)
                         for neg in negations:

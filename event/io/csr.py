@@ -376,10 +376,11 @@ class Sentence(SpanInterpFrame):
     """
 
     def __init__(self, fid, parent, begin, length, text,
-                 component=None, keyframe=None):
+                 component=None, keyframe=None, score=None):
         super().__init__(fid, 'sentence', parent, 'sentence_interp',
                          begin, length, text, component=component)
         self.keyframe = keyframe
+        self.score = score
 
     def substring(self, span):
         """
@@ -391,6 +392,12 @@ class Sentence(SpanInterpFrame):
         begin = span[0] - self.span.begin
         end = span[1] - self.span.begin
         return self.span.text[begin: end]
+
+    def json_rep(self):
+        rep = super().json_rep()
+        if self.score:
+            rep["score"] = self.score
+        return rep
 
 
 class EntityMention(SpanInterpFrame):
@@ -938,7 +945,7 @@ class CSR:
         return frames.get(frame_id)
 
     def add_sentence(self, span, text=None, component=None, keyframe=None,
-                     sent_id=None):
+                     sent_id=None, score=None):
         if not sent_id:
             sent_id = self.get_id('sent')
 
@@ -949,7 +956,7 @@ class CSR:
         sent_text = text if text else ""
         sent = Sentence(
             sent_id, self.current_doc, span[0], span[1] - span[0],
-            text=sent_text, component=component, keyframe=keyframe
+            text=sent_text, component=component, keyframe=keyframe, score=score
         )
         self._frame_map[self.sent_key][sent_id] = sent
 
