@@ -11,6 +11,7 @@ def get_args():
    ap = argparse.ArgumentParser(description="Convert speech transcripts to LTF files")
    ap.add_argument("transcript_file", help="format: utt_id<TAB>lang_id<TAB>transcripts")
    ap.add_argument("output_ltf_dir", help="Output directory where LTF files should be writtern")
+   ap.add_argument("--add_scores", help="add scores utt_id<TAB>lang_id<TAB>score<TAB>transcripts", action="store_true")
    return ap.parse_args()
 
 
@@ -31,7 +32,8 @@ def write_ltf(outfile, lang, doc_id, segments):
    text = ET.SubElement(doc, "TEXT")
    start_char = 1
    for utt_id in sorted(segments.keys()):
-      words = [w for w in segments[utt_id].split() if w.lower() not in ["<unk>", "<sil>"]]
+      score = segments[utt_id]["score"]
+      words = [w for w in segments[utt_id]["text"].split() if w.lower() not in ["<unk>", "<sil>"]]
       if len(words) == 0:
          continue
       words.append(".")
@@ -39,6 +41,7 @@ def write_ltf(outfile, lang, doc_id, segments):
       seg = ET.SubElement(text, "SEG", {
          "id": utt_id,
          "keyframe": utt_id,
+         "score": str(score),
          "start_char": str(start_char),
          "end_char": str(start_char + len(segment_text) - 1)
       })
@@ -64,15 +67,23 @@ def main():
       lines = fin.readlines()
    utterances = defaultdict(lambda: defaultdict(dict))
    for line in lines:
-      fields = line.split(None, 2)
-      if len(fields) != 3:
-         continue
-      utt_id, lang, transcript = fields
+      if args.add_scores:
+         fields = line.split(None, 3)
+         if len(fields) != 4:
+            continue
+         utt_id, lang, score, transcript = fields
+         score = float(score)
+      else:
+         fields = line.split(None, 2)
+         if len(fields) != 3:
+            continue
+         utt_id, lang, transcript = fields
+         score = 1.0
       lang = normalize_lang(lang)
       if not lang:
          continue
       doc_id = utt_id.rsplit('_', 1)[0].upper()
-      utterances[lang][doc_id][utt_id.upper()] = transcript.strip()
+      utterances[lang][doc_id][utt_id.upper()] = {"score": score, "text": transcript.strip()}
    for lang in utterances:
        if not os.path.exists(os.path.join(args.output_ltf_dir, lang)):
          os.makedirs(os.path.join(args.output_ltf_dir, lang))
