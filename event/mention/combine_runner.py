@@ -22,7 +22,7 @@ from event.io.ontology import (
     MappingLoader,
     JsonOntologyLoader,
 )
-from event import resources
+from event import resources, comex_integration_utils
 import nltk
 import time
 
@@ -807,6 +807,17 @@ def main(config):
                 if docid in scored_events:
                     add_event_salience(csr, scored_events[docid])
 
+        # Integrate COMEX here
+        if config.ignore_comex is False and config.comex:
+            if not os.path.exists(config.comex):
+                logging.info("No COMEX output")
+            else:
+                comex_file = find_by_id(config.comex, docid)
+                if comex_file:
+                    logging.info("Adding COMEX results: {}".format(comex_file))
+                    comex_integration_utils.add_comex(comex_file, csr)
+
+
         # TODO: we could possibly remove all conll related stuff.
         if config.add_rule_detector:
             logging.info("Reading on CoNLLU: {}".format(conll_file))
@@ -839,6 +850,10 @@ class CombineParams(DetectionParams):
 
     parent_children_tab = Unicode(
         help='File parent children relations provided').tag(config=True)
+    comex = Unicode(help='COMEX json output.').tag(config=True)
+    ignore_comex = Bool(
+        help='Whether to integrate COMEX',
+        default_value=False).tag(config=True)
 
 
 if __name__ == '__main__':
