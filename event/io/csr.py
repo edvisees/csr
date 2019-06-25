@@ -1316,6 +1316,8 @@ class CSR:
                 arg_onto = 'propbank'
             elif arg_onto_name == self.ontology.prefix:
                 arg_onto = arg_onto_name
+            else:
+                return
 
             return evm.add_arg(arg_onto, slot_type, ent, arg_id,
                                component=component, score=score)
