@@ -1307,7 +1307,7 @@ class CSR:
                 if t.startswith('aida:'):
                     aida_arg_entity_types.append(t.split(':')[1])
 
-            arg_onto_name, slot_type = role.split(':')
+            arg_onto_name, slot_type = role.split(':', 1)
 
             arg_onto = None
             if arg_onto_name == 'fn':
