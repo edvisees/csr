@@ -39,6 +39,15 @@ class Frame(Jsonable):
         self.parent = parent
         self.component = component
         self.score = score
+        # If marked as deleted, the CSR object will ignore it when generating
+        # JSON.
+        self.__is_deleted = False
+
+    def mark_as_delete(self):
+        self.__is_deleted = True
+
+    def is_deleted(self):
+        return self.__is_deleted
 
     def json_rep(self):
         rep = {
@@ -1334,8 +1343,11 @@ class CSR:
         rep['frames'] = [self.current_doc.json_rep()]
         for frame_type, frame_info in self._frame_map.items():
             for fid, frame in frame_info.items():
-                rep['frames'].append(frame.json_rep())
-
+                if not frame.is_deleted():
+                    rep['frames'].append(frame.json_rep())
+                else:
+                    logging.info(
+                        f"{fid} ignored since it is marked as deleted.")
         return rep
 
     def write(self, out_path, append=False):
