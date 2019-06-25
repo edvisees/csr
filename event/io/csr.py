@@ -46,6 +46,9 @@ class Frame(Jsonable):
     def mark_as_delete(self):
         self.__is_deleted = True
 
+    def unmark_delete(self):
+        self.__is_deleted = False
+
     def is_deleted(self):
         return self.__is_deleted
 
