@@ -22,7 +22,7 @@ def validate_sent(seg):
     return True
 
 
-def ltf2txt(in_dir, out_dir):
+def ltf2txt(in_dir, out_dir, off_by_1=False):
     lemmatizer = WordNetLemmatizer()
 
     for file in os.listdir(in_dir):
@@ -50,10 +50,19 @@ def ltf2txt(in_dir, out_dir):
                     key_frame = seg_attr.get('keyframe', '-')
                     score = seg_attr.get('score', '-')
 
+                    seg_begin = int(seg_attr['start_char'])
+                    seg_end = int(seg_attr['end_char']) + 1
+
+                    if off_by_1:
+                        seg_begin -= 1
+                        seg_end -= 1
+
                     sents.append(
                         "{} {} {} {} {}".format(
-                            int(seg_attr['start_char']) - 1,
-                            int(seg_attr['end_char']) + 1,
+                            # int(seg_attr['start_char']) - 1,
+                            # int(seg_attr['end_char']) + 1,
+                            seg_begin,
+                            seg_end,
                             seg_id,
                             key_frame,
                             score
@@ -64,7 +73,9 @@ def ltf2txt(in_dir, out_dir):
 
                     for token in seg:
                         if token.tag == 'TOKEN':
-                            begin = int(token.attrib['start_char']) - 1
+                            begin = int(token.attrib['start_char'])
+                            if off_by_1:
+                                begin -= 1
 
                             if new_sent:
                                 if bad_ending and begin > len(text):
@@ -90,8 +101,11 @@ def main():
     out_file = sys.argv[2]
     format_in = sys.argv[3]
 
-    if format_in == 'ltf':
-        ltf2txt(in_dir, out_file)
+    if format_in.startswith('ltf'):
+        if format_in == 'ltf_minus_1':
+            ltf2txt(in_dir, out_file, True)
+        else:
+            ltf2txt(in_dir, out_file, False)
 
 
 if __name__ == '__main__':
