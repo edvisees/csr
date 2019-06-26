@@ -474,7 +474,7 @@ class EntityMention(SpanInterpFrame):
         self.entity_types.add(full_type)
 
     def add_linking(self, mid, wiki, score, refkbid=None, lang='en',
-                    component=None, canonical_name=None):
+                    component=None, canonical_name=None, comexkbid=None):
         if mid:
             fb_link = 'freebase:' + mid
             fb_xref = ValueFrame(None, 'db_reference', score=score,
@@ -498,6 +498,14 @@ class EntityMention(SpanInterpFrame):
             refkb_xref.add_value('id', refkb_link)
             refkb_xref.add_value('canonical_name', canonical_name)
             self.interp.add_field('xref', 'refkb', refkbid, refkb_xref,
+                                  component=component, multi_value=True)
+        if comexkbid:
+            comexkb_link = 'comexkb:' + comexkbid
+            comexkb_xref = ValueFrame(None, 'db_reference',
+                                      score=score, component=component)
+            comexkb_xref.add_value('id', comexkb_link)
+            comexkb_xref.add_value('canonical_name', canonical_name)
+            self.interp.add_field('xref', 'comexkb', comexkbid, comexkb_xref,
                                   component=component, multi_value=True)
 
     def add_salience(self, salience_score):
