@@ -475,6 +475,9 @@ class EntityMention(SpanInterpFrame):
 
     def add_linking(self, mid, wiki, score, refkbid=None, lang='en',
                     component=None, canonical_name=None, comexkbid=None):
+        # Some system output string type scores.
+        score = float(score)
+        
         if mid:
             fb_link = 'freebase:' + mid
             fb_xref = ValueFrame(None, 'db_reference', score=score,
