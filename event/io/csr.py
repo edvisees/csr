@@ -6,6 +6,10 @@ import string
 from event.util import remove_punctuation
 
 
+class GlobalSwitches:
+    use_1_based_close_interval_system = False
+
+
 class Constants:
     GENERAL_ENTITY_TYPE = 'aida:General_Entity'
     GENERAL_EVENT_TYPE = 'aida:General_Event'
@@ -305,20 +309,32 @@ class Span:
     Represent text span (begin and end), according to the reference.
     """
 
-    def __init__(self, reference, begin, length, text):
+    def __init__(self, reference, begin, length, text, ltf_span_style=False):
         self.reference = reference
         self.begin = begin
         self.length = length
         self.text = text
+        self.off_start_by_1 = ltf_span_style
 
     def json_rep(self):
-        return {
-            '@type': 'text_span',
-            'text': self.text,
-            'reference': self.reference,
-            'start': self.begin,
-            'length': self.length,
-        }
+        if self.off_start_by_1:
+            # We have minus 1 during ltf2txt convention at the beginning,
+            # so here we may need to do this.
+            return {
+                '@type': 'text_span',
+                'text': self.text,
+                'reference': self.reference,
+                'start': self.begin + 1,
+                'length': self.length,
+            }
+        else:
+            return {
+                '@type': 'text_span',
+                'text': self.text,
+                'reference': self.reference,
+                'start': self.begin,
+                'length': self.length,
+            }
 
     def get(self):
         return self.begin, self.begin + self.length
@@ -337,10 +353,12 @@ class SpanInterpFrame(InterpFrame):
 
     def __init__(
             self, fid, frame_type, parent, interp_type, begin,
-            length, text, component=None, score=None):
+            length, text, component=None, score=None, ltf_span_style=False):
         super().__init__(fid, frame_type, parent, interp_type, component, score)
+
         if parent:
-            self.span = Span(parent.id, begin, length, text)
+            self.span = Span(parent.id, begin, length, text,
+                             ltf_span_style=ltf_span_style)
         else:
             self.span = None
 
@@ -388,11 +406,14 @@ class Sentence(SpanInterpFrame):
     """
 
     def __init__(self, fid, parent, begin, length, text,
-                 component=None, keyframe=None, score=None):
+                 component=None, keyframe=None, score=None,
+                 ltf_span_style=False):
         super().__init__(fid, 'sentence', parent, 'sentence_interp',
-                         begin, length, text, component=component)
+                         begin, length, text, component=component,
+                         ltf_span_style=ltf_span_style)
         self.keyframe = keyframe
         self.score = score
+        self.ltf_span_style = ltf_span_style
 
     def substring(self, span):
         """
@@ -785,7 +806,7 @@ class CSR:
         self.root_id = root_id
         self.header['meta']['root'] = root_id
 
-    def load_from_file(self, csr_file):
+    def load_from_file(self, csr_file, ltf_span_style=False):
         def get_parent_sent(this_frame):
             parent_sent_id = this_frame['provenance']['reference']
             if parent_sent_id in self._frame_map[self.sent_key]:
@@ -800,6 +821,9 @@ class CSR:
                 offset = 0
 
             s = this_frame["provenance"]["start"] + offset
+            if ltf_span_style:
+                s = s - 1
+
             e = this_frame["provenance"]["length"] + s
             return (s, e)
 
@@ -957,7 +981,7 @@ class CSR:
         return frames.get(frame_id)
 
     def add_sentence(self, span, text=None, component=None, keyframe=None,
-                     sent_id=None, score=None):
+                     sent_id=None, score=None, ltf_span_style=False):
         if not sent_id:
             sent_id = self.get_id('sent')
 
@@ -968,7 +992,8 @@ class CSR:
         sent_text = text if text else ""
         sent = Sentence(
             sent_id, self.current_doc, span[0], span[1] - span[0],
-            text=sent_text, component=component, keyframe=keyframe, score=score
+            text=sent_text, component=component, keyframe=keyframe, score=score,
+            ltf_span_style=ltf_span_style
         )
         self._frame_map[self.sent_key][sent_id] = sent
 

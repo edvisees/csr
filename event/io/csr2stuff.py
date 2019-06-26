@@ -71,9 +71,9 @@ class CsrConverter:
         self.data = []
         self.ontology = ontology
 
-    def read_csr(self, path):
+    def read_csr(self, path, ltf_span_style=False):
         csr = CSR('Load_from_Disk', 1, 'data', ontology=self.ontology)
-        csr.load_from_file(path)
+        csr.load_from_file(path, ltf_span_style=ltf_span_style)
         self.load_csr(csr)
 
     def load_csr(self, csr):
@@ -270,6 +270,8 @@ class CsrConverter:
 
 if __name__ == '__main__':
     csr_in, brat_out, onto_path = sys.argv[1:4]
+    ltf_span_style = False
+
     ontology = JsonOntologyLoader(onto_path)
 
     converter = CsrConverter(ontology)
@@ -279,5 +281,6 @@ if __name__ == '__main__':
 
     for fn in os.listdir(csr_in):
         if fn.endswith('.csr.json'):
-            converter.read_csr(os.path.join(csr_in, fn))
+            converter.read_csr(os.path.join(csr_in, fn),
+                               ltf_span_style=ltf_span_style)
             converter.write_brat(brat_out, False, onto_set={'ldcOnt'})

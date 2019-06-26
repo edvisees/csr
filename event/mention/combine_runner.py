@@ -500,7 +500,7 @@ def analyze_sentence(text):
 
 
 def read_source(source_folder, language, ontology, child2root,
-                csr_component_name):
+                csr_component_name, use_ltf_span_style = False):
     for source_text_path in glob.glob(source_folder + '/*.txt'):
         # Use the empty newline to handle different newline format.
         with open(source_text_path, newline='') as text_in:
@@ -551,7 +551,9 @@ def read_source(source_folder, language, ontology, child2root,
                             score = None
 
                         sent = csr.add_sentence(
-                            span, text=sent_text, keyframe=kf, score=score)
+                            span, text=sent_text, keyframe=kf, score=score,
+                            ltf_span_style=use_ltf_span_style,
+                        )
 
                         negations = analyze_sentence(sent_text)
                         for neg in negations:
@@ -566,8 +568,9 @@ def read_source(source_folder, language, ontology, child2root,
                 sent_lengths = [len(t) for t in sent_texts]
                 for sent_text, l in zip(sent_texts, sent_lengths):
                     if sent_text.strip():
-                        sent = csr.add_sentence((begin, begin + l),
-                                                text=sent_text)
+                        sent = csr.add_sentence(
+                            (begin, begin + l), text=sent_text,
+                            ltf_span_style=use_ltf_span_style)
                         negations = analyze_sentence(sent_text)
                         for neg in negations:
                             sent.add_modifier('NEG', neg)
@@ -733,7 +736,8 @@ def main(config):
 
     for csr, docid in read_source(config.source_folder, config.language,
                                   ontology, child2root,
-                                  'Frames_hector_combined'):
+                                  'Frames_hector_combined',
+                                  config.use_ltf_span_style):
         logging.info('Working with docid: {}'.format(docid))
 
         if config.edl_json and not ignore_edl:
@@ -854,6 +858,11 @@ class CombineParams(DetectionParams):
     ignore_comex = Bool(
         help='Whether to integrate COMEX',
         default_value=False).tag(config=True)
+
+    use_ltf_span_style = Bool(
+        help='Whether to use the 1-based closed interval system in LTF',
+        default_value=False
+    ).tag(config=True)
 
 
 if __name__ == '__main__':
