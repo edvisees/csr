@@ -406,7 +406,7 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                     representative_arg = cluster['representative']
 
                     if representative_arg in csr_entities:
-                        repr_entity_id = csr_entities[representative_arg]
+                        repr_entity_id = csr_entities[representative_arg].id
                     else:
                         # If the representative is ignored then we simply use
                         # the fist one.
