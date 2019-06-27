@@ -308,10 +308,10 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
             else:
                 if len(text) > 20:
                     logging.warning(
-                        "Argument mention {} rejected.".format(eid))
+                        "Argument mention with id [{}] rejected.".format(eid))
                 else:
                     logging.warning(
-                        ("Argument mention {}:{} "
+                        ("Argument mention with id [{}] and text [{}] "
                          "rejected.".format(eid, text)))
 
         csr_events = {}
@@ -401,13 +401,22 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                 args = [csr_entities[i].id for i in cluster['arguments'] if
                         i in csr_entities]
 
-                repr_entity = csr_entities.get(cluster['representative'], None)
+                if len(args) > 1:
+                    representative_arg = cluster['representative']
+                    if representative_arg not in csr_entities:
+                        # If the representative is ignored then we simply use the fist one.
+                        logging.warning(f'Representative mention {representative_arg} is probably rejected, the first one in the arg list is used')
+                        representative_arg = args[0]
 
-                csr_rel = csr.add_relation(args, component='corenlp')
-                if csr_rel:
-                    csr_rel.add_type('aida:entity_coreference')
-                    csr_rel.add_named_arg('representative', repr_entity.id)
+                    repr_entity = csr_entities[representative_arg]
+                    csr_rel = csr.add_relation(args, component='corenlp')
 
+                    if csr_rel:
+                        csr_rel.add_type('aida:entity_coreference')
+                        csr_rel.add_named_arg('representative', repr_entity.id)
+                else:
+                    member_list = ','.join([str(i) for i in cluster['arguments']])
+                    logging.warning(f'Cluster is rejected since less than 2 members are accepted. Members include: {member_list}')
 
 def load_salience(salience_folder):
     raw_data_path = os.path.join(salience_folder, 'data.json')
