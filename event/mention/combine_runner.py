@@ -403,20 +403,29 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
 
                 if len(args) > 1:
                     representative_arg = cluster['representative']
-                    if representative_arg not in csr_entities:
-                        # If the representative is ignored then we simply use the fist one.
-                        logging.warning(f'Representative mention {representative_arg} is probably rejected, the first one in the arg list is used')
-                        representative_arg = args[0]
 
-                    repr_entity = csr_entities[representative_arg]
+                    if representative_arg in csr_entities:
+                        repr_entity_id = csr_entities[representative_arg]
+                    else:
+                        # If the representative is ignored then we simply use
+                        # the fist one.
+                        logging.warning(
+                            f'Representative mention {representative_arg} is '
+                            f'probably rejected, the first one in the arg '
+                            f'list is used')
+                        repr_entity_id = args[0]
+
                     csr_rel = csr.add_relation(args, component='corenlp')
 
                     if csr_rel:
                         csr_rel.add_type('aida:entity_coreference')
-                        csr_rel.add_named_arg('representative', repr_entity.id)
+                        csr_rel.add_named_arg('representative', repr_entity_id)
                 else:
                     member_list = ','.join([str(i) for i in cluster['arguments']])
-                    logging.warning(f'Cluster is rejected since less than 2 members are accepted. Members include: {member_list}')
+                    logging.warning(
+                        f'Cluster is rejected since less than 2 members '
+                        f'are accepted. Members include: {member_list}')
+
 
 def load_salience(salience_folder):
     raw_data_path = os.path.join(salience_folder, 'data.json')
