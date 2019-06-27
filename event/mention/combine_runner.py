@@ -41,7 +41,8 @@ def add_entity_relations(relation_file, edl_entities, csr):
                 score = rel['score']
                 for arg_name, relen in rel.items():
                     if (arg_name == 'rel' or arg_name == 'span' or
-                            arg_name == 'score'):
+                            arg_name == 'score' or arg_name == 'en1'
+                            or arg_name == 'en2'):
                         # Not an argument field.
                         continue
 
@@ -421,7 +422,8 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                         csr_rel.add_type('aida:entity_coreference')
                         csr_rel.add_named_arg('representative', repr_entity_id)
                 else:
-                    member_list = ','.join([str(i) for i in cluster['arguments']])
+                    member_list = ','.join(
+                        [str(i) for i in cluster['arguments']])
                     logging.warning(
                         f'Cluster is rejected since less than 2 members '
                         f'are accepted. Members include: {member_list}')
@@ -518,7 +520,7 @@ def analyze_sentence(text):
 
 
 def read_source(source_folder, language, ontology, child2root,
-                csr_component_name, use_ltf_span_style = False):
+                csr_component_name, use_ltf_span_style=False):
     for source_text_path in glob.glob(source_folder + '/*.txt'):
         # Use the empty newline to handle different newline format.
         with open(source_text_path, newline='') as text_in:
@@ -838,7 +840,6 @@ def main(config):
                 if comex_file:
                     logging.info("Adding COMEX results: {}".format(comex_file))
                     comex_integration_utils.add_comex(comex_file, csr)
-
 
         # TODO: we could possibly remove all conll related stuff.
         if config.add_rule_detector:
