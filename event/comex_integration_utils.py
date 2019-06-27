@@ -54,7 +54,21 @@ def add_comex(comex_file, csr):
                     ent_frame.interp.add_field(name='fringe', key_name='fringe',
                                                content=fringe_name, content_rep=fringe_name,
                                                component=component_name)
-            collect_modifiers(comex_ent_frame, ent_frame)
+                if comex_ent_frame['interp'].get('xref') is not None:
+                    xref_list = comex_ent_frame['interp'].get('xref')
+                    for xref in xref_list:
+                        component = xref['component']
+                        score = xref['score']
+                        canonical_name = xref['canonical_name']
+                        if len(xref['id'].split(':')) != 2:
+                            continue
+                        prefix, kbid = xref['id'].split(':')
+                        refkbid = kbid if prefix == 'refkb' else None
+                        comexkbid = kbid if prefix == 'comexkb' else None
+                        ent_frame.add_linking(mid=None, wiki=None, score=score, refkbid=refkbid,
+                                              component=component,
+                                              canonical_name=canonical_name, comexkbid=comexkbid)
+                collect_modifiers(comex_ent_frame, ent_frame)
         # Events
         comex_ev_frames = get_frames(data, 'event_evidence')
         for comex_ev_frame in comex_ev_frames:
