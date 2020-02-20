@@ -83,11 +83,13 @@ def main():
 
             csr_events = {}
             for evm in event_data:
-                if evm[evm_header.index('textoffset_startchar')] == 'EMPTY_NA':
+                if evm[evm_header.index('textoffset_startchar')].startswith('EMPTY_'):
                     continue
 
                 span = (int(evm[evm_header.index('textoffset_startchar')]) - 1,
                         int(evm[evm_header.index('textoffset_endchar')]))
+                # TODO: fix this properly using ltf_span_style/off_start_by_1
+                span = (span[0] + 1, span[1] + 1)
                 text = evm[evm_header.index('text_string')]
                 full_type = 'ldcOnt:' + evm[evm_header.index('type')] + '_' \
                             + evm[evm_header.index('subtype')] + '_' \
@@ -101,11 +103,13 @@ def main():
                         evm[evm_header.index('eventmention_id')]] = csr_evm
 
             for arg in arg_data:
-                if arg[arg_header.index('textoffset_startchar')] == 'EMPTY_NA':
+                if arg[arg_header.index('textoffset_startchar')].startswith('EMPTY_'):
                     continue
 
                 span = (int(arg[arg_header.index('textoffset_startchar')]) - 1,
                         int(arg[arg_header.index('textoffset_endchar')]))
+                # TODO: fix this properly using ltf_span_style/off_start_by_1
+                span = (span[0] + 1, span[1] + 1)
                 text = arg[arg_header.index('text_string')]
 
                 full_type = 'ldcOnt:' + arg[arg_header.index('type')] + '_' \
@@ -141,13 +145,15 @@ def main():
             csr_relms = {}
             for relm in rel_mentions:
                 if relm[relm_header.index(
-                        'textoffset_startchar')] == 'EMPTY_NA':
+                        'textoffset_startchar')].startswith('EMPTY_'):
                     continue
 
                 span = (
                     int(relm[relm_header.index('textoffset_startchar')]) - 1,
                     int(relm[relm_header.index('textoffset_endchar')])
                 )
+                # TODO: fix this properly using ltf_span_style/off_start_by_1
+                span = (span[0] + 1, span[1] + 1)
                 csr_rel = csr.add_relation([], component='corenlp', span=span)
 
                 full_type = 'ldcOnt:' + relm[relm_header.index('type')] + '_' \
