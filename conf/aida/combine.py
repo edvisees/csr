@@ -47,6 +47,8 @@ c.CombineParams.use_ltf_span_style = False
 # COMEX
 c.CombineParams.comex = os.path.join(output_base, 'comex')
 c.CombineParams.ignore_comex = False
+# zie
+c.CombineParams.zie_event = os.path.join(os.path.dirname(os.path.dirname(output_base+"/")), 'zie', f'zie.{c.DetectionParams.language}_out')
 
 
 # This is the parent child from the eval source.
