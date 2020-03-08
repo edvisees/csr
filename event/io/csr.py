@@ -946,8 +946,8 @@ class CSR:
                 fid = frame['@id']
                 interp = frame['interp']
 
-                args = [arg['arg'] for arg in interp['args']]
-                arg_names = [arg['type'] for arg in interp['args']]
+                args = [arg['arg'] for arg in interp.get('args', [])]
+                arg_names = [arg['type'] for arg in interp.get('args', [])]
 
                 if "provenance" in frame:
                     span = compute_span(frame)
