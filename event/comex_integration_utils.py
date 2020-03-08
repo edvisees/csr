@@ -1,3 +1,5 @@
+import sys
+import traceback
 import json
 
 
@@ -26,49 +28,55 @@ def add_comex(comex_file, csr):
         # Entities
         comex_ent_frames = get_frames(data, 'entity_evidence')
         for comex_ent_frame in comex_ent_frames:
-            start = int(comex_ent_frame['interp']['span_for_combined_start'])
-            end = int(comex_ent_frame['interp']['span_for_combined_end'])
-            span = [start, end]
-            text = comex_ent_frame['provenance']['text']
-            entity_type = comex_ent_frame['interp']['type']
-            form = comex_ent_frame['interp']['form']
-            head_span_start = int(comex_ent_frame['interp']['head_span_start'])
-            head_span_end = int(comex_ent_frame['interp']['head_span_end'])
-            head_span = [head_span_start, head_span_end]
-            concept_name = comex_ent_frame['interp']['concept']
-            ent_id = comex_ent_frame['@id']
-            score = comex_ent_frame['interp']['score']
+            try:
+                start = int(comex_ent_frame['interp']['span_for_combined_start'])
+                end = int(comex_ent_frame['interp']['span_for_combined_end'])
+                span = [start, end]
+                text = comex_ent_frame['provenance']['text']
+                entity_type = comex_ent_frame['interp']['type']
+                form = comex_ent_frame['interp']['form']
+                head_span_start = int(comex_ent_frame['interp']['head_span_start'])
+                head_span_end = int(comex_ent_frame['interp']['head_span_end'])
+                head_span = [head_span_start, head_span_end]
+                concept_name = comex_ent_frame['interp']['concept']
+                ent_id = comex_ent_frame['@id']
+                score = comex_ent_frame['interp']['score']
 
-            ent_frame = csr.add_entity_mention(head_span, span, text, entity_type,
-                                               parent_sent=None, entity_form=form,
-                                               component=component_name,
-                                               entity_id=None, score=score)
-            if ent_frame:
-                frame_indexer[ent_id] = ent_frame.id
-                # adding concepts into CSR
-                ent_frame.interp.add_field(name='concept', key_name='concept',
-                                           content=concept_name, content_rep=concept_name,
-                                           component=component_name)
-                if comex_ent_frame['interp'].get('fringe') is not None:
-                    fringe_name = comex_ent_frame['interp'].get('fringe')
-                    ent_frame.interp.add_field(name='fringe', key_name='fringe',
-                                               content=fringe_name, content_rep=fringe_name,
+                ent_frame = csr.add_entity_mention(head_span, span, text, entity_type,
+                                                   parent_sent=None, entity_form=form,
+                                                   component=component_name,
+                                                   entity_id=None, score=score)
+                if ent_frame:
+                    frame_indexer[ent_id] = ent_frame.id
+                    # adding concepts into CSR
+                    ent_frame.interp.add_field(name='concept', key_name='concept',
+                                               content=concept_name, content_rep=concept_name,
                                                component=component_name)
-                if comex_ent_frame['interp'].get('xref') is not None:
-                    xref_list = comex_ent_frame['interp'].get('xref')
-                    for xref in xref_list:
-                        component = xref['component']
-                        score = xref['score']
-                        canonical_name = xref['canonical_name']
-                        if len(xref['id'].split(':')) != 2:
-                            continue
-                        prefix, kbid = xref['id'].split(':')
-                        refkbid = kbid if prefix == 'refkb' else None
-                        comexkbid = kbid if prefix == 'comexkb' else None
-                        ent_frame.add_linking(mid=None, wiki=None, score=score, refkbid=refkbid,
-                                              component=component,
-                                              canonical_name=canonical_name, comexkbid=comexkbid)
-                collect_modifiers(comex_ent_frame, ent_frame)
+                    if comex_ent_frame['interp'].get('fringe') is not None:
+                        fringe_name = comex_ent_frame['interp'].get('fringe')
+                        ent_frame.interp.add_field(name='fringe', key_name='fringe',
+                                                   content=fringe_name, content_rep=fringe_name,
+                                                   component=component_name)
+                    if comex_ent_frame['interp'].get('xref') is not None:
+                        xref_list = comex_ent_frame['interp'].get('xref')
+                        for xref in xref_list:
+                            component = xref['component']
+                            score = xref['score']
+                            canonical_name = xref['canonical_name']
+                            if len(xref['id'].split(':')) != 2:
+                                continue
+                            prefix, kbid = xref['id'].split(':')
+                            refkbid = kbid if prefix == 'refkb' else None
+                            comexkbid = kbid if prefix == 'comexkb' else None
+                            ent_frame.add_linking(mid=None, wiki=None, score=score, refkbid=refkbid,
+                                                  component=component,
+                                                  canonical_name=canonical_name, comexkbid=comexkbid)
+                    collect_modifiers(comex_ent_frame, ent_frame)
+            except Exception:
+                sys.stderr.write("ERROR: Exception occurred while processing file {0}\n".format(comex_file))
+                sys.stderr.write(json.dumps(comex_ent_frame, indent=4))
+                traceback.print_exc()
+
         # Events
         comex_ev_frames = get_frames(data, 'event_evidence')
         for comex_ev_frame in comex_ev_frames:
