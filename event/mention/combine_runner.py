@@ -256,7 +256,7 @@ def add_rich_arguments(csr, csr_evm, rich_evm, rich_entities, provided_tokens):
                         csr_arg_ent.set_not_ok()
 
 
-def add_rich_events(csr, rich_event_file, provided_tokens=None):
+def add_rich_events(csr, rich_event_file, provided_tokens=None, extent_based_provenance=True):
     base_component_name = 'opera.events.mention.tac.hector'
 
     with open(rich_event_file) as fin:
@@ -362,13 +362,17 @@ def add_rich_events(csr, rich_event_file, provided_tokens=None):
                         arg_entity_types.add(t)
 
             # Add an event, use the argument entity types to help debug.
+            extent_text, extent_span = None, None
+            if extent_based_provenance:
+                extent_text = rich_evm.get('extentText', None)
+                extent_span = rich_evm.get('extentSpan', None)
             csr_evm = csr.add_event_mention(
                 head_span, span, text, full_type,
                 realis=rich_evm.get('realis', None), component=component,
                 arg_entity_types=arg_entity_types,
                 score=rich_evm.get('score', 0.5),
-                extent_text=rich_evm.get('extentText', None),
-                extent_span=rich_evm.get('extentSpan', None)
+                extent_text=extent_text,
+                extent_span=extent_span
             )
 
             if csr_evm:
@@ -805,7 +809,7 @@ def main(config):
                     logging.info(
                         "Adding events with rich output: {}".format(
                             rich_event_file))
-                    add_rich_events(csr, rich_event_file, conll_tokens)
+                    add_rich_events(csr, rich_event_file, provided_tokens=conll_tokens, extent_based_provenance=config.extent_based_provenance)
                 else:
                     logging.error(f"Cannot find rich output for {docid}")
             else:
@@ -896,6 +900,10 @@ class CombineParams(DetectionParams):
 
     # zie component
     zie_event = Unicode(help='zie json output dir.').tag(config=True)
+
+    extent_based_provenance = Bool(
+        help='disable extent based provenance for event mentions to use trigger based provenance',
+        default_value=True).tag(config=True)
 
 
 if __name__ == '__main__':
