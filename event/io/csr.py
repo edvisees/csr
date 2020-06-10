@@ -869,7 +869,7 @@ class CSR:
                 else:
                     frame_data[frame_type].append(frame)
 
-            entities = {}
+            entities_or_events = {}  # for args finding
             for frame in frame_data['entity_evidence']:
                 parent_sent = get_parent_sent(frame)
                 interp = frame['interp']
@@ -892,8 +892,9 @@ class CSR:
                         entity_id=eid
                     )
 
-                    entities[eid] = csr_ent
+                    entities_or_events[eid] = csr_ent
 
+            frames_for_arg_adding = []  # saved for arg adding
             for frame in frame_data['event_evidence']:
                 parent_sent = get_parent_sent(frame)
                 interp = frame['interp']
@@ -914,10 +915,15 @@ class CSR:
                         parent_sent=parent_sent, component=frame['component'],
                         event_id=frame['@id']
                     )
+                    
+                    entities_or_events[event_id] = csr_evm
 
                 for mod, v in frame["provenance"]["modifiers"].items():
                     csr_evm.add_modifier(mod, v)
+                    
+                frames_for_arg_adding.append((csr_evm, interp))
 
+            for csr_evm, interp in frames_for_arg_adding:
                 for arg in interp.get('args', []):
                     arg_values = []
                     if arg['@type'] == 'xor':
@@ -935,7 +941,7 @@ class CSR:
                         arg_onto, arg_type = arg_detail['type'].split(':')
                         arg_id = arg_detail['@id']
                         arg_entity_id = arg_detail['arg']
-                        ent = entities[arg_entity_id]
+                        ent = entities_or_events[arg_entity_id]
 
                         csr_evm.add_arg(
                             arg_onto, arg_type, ent, arg_id,
