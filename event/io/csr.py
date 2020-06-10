@@ -908,15 +908,22 @@ class CSR:
                     event_types = [raw_type]
                 else:
                     event_types = handle_xor(raw_type)
+                    
+                # quick fix by using only the first realis
+                raw_realis = interp.get("realis", None)
+                if raw_realis is None or isinstance(raw_realis, str):
+                    event_realis = raw_realis
+                else:
+                    event_realis = handle_xor(raw_realis)[0]
 
                 for t in event_types:
                     csr_evm = self.add_event_mention(
-                        span, span, text, t, realis=interp.get('realis', None),
+                        span, span, text, t, realis=event_realis,
                         parent_sent=parent_sent, component=frame['component'],
                         event_id=frame['@id']
                     )
                     
-                    entities_or_events[event_id] = csr_evm
+                    entities_or_events[frame['@id']] = csr_evm
 
                 for mod, v in frame["provenance"]["modifiers"].items():
                     csr_evm.add_modifier(mod, v)
