@@ -909,12 +909,18 @@ class CSR:
                 else:
                     event_types = handle_xor(raw_type)
                     
-                # quick fix by using only the first realis
+                # quick fix by preferring realis from zie component
                 raw_realis = interp.get("realis", None)
                 if raw_realis is None or isinstance(raw_realis, str):
                     event_realis = raw_realis
                 else:
-                    event_realis = handle_xor(raw_realis)[0]
+                    if isinstance(raw_realis, dict):
+                        cand_realis = [g['value'] for g in raw_realis['args'] if g.get('component','').startswith("zie.")]
+                    else:
+                        cand_realis = [g['value'] for g in raw_realis if g.get('component','').startswith("zie.")]
+                    if len(cand_realis)==0:  # use all if not found
+                        cand_realis = handle_xor(raw_realis)
+                    event_realis = cand_realis[-1]
 
                 for t in event_types:
                     csr_evm = self.add_event_mention(
