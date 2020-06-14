@@ -869,7 +869,7 @@ class CSR:
                 else:
                     frame_data[frame_type].append(frame)
 
-            entities = {}
+            entities_or_events = {}  # for args finding
             for frame in frame_data['entity_evidence']:
                 parent_sent = get_parent_sent(frame)
                 interp = frame['interp']
@@ -892,8 +892,9 @@ class CSR:
                         entity_id=eid
                     )
 
-                    entities[eid] = csr_ent
+                    entities_or_events[eid] = csr_ent
 
+            frames_for_arg_adding = []  # saved for arg adding
             for frame in frame_data['event_evidence']:
                 parent_sent = get_parent_sent(frame)
                 interp = frame['interp']
@@ -907,17 +908,35 @@ class CSR:
                     event_types = [raw_type]
                 else:
                     event_types = handle_xor(raw_type)
+                    
+                # quick fix by preferring realis from zie component
+                raw_realis = interp.get("realis", None)
+                if raw_realis is None or isinstance(raw_realis, str):
+                    event_realis = raw_realis
+                else:
+                    if isinstance(raw_realis, dict):
+                        cand_realis = [g['value'] for g in raw_realis['args'] if g.get('component','').startswith("zie.")]
+                    else:
+                        cand_realis = [g['value'] for g in raw_realis if g.get('component','').startswith("zie.")]
+                    if len(cand_realis)==0:  # use all if not found
+                        cand_realis = handle_xor(raw_realis)
+                    event_realis = cand_realis[-1]
 
                 for t in event_types:
                     csr_evm = self.add_event_mention(
-                        span, span, text, t, realis=interp.get('realis', None),
+                        span, span, text, t, realis=event_realis,
                         parent_sent=parent_sent, component=frame['component'],
                         event_id=frame['@id']
                     )
+                    
+                    entities_or_events[frame['@id']] = csr_evm
 
                 for mod, v in frame["provenance"]["modifiers"].items():
                     csr_evm.add_modifier(mod, v)
+                    
+                frames_for_arg_adding.append((csr_evm, interp))
 
+            for csr_evm, interp in frames_for_arg_adding:
                 for arg in interp.get('args', []):
                     arg_values = []
                     if arg['@type'] == 'xor':
@@ -935,7 +954,7 @@ class CSR:
                         arg_onto, arg_type = arg_detail['type'].split(':')
                         arg_id = arg_detail['@id']
                         arg_entity_id = arg_detail['arg']
-                        ent = entities[arg_entity_id]
+                        ent = entities_or_events[arg_entity_id]
 
                         csr_evm.add_arg(
                             arg_onto, arg_type, ent, arg_id,

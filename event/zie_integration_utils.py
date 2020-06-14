@@ -13,8 +13,18 @@ def add_zie_event(zie_event_file, csr):
         # read json
         doc = json.load(fd)
         evt_posi_mapping = Counter()
-        evt_mappings = {}  # for debugging
+        # add (certain) efs
+        for ef in doc["entity_mentions"] + doc["fillers"]:
+            if ef["type"].startswith("ldcOnt:"):
+                extra_info = ef.get("extra_info", {})
+                span_info = extra_info.get("posi")
+                if span_info is not None:
+                    ent = csr.add_entity_mention(
+                        span_info["head_span"], span_info["span"], span_info["text"], ef["type"],
+                        component=extra_info["component"], score=math.exp(ef["score"])
+                    )
         # add events
+        evt_mappings = {}  # event-id -> csr_evm
         for evt in doc["event_mentions"]:
             extra_info = evt["extra_info"]
             span_info = extra_info["posi"]
@@ -28,27 +38,39 @@ def add_zie_event(zie_event_file, csr):
             evt_posi_mapping[span_key] += 1
             if evt_posi_mapping[span_key] > 1:
                 logging.warning("Same posi-span evt inside zie!!")
-            # # ----- for debugging
-            # if id(csr_evm) not in evt_mappings:
-            #     evt_mappings[id(csr_evm)] = []
-            # evt_mappings[id(csr_evm)].append(evt)
-            # if len(evt_mappings[id(csr_evm)]) > 1:
-            #     import pdb
-            #     pdb.set_trace()
-            # # -----
             # add args
-            if csr_evm:
-                for arg in evt["em_arg"]:
-                    arg_extra_info = arg["extra_info"]
-                    arg_span_info = arg_extra_info["posi"]
+            if csr_evm is not None:
+                evt_mappings[evt["id"]] = csr_evm
+            else:
+                logging.warning(f"Adding evt failed for {evt['type']}({span_info['text']})")
+        # add args
+        for evt in doc["event_mentions"]:
+            csr_evm = evt_mappings.get(evt["id"])
+            if csr_evm is None:
+                continue  # adding failed
+            for arg in evt["em_arg"]:
+                # do we want to add things that might not be in ontology?
+                # if not arg["role"].startswith("ldcOnt:"):
+                #     continue
+                arg_extra_info = arg["extra_info"]
+                arg_span_info = arg_extra_info["posi"]
+                if arg_extra_info.get("is_evt2evt_link", False):
+                    # directly use event's adding method to add another event as arg
+                    arg_evm = evt_mappings.get(arg["aid"])
+                    if arg_evm is not None:
+                        arg_onto, slot_type = arg["role"].split(":", 1)
+                        arg_id = csr.get_id('arg')
+                        csr_arg = csr_evm.add_arg(arg_onto, slot_type, arg_evm, arg_id,
+                                                  component=arg_extra_info["component"], score=math.exp(arg["score"]))
+                    else:
+                        csr_arg = None
+                else:
                     csr_arg = csr.add_event_arg_by_span(
                         csr_evm, arg_span_info["head_span"], arg_span_info["span"], arg_span_info["text"], arg["role"],
                         component=arg_extra_info["component"], score=math.exp(arg["score"])
                     )
-                    if not csr_arg:
-                        logging.warning(f"Adding evt arg failed for {arg['role']}({arg_span_info['text']})")
-            else:
-                logging.warning(f"Adding evt failed for {evt['type']}({span_info['text']})")
+                if not csr_arg:
+                    logging.warning(f"Adding evt arg failed for {arg['role']}({arg_span_info['text']})")
 
 # =====
 # possible ways to modify "combine_runner.py"
