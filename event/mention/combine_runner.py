@@ -802,6 +802,17 @@ def main(config):
                 logging.warning(
                     f"File file not found at {config.conllu_folder}")
 
+        if config.zie_event:
+            if os.path.exists(config.zie_event):
+                zie_event_file = find_by_id(config.zie_event, docid)
+                if zie_event_file:
+                    logging.info("Adding events with zie output: {}".format(zie_event_file))
+                    zie_integration_utils.add_zie_event(zie_event_file, csr)
+                else:
+                    logging.error(f"Cannot find zie output for {docid}")
+            else:
+                logging.info("No zie event output.")
+
         if config.rich_event:
             if os.path.exists(config.rich_event):
                 rich_event_file = find_by_id(config.rich_event, docid)
@@ -814,17 +825,6 @@ def main(config):
                     logging.error(f"Cannot find rich output for {docid}")
             else:
                 logging.info("No rich event output.")
-
-        if config.zie_event:
-            if os.path.exists(config.zie_event):
-                zie_event_file = find_by_id(config.zie_event, docid)
-                if zie_event_file:
-                    logging.info("Adding events with zie output: {}".format(zie_event_file))
-                    zie_integration_utils.add_zie_event(zie_event_file, csr)
-                else:
-                    logging.error(f"Cannot find zie output for {docid}")
-            else:
-                logging.info("No zie event output.")
 
         if config.dbpedia_wiki_json:
             if os.path.exists(config.dbpedia_wiki_json):

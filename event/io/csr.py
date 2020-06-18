@@ -920,7 +920,7 @@ class CSR:
                         cand_realis = [g['value'] for g in raw_realis if g.get('component','').startswith("zie.")]
                     if len(cand_realis)==0:  # use all if not found
                         cand_realis = handle_xor(raw_realis)
-                    event_realis = cand_realis[-1]
+                    event_realis = cand_realis[0]  # now we prefer the first added one!
 
                 for t in event_types:
                     csr_evm = self.add_event_mention(
