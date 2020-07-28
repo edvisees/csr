@@ -15,7 +15,7 @@ def add_zie_event(zie_event_file, csr):
         evt_posi_mapping = Counter()
         # add (certain) efs
         for ef in doc["entity_mentions"] + doc["fillers"]:
-            if ef["type"].startswith("ldcOnt:"):
+            if ef["type"].startswith("ldcOnt:") or ef["type"].startswith("aida:"):
                 extra_info = ef.get("extra_info", {})
                 span_info = extra_info.get("posi")
                 if span_info is not None:
