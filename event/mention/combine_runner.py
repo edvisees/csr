@@ -132,6 +132,22 @@ def add_edl_entities(edl_file, csr):
                             canonical_name=link["CannonicalName"]
                         )
 
+            for entity in entity_sent['fillerMentions']:
+                if entity['type'] not in ["ldcOnt:TIME", "aida:time"]:
+                    continue
+                mention_span = [entity['char_begin'], entity['char_end']]
+                head_span = entity['head_span']
+
+                ent = csr.add_entity_mention(
+                    head_span, mention_span, entity['mention'],
+                    entity['type'], entity_form='filler',
+                    component=edl_component_id,
+                    score=entity.get('confidence', entity.get('score'))
+                )
+
+                if ent:
+                    edl_entities[entity['@id']] = ent
+
     return edl_entities
 
 
