@@ -1444,6 +1444,8 @@ class CSR:
                 arg_onto = 'framenet'
             elif arg_onto_name == 'pb':
                 arg_onto = 'propbank'
+            elif arg_onto_name == 'aida':
+                arg_onto = 'aida'
             elif arg_onto_name == self.ontology.prefix:
                 arg_onto = arg_onto_name
             else:
