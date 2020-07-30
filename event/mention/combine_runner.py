@@ -133,8 +133,8 @@ def add_edl_entities(edl_file, csr):
                         )
 
             for entity in entity_sent['fillerMentions']:
-                if entity['type'] not in ["ldcOnt:TIME", "aida:date_time"]:
-                    continue
+                # if entity['type'] not in ["ldcOnt:TIME", "aida:date_time"]:
+                    # continue
                 mention_span = [entity['char_begin'], entity['char_end']]
                 head_span = entity['head_span']
 
