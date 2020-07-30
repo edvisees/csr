@@ -30,7 +30,7 @@ c.DetectionParams.tag_list = os.path.join(c.DetectionParams.resource_folder,
 c.DetectionParams.no_sentence = True
 
 c.CombineParams.ontology_path = os.path.join(
-    c.DetectionParams.resource_folder, 'LDCOntology_v0.1.jsonld'
+    c.DetectionParams.resource_folder, 'LDCOntologyM36.jsonld'
 )
 c.CombineParams.output_folder = output_base
 # c.CombineParams.conllu_folder = os.path.join(output_base, 'conllu')

@@ -100,4 +100,4 @@ def add_zie_event(zie_event_file, csr):
 # output_base=../hector_out/english/ csr_resources=../csr_resources/ PYTHONPATH=./ python event/mention/combine_runner.py conf/aida/combine.py  --CombineParams.csr_output=../zout_csr_norich/ --CombineParams.rich_event=NOPE
 # output_base=../hector_out/english/ csr_resources=../csr_resources/ PYTHONPATH=./ python event/mention/combine_runner.py conf/aida/combine.py  --CombineParams.csr_output=../zout_csr_rich/
 # visualization
-# python -m event.io.csr2stuff ../zout_csr_norich/ ../zout_visual_norich/ ../csr_resources/LDCOntology_v0.1.jsonld
+# python -m event.io.csr2stuff ../zout_csr_norich/ ../zout_visual_norich/ ../csr_resources/LDCOntologyM36.jsonld
