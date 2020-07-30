@@ -26,6 +26,9 @@ def add_zie_event(zie_event_file, csr):
         # add events
         evt_mappings = {}  # event-id -> csr_evm
         for evt in doc["event_mentions"]:
+            if not (evt["type"].startswith("ldcOnt:") or evt["type"].startswith("aida:")):
+                logging.info(f"Skipping evt for {evt['type']}({evt['extra_info']['posi']['text']})")
+                continue
             extra_info = evt["extra_info"]
             span_info = extra_info["posi"]
             # add one
@@ -49,6 +52,9 @@ def add_zie_event(zie_event_file, csr):
             if csr_evm is None:
                 continue  # adding failed
             for arg in evt["em_arg"]:
+                if not (arg["role"].startswith("ldcOnt:") or arg["role"].startswith("aida:")):
+                    logging.info(f"Skipping evt arg for {arg['role']}({arg['extra_info']['posi']['text']})")
+                    continue
                 # do we want to add things that might not be in ontology?
                 # if not arg["role"].startswith("ldcOnt:"):
                 #     continue
@@ -69,7 +75,7 @@ def add_zie_event(zie_event_file, csr):
                         csr_evm, arg_span_info["head_span"], arg_span_info["span"], arg_span_info["text"], arg["role"],
                         component=arg_extra_info["component"], score=math.exp(arg["score"])
                     )
-                if not csr_arg:
+                if csr_arg is None:
                     logging.warning(f"Adding evt arg failed for {arg['role']}({arg_span_info['text']})")
 
 # =====
