@@ -20,7 +20,7 @@ conll_to_target = {
     # "TIME": "Time",
     "PERSON": ("ldcOnt", "PER"),
     "LOCATION": ("ldcOnt", "GPE"),
-    "ORGANIZATION": {"ldcOnt", "ORG"},
+    "ORGANIZATION": ("ldcOnt", "ORG"),
 }
 
 
