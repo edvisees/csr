@@ -62,15 +62,16 @@ def add_comex(comex_file, csr):
                         for xref in xref_list:
                             component = xref['component']
                             score = xref['score']
-                            canonical_name = xref['canonical_name']
+                            canonical_name = xref.get('canonical_name')
                             if len(xref['id'].split(':')) != 2:
                                 continue
                             prefix, kbid = xref['id'].split(':')
                             refkbid = kbid if prefix == 'refkb' else None
                             comexkbid = kbid if prefix == 'comexkb' else None
+                            wikidataid = kbid if prefix == 'wikidata' else None
                             ent_frame.add_linking(mid=None, wiki=None, score=score, refkbid=refkbid,
                                                   component=component,
-                                                  canonical_name=canonical_name, comexkbid=comexkbid)
+                                                  canonical_name=canonical_name, comexkbid=comexkbid, wikidataid=wikidataid)
                     collect_modifiers(comex_ent_frame, ent_frame)
             except Exception:
                 sys.stderr.write("ERROR: Exception occurred while processing file {0}\n".format(comex_file))

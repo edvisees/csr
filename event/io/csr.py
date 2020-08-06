@@ -519,7 +519,7 @@ class EntityMention(SpanInterpFrame):
         self.entity_types.add(full_type)
 
     def add_linking(self, mid, wiki, score, refkbid=None, lang='en',
-                    component=None, canonical_name=None, comexkbid=None):
+                    component=None, canonical_name=None, comexkbid=None, wikidataid=None):
         # Some system output string type scores.
         score = float(score)
         
@@ -554,6 +554,15 @@ class EntityMention(SpanInterpFrame):
             comexkb_xref.add_value('id', comexkb_link)
             comexkb_xref.add_value('canonical_name', canonical_name)
             self.interp.add_field('xref', 'comexkb', comexkbid, comexkb_xref,
+                                  component=component, multi_value=True)
+        if wikidataid:
+            wikidata_link = 'wikidata:' + wikidataid
+            wikidata_xref = ValueFrame(None, 'db_reference',
+                                       score=score, component=component)
+            wikidata_xref.add_value('id', wikidata_link)
+            if canonical_name:
+                wikidata_xref.add_value('canonical_name', canonical_name)
+            self.interp.add_field('xref', 'wikidata', wikidataid, wikidata_xref,
                                   component=component, multi_value=True)
 
     def add_salience(self, salience_score):
