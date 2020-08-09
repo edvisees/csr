@@ -81,78 +81,90 @@ def add_comex(comex_file, csr):
         # Events
         comex_ev_frames = get_frames(data, 'event_evidence')
         for comex_ev_frame in comex_ev_frames:
-            span_start = int(comex_ev_frame['interp']['regular_span_start'])
-            span_end = int(comex_ev_frame['interp']['regular_span_end'])
-            span = [span_start, span_end]
-            extent_span_start = int(comex_ev_frame['interp']['extent_span_start'])
-            extent_span_end = int(comex_ev_frame['interp']['extent_span_end'])
-            extent_span = [extent_span_start, extent_span_end]
-            head_span_start = int(comex_ev_frame['interp']['head_span_start'])
-            head_span_end = int(comex_ev_frame['interp']['head_span_end'])
-            head_span = [head_span_start, head_span_end]
-            text = comex_ev_frame['interp']['regular_text']
-            extent_text = comex_ev_frame['provenance']['text']
-            event_type = comex_ev_frame['interp']['type']
-            score = comex_ev_frame['interp']['score']
+            try:
+                span_start = int(comex_ev_frame['interp']['regular_span_start'])
+                span_end = int(comex_ev_frame['interp']['regular_span_end'])
+                span = [span_start, span_end]
+                extent_span_start = int(comex_ev_frame['interp']['extent_span_start'])
+                extent_span_end = int(comex_ev_frame['interp']['extent_span_end'])
+                extent_span = [extent_span_start, extent_span_end]
+                head_span_start = int(comex_ev_frame['interp']['head_span_start'])
+                head_span_end = int(comex_ev_frame['interp']['head_span_end'])
+                head_span = [head_span_start, head_span_end]
+                text = comex_ev_frame['interp']['regular_text']
+                extent_text = comex_ev_frame['provenance']['text']
+                event_type = comex_ev_frame['interp']['type']
+                score = comex_ev_frame['interp']['score']
 
-            ev_frame = csr.add_event_mention(head_span, span, text, event_type,
-                                             realis=None, parent_sent=None,
-                                             component=component_name,
-                                             arg_entity_types=None, event_id=None, score=score,
-                                             extent_span=extent_span, extent_text=extent_text)
-            if ev_frame:
-                ev_id = comex_ev_frame['@id']
-                frame_indexer[ev_id] = ev_frame.id
-                collect_modifiers(comex_ev_frame, ev_frame)
+                ev_frame = csr.add_event_mention(head_span, span, text, event_type,
+                                                 realis=None, parent_sent=None,
+                                                 component=component_name,
+                                                 arg_entity_types=None, event_id=None, score=score,
+                                                 extent_span=extent_span, extent_text=extent_text)
+                if ev_frame:
+                    ev_id = comex_ev_frame['@id']
+                    frame_indexer[ev_id] = ev_frame.id
+                    collect_modifiers(comex_ev_frame, ev_frame)
 
-                # Basically, for arg in csr for the event
-                # 1. get_frame
-                # 2. csr.add_event_arg
-                if 'args' not in comex_ev_frame['interp'].keys():
-                    continue
-                for event_arg in comex_ev_frame['interp']['args']:
-                    if event_arg['@type'] == 'xor':
-                        arg_list = [facet['value'] for facet in event_arg['args']]
-                    else:
-                        arg_list = [event_arg]
-                    for arg in arg_list:
-                        ontology_prefix = arg['type'].split(':')[0]
-                        arg_role_no_prefix = arg['type'].split(':')[1]
+                    # Basically, for arg in csr for the event
+                    # 1. get_frame
+                    # 2. csr.add_event_arg
+                    if 'args' not in comex_ev_frame['interp'].keys():
+                        continue
+                    for event_arg in comex_ev_frame['interp']['args']:
+                        if event_arg['@type'] == 'xor':
+                            arg_list = [facet['value'] for facet in event_arg['args']]
+                        else:
+                            arg_list = [event_arg]
+                        for arg in arg_list:
+                            ontology_prefix = arg['type'].split(':')[0]
+                            arg_role_no_prefix = arg['type'].split(':')[1]
 
-                        # The arg is not found in the previous entity stage
-                        if arg['arg'] not in frame_indexer.keys():
-                            continue
-                        arg_ent_frame_id = frame_indexer[arg['arg']]
-                        arg_ent_frame = csr.get_frame(csr.entity_key, arg_ent_frame_id)
-                        csr.add_event_arg(ev_frame, arg_ent_frame, ontology=ontology_prefix,
-                                          arg_role=arg_role_no_prefix,
-                                          component=component_name)
+                            # The arg is not found in the previous entity stage
+                            if arg['arg'] not in frame_indexer.keys():
+                                continue
+                            arg_ent_frame_id = frame_indexer[arg['arg']]
+                            arg_ent_frame = csr.get_frame(csr.entity_key, arg_ent_frame_id)
+                            csr.add_event_arg(ev_frame, arg_ent_frame, ontology=ontology_prefix,
+                                              arg_role=arg_role_no_prefix,
+                                              component=component_name)
+            except Exception:
+                sys.stderr.write("ERROR: Exception occurred while processing file {0}\n".format(comex_file))
+                sys.stderr.write(json.dumps(comex_ev_frame, indent=4))
+                traceback.print_exc()
+
+
         # Relations
         comex_rel_frames = get_frames(data, 'relation_evidence')
         for comex_rel_frame in comex_rel_frames:
-            if comex_rel_frame['interp']['type'] == 'aida:entity_coreference':
-                continue
-            start = int(comex_rel_frame['interp']['span_start'])
-            end = int(comex_rel_frame['interp']['span_end'])
-            span = [start, end]
-            arg_ids = []
-            arg_roles = []
-            for rel_arg in comex_rel_frame['interp']['args']:
-                if rel_arg['arg'] not in frame_indexer.keys():
+            try:
+                if comex_rel_frame['interp']['type'] == 'aida:entity_coreference':
                     continue
-                arg_roles.append(rel_arg['type'])
-                arg_ent_frame_id = frame_indexer[rel_arg['arg']]
-                arg_ids.append(arg_ent_frame_id)
+                start = int(comex_rel_frame['interp']['span_start'])
+                end = int(comex_rel_frame['interp']['span_end'])
+                span = [start, end]
+                arg_ids = []
+                arg_roles = []
+                for rel_arg in comex_rel_frame['interp']['args']:
+                    if rel_arg['arg'] not in frame_indexer.keys():
+                        continue
+                    arg_roles.append(rel_arg['type'])
+                    arg_ent_frame_id = frame_indexer[rel_arg['arg']]
+                    arg_ids.append(arg_ent_frame_id)
 
-            rel_frame = csr.add_relation(arg_ids, arg_names=arg_roles,
-                                         component=component_name,
-                                         relation_id=None, span=span, score=1.0)
-            if rel_frame:
-                rel_id = comex_rel_frame['@id']
-                frame_indexer[rel_id] = rel_frame.id
+                rel_frame = csr.add_relation(arg_ids, arg_names=arg_roles,
+                                             component=component_name,
+                                             relation_id=None, span=span, score=1.0)
+                if rel_frame:
+                    rel_id = comex_rel_frame['@id']
+                    frame_indexer[rel_id] = rel_frame.id
 
-                rel_type = comex_rel_frame['interp']['rel_type']
-                rel_frame.add_type(rel_type)
-                collect_modifiers(comex_rel_frame, rel_frame)
+                    rel_type = comex_rel_frame['interp']['rel_type']
+                    rel_frame.add_type(rel_type)
+                    collect_modifiers(comex_rel_frame, rel_frame)
+            except Exception:
+                sys.stderr.write("ERROR: Exception occurred while processing file {0}\n".format(comex_file))
+                sys.stderr.write(json.dumps(comex_rel_frame, indent=4))
+                traceback.print_exc()
 
 
