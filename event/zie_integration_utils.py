@@ -13,16 +13,13 @@ def add_zie_event(zie_event_file, csr):
         # read json
         doc = json.load(fd)
         evt_posi_mapping = Counter()
+        # --
         # add (certain) efs
+        ef_dict_mappings = {}  # ef-id -> ef
         for ef in doc["entity_mentions"] + doc["fillers"]:
             if ef["type"].startswith("ldcOnt:") or ef["type"].startswith("aida:"):
-                extra_info = ef.get("extra_info", {})
-                span_info = extra_info.get("posi")
-                if span_info is not None:
-                    ent = csr.add_entity_mention(
-                        span_info["head_span"], span_info["span"], span_info["text"], ef["type"],
-                        component=extra_info["component"], score=math.exp(ef["score"])
-                    )
+                ef_dict_mappings[ef["id"]] = ef  # store for later adding
+        # --
         # add events
         evt_mappings = {}  # event-id -> csr_evm
         for evt in doc["event_mentions"]:
@@ -46,6 +43,7 @@ def add_zie_event(zie_event_file, csr):
                 evt_mappings[evt["id"]] = csr_evm
             else:
                 logging.warning(f"Adding evt failed for {evt['type']}({span_info['text']})")
+        # --
         # add args
         for evt in doc["event_mentions"]:
             csr_evm = evt_mappings.get(evt["id"])
@@ -71,6 +69,18 @@ def add_zie_event(zie_event_file, csr):
                     else:
                         csr_arg = None
                 else:
+                    # add ent only if used as arg
+                    arg_ef = ef_dict_mappings.get(arg["aid"])
+                    if arg_ef is not None:
+                        extra_info = arg_ef.get("extra_info", {})
+                        span_info = extra_info.get("posi")
+                        if span_info is not None:
+                            ent = csr.add_entity_mention(
+                                span_info["head_span"], span_info["span"], span_info["text"], arg_ef["type"],
+                                component=extra_info["component"], score=math.exp(arg_ef["score"])
+                            )
+                        ef_dict_mappings[arg["aid"]] = None  # no repeated adding
+                    # add arg
                     csr_arg = csr.add_event_arg_by_span(
                         csr_evm, arg_span_info["head_span"], arg_span_info["span"], arg_span_info["text"], arg["role"],
                         component=arg_extra_info["component"], score=math.exp(arg["score"])
