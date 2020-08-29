@@ -544,7 +544,8 @@ class EntityMention(SpanInterpFrame):
             refkb_xref = ValueFrame(None, 'db_reference',
                                     score=score, component=component)
             refkb_xref.add_value('id', refkb_link)
-            refkb_xref.add_value('canonical_name', canonical_name)
+            if canonical_name:
+                refkb_xref.add_value('canonical_name', canonical_name)
             self.interp.add_field('xref', 'refkb', refkbid, refkb_xref,
                                   component=component, multi_value=True)
         if comexkbid:
@@ -552,7 +553,8 @@ class EntityMention(SpanInterpFrame):
             comexkb_xref = ValueFrame(None, 'db_reference',
                                       score=score, component=component)
             comexkb_xref.add_value('id', comexkb_link)
-            comexkb_xref.add_value('canonical_name', canonical_name)
+            if canonical_name:
+                comexkb_xref.add_value('canonical_name', canonical_name)
             self.interp.add_field('xref', 'comexkb', comexkbid, comexkb_xref,
                                   component=component, multi_value=True)
         if wikidataid:
