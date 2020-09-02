@@ -110,6 +110,8 @@ def add_comex(comex_file, csr):
                     # 1. get_frame
                     # 2. csr.add_event_arg
                     if 'args' not in comex_ev_frame['interp'].keys():
+                        sys.stderr.write("WARNING: no args in interp {0}\n".format(comex_file))
+                        sys.stderr.write(json.dumps(comex_ev_frame, indent=4))
                         continue
                     for event_arg in comex_ev_frame['interp']['args']:
                         if event_arg['@type'] == 'xor':
@@ -145,12 +147,21 @@ def add_comex(comex_file, csr):
                 span = [start, end]
                 arg_ids = []
                 arg_roles = []
+                if 'args' not in comex_rel_frame['interp'].keys():
+                    sys.stderr.write("WARNING: no args in interp {0}\n".format(comex_file))
+                    sys.stderr.write(json.dumps(comex_rel_frame, indent=4))
+                    continue
                 for rel_arg in comex_rel_frame['interp']['args']:
-                    if rel_arg['arg'] not in frame_indexer.keys():
-                        continue
-                    arg_roles.append(rel_arg['type'])
-                    arg_ent_frame_id = frame_indexer[rel_arg['arg']]
-                    arg_ids.append(arg_ent_frame_id)
+                    if rel_arg['@type'] == 'xor':
+                        arg_list = [facet['value'] for facet in rel_arg['args']]
+                    else:
+                        arg_list = [rel_arg]
+                    for arg in arg_list:
+                        if arg['arg'] not in frame_indexer.keys():
+                            continue
+                        arg_roles.append(arg['type'])
+                        arg_ent_frame_id = frame_indexer[arg['arg']]
+                        arg_ids.append(arg_ent_frame_id)
 
                 rel_frame = csr.add_relation(arg_ids, arg_names=arg_roles,
                                              component=component_name,
