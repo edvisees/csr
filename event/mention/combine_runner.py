@@ -8,6 +8,7 @@ import os
 from traitlets import (
     Unicode,
     Bool,
+    Integer,
 )
 from traitlets.config.loader import PyFileConfigLoader
 from event.mention.params import DetectionParams
@@ -540,7 +541,7 @@ def analyze_sentence(text):
 
 
 def read_source(source_folder, language, ontology, child2root,
-                csr_component_name, use_ltf_span_style=False):
+                csr_component_name, use_ltf_span_style=False, evt_merge_level=0):
     for source_text_path in glob.glob(source_folder + '/*.txt'):
         # Use the empty newline to handle different newline format.
         with open(source_text_path, newline='') as text_in:
@@ -549,7 +550,7 @@ def read_source(source_folder, language, ontology, child2root,
             runid = time.strftime("%Y%m%d%H%M")
 
             csr = CSR(csr_component_name, runid, 'data',
-                      ontology=ontology)
+                      ontology=ontology, evt_merge_level=evt_merge_level)
 
             # Find the root if possible, otherwise use itself.
             if docid in child2root:
@@ -777,7 +778,8 @@ def main(config):
     for csr, docid in read_source(config.source_folder, config.language,
                                   ontology, child2root,
                                   'Frames_hector_combined',
-                                  config.use_ltf_span_style):
+                                  config.use_ltf_span_style,
+                                  config.evt_merge_level):
         logging.info('Working with docid: {}'.format(docid))
 
         if config.edl_json and not ignore_edl:
@@ -920,6 +922,11 @@ class CombineParams(DetectionParams):
     extent_based_provenance = Bool(
         help='disable extent based provenance for event mentions to use trigger based provenance',
         default_value=True).tag(config=True)
+
+    evt_merge_level = Integer(
+        help='How much level of type level to consider when merge events',
+        default_value=0
+    ).tag(config=True)
 
 
 if __name__ == '__main__':

@@ -54,6 +54,8 @@ c.CombineParams.ignore_comex = False
 # zie
 c.CombineParams.zie_event = os.path.join(os.path.dirname(os.path.dirname(output_base+"/")), 'zie', f'zie.{c.DetectionParams.language}_out')
 
+# by default, merge without considering types (level=0)
+c.CombineParams.evt_merge_level = 0
 
 # This is the parent child from the eval source.
 if 'parent_child_tab' in os.environ:
