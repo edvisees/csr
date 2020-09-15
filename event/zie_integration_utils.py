@@ -7,6 +7,19 @@ import logging
 import math
 from collections import Counter
 
+# helper function for add ef
+def add_ef(csr, arg_ef):
+    extra_info = arg_ef.get("extra_info", {})
+    span_info = extra_info.get("posi")
+    if span_info is not None:
+        ent = csr.add_entity_mention(
+            span_info["head_span"], span_info["span"], span_info["text"], arg_ef["type"],
+            component=extra_info["component"], score=math.exp(arg_ef["score"])
+        )
+        return ent
+    else:
+        return None
+
 # read file and add to csr
 def add_zie_event(zie_event_file, csr):
     with open(zie_event_file) as fd:
@@ -16,13 +29,16 @@ def add_zie_event(zie_event_file, csr):
         # --
         # add (certain) efs
         ef_dict_mappings = {}  # ef-id -> ef
+        ef_csr_mappings = {}  # ef-id -> csr_ef
         for ef in doc["entity_mentions"] + doc["fillers"]:
             if ef["type"].startswith("ldcOnt:") or ef["type"].startswith("aida:"):
                 ef_dict_mappings[ef["id"]] = ef  # store for later adding
         # --
         # add events
-        evt_mappings = {}  # event-id -> csr_evm
+        evt_csr_mappings = {}  # event-id -> csr_evm
         for evt in doc["event_mentions"]:
+            if evt["type"].startswith("rel:"):
+                continue  # these will be added later
             if not (evt["type"].startswith("ldcOnt:") or evt["type"].startswith("aida:")):
                 logging.info(f"Skipping evt for {evt['type']}({evt['extra_info']['posi']['text']})")
                 continue
@@ -34,19 +50,19 @@ def add_zie_event(zie_event_file, csr):
                 realis=evt["realis"], component=extra_info["component"], score=math.exp(evt["score"]),
                 extent_text=span_info.get('extra_text', None), extent_span=span_info.get('extra_span', None)
             )
-            span_key = tuple(span_info["span"])
-            evt_posi_mapping[span_key] += 1
-            if evt_posi_mapping[span_key] > 1:
-                logging.warning("Same posi-span evt inside zie!!")
+            # span_key = tuple(span_info["span"])
+            # evt_posi_mapping[span_key] += 1
+            # if evt_posi_mapping[span_key] > 1:
+            #     logging.warning("Same posi-span evt inside zie!!")
             # add args
             if csr_evm is not None:
-                evt_mappings[evt["id"]] = csr_evm
+                evt_csr_mappings[evt["id"]] = csr_evm
             else:
                 logging.warning(f"Adding evt failed for {evt['type']}({span_info['text']})")
         # --
         # add args
         for evt in doc["event_mentions"]:
-            csr_evm = evt_mappings.get(evt["id"])
+            csr_evm = evt_csr_mappings.get(evt["id"])
             if csr_evm is None:
                 continue  # adding failed
             for arg in evt["em_arg"]:
@@ -60,7 +76,7 @@ def add_zie_event(zie_event_file, csr):
                 arg_span_info = arg_extra_info["posi"]
                 if arg_extra_info.get("is_evt2evt_link", False):
                     # directly use event's adding method to add another event as arg
-                    arg_evm = evt_mappings.get(arg["aid"])
+                    arg_evm = evt_csr_mappings.get(arg["aid"])
                     if arg_evm is not None:
                         arg_onto, slot_type = arg["role"].split(":", 1)
                         arg_id = csr.get_id('arg')
@@ -72,14 +88,10 @@ def add_zie_event(zie_event_file, csr):
                     # add ent only if used as arg
                     arg_ef = ef_dict_mappings.get(arg["aid"])
                     if arg_ef is not None:
-                        extra_info = arg_ef.get("extra_info", {})
-                        span_info = extra_info.get("posi")
-                        if span_info is not None:
-                            ent = csr.add_entity_mention(
-                                span_info["head_span"], span_info["span"], span_info["text"], arg_ef["type"],
-                                component=extra_info["component"], score=math.exp(arg_ef["score"])
-                            )
-                        ef_dict_mappings[arg["aid"]] = None  # no repeated adding
+                        if arg["aid"] not in ef_csr_mappings:  # no repeated adding
+                            ent = add_ef(csr, arg_ef)
+                            if ent is not None:  # set for later use
+                                ef_csr_mappings[arg["aid"]] = ent
                     # add arg
                     csr_arg = csr.add_event_arg_by_span(
                         csr_evm, arg_span_info["head_span"], arg_span_info["span"], arg_span_info["text"], arg["role"],
@@ -87,6 +99,7 @@ def add_zie_event(zie_event_file, csr):
                     )
                 if csr_arg is None:
                     logging.warning(f"Adding evt arg failed for {arg['role']}({arg_span_info['text']})")
+        # --
 
 # =====
 # possible ways to modify "combine_runner.py"

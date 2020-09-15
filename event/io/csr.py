@@ -818,7 +818,7 @@ class CSR:
     """
 
     def __init__(self, component_name, run_id, namespace, ontology,
-                 media_type='text', onto_check=True):
+                 media_type='text', onto_check=True, evt_merge_level=0):
         self.header = {
             "@context": [
                 "https://www.isi.edu/isd/LOOM/opera/"
@@ -867,6 +867,8 @@ class CSR:
         self.image_detection_key = 'image_detection'
 
         self.ontology = ontology
+
+        self.evt_merge_level = evt_merge_level  # on what (type-)level to merge events
 
     def turnoff_onto_check(self):
         self.onto_check = False
@@ -1339,11 +1341,13 @@ class CSR:
         extent based provenance instead of the triger based provenance.
         :return:
         """
+        to_merge_evt_type = ''  # evt_type for merging (if no onto type, then by default '' for this value)
         if full_evm_type is not None:
             evm_onto_type = full_evm_type.split(':', 1)
 
             if len(evm_onto_type) == 2:
                 onto_name, evm_type = evm_onto_type
+                to_merge_evt_type = ".".join(evm_type.split(".")[:self.evt_merge_level])  # on what level to merge things
 
                 if onto_name == self.ontology.prefix:
                     if self.onto_check:
@@ -1359,16 +1363,18 @@ class CSR:
         # Annotation on the same span will be reused.
         head_span = tuple(head_span)
         span = tuple(span)
+        # also consider type when merging?
+        key_head_span, key_span = head_span + (to_merge_evt_type, ), span + (to_merge_evt_type, )
 
         span_aligned = self.align_to_text(span, text, parent_sent)
 
         if span_aligned:
             parent_sent, fitted_span, valid_text = span_aligned
 
-            if span in self._span_frame_map[self.event_key]:
-                evm = self._span_frame_map[self.event_key][span]
-            elif head_span in self._span_frame_map[self.event_key + '_head']:
-                evm = self._span_frame_map[self.event_key + '_head'][head_span]
+            if key_span in self._span_frame_map[self.event_key]:
+                evm = self._span_frame_map[self.event_key][key_span]
+            elif key_head_span in self._span_frame_map[self.event_key + '_head']:
+                evm = self._span_frame_map[self.event_key + '_head'][key_head_span]
             else:
                 if not event_id:
                     event_id = self.get_id('evm')
@@ -1400,8 +1406,8 @@ class CSR:
 
                 self._frame_map[self.event_key][event_id] = evm
 
-                self._span_frame_map[self.event_key][span] = evm
-                self._span_frame_map[self.event_key + "_head"][head_span] = evm
+                self._span_frame_map[self.event_key][key_span] = evm
+                self._span_frame_map[self.event_key + "_head"][key_head_span] = evm
         else:
             return
 
