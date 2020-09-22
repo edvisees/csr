@@ -8,13 +8,19 @@ import math
 from collections import Counter
 
 # helper function for add ef
-def add_ef(csr, arg_ef):
+def add_ef(csr, arg_ef, check_type=False):
     extra_info = arg_ef.get("extra_info", {})
     span_info = extra_info.get("posi")
     if span_info is not None:
+        ef_type = arg_ef["type"]
+        if check_type and ef_type.split(":")[0] not in ["ldcOnt", "aida"]:
+            ef_type = None
+        ef_score = arg_ef.get("score")
+        if ef_score is not None and ef_score < 0.:
+            ef_score = math.exp(ef_score)
         ent = csr.add_entity_mention(
-            span_info["head_span"], span_info["span"], span_info["text"], arg_ef["type"],
-            component=extra_info["component"], score=math.exp(arg_ef["score"])
+            span_info["head_span"], span_info["span"], span_info["text"], ef_type,
+            component=extra_info.get("component"), score=ef_score,
         )
         return ent
     else:
@@ -28,9 +34,11 @@ def add_zie_event(zie_event_file, csr):
         evt_posi_mapping = Counter()
         # --
         # add (certain) efs
+        ef_all_dict_mappings = {}  # ef-id -> ef (all)
         ef_dict_mappings = {}  # ef-id -> ef
         ef_csr_mappings = {}  # ef-id -> csr_ef
         for ef in doc["entity_mentions"] + doc["fillers"]:
+            ef_all_dict_mappings[ef["id"]] = ef
             if ef["type"].startswith("ldcOnt:") or ef["type"].startswith("aida:"):
                 ef_dict_mappings[ef["id"]] = ef  # store for later adding
         # --
@@ -99,6 +107,52 @@ def add_zie_event(zie_event_file, csr):
                     )
                 if csr_arg is None:
                     logging.warning(f"Adding evt arg failed for {arg['role']}({arg_span_info['text']})")
+        # --
+        # add special rels
+        for rel in doc["event_mentions"]:
+            if not rel["type"].startswith("rel:"):
+                continue
+            try:  # to be safe ...
+                extra_info = rel["extra_info"]
+                span_info = extra_info["posi"]
+                rel_type = "ldcOnt:" + rel["type"].split(":")[-1]
+                rel_arg_ids, rel_arg_roles = [], []
+                for arg in rel["em_arg"]:
+                    if not arg["role"].startswith("rel:"):
+                        continue
+                    # find the arg
+                    arg_extra_info = arg["extra_info"]
+                    if arg_extra_info.get("is_evt2evt_link", False):
+                        one_arg = evt_csr_mappings.get(arg["aid"])
+                    else:
+                        arg_ef = ef_all_dict_mappings.get(arg["aid"])
+                        one_arg = ef_csr_mappings.get(arg["aid"])
+                        if one_arg is None and arg_ef is not None:
+                            one_arg = add_ef(csr, arg_ef, check_type=True)
+                            if one_arg is not None:
+                                ef_csr_mappings[arg["aid"]] = one_arg
+                    # skip if not added
+                    if one_arg is None:
+                        logging.warning(f"Adding rel_arg failed for {arg})")
+                        continue
+                    # put it
+                    arg_role = f"{rel_type}_{arg['role'].split(':')[-1]}"
+                    rel_arg_ids.append(one_arg.id)
+                    rel_arg_roles.append(arg_role)
+                # finally checking
+                if len(rel_arg_ids) == 2:
+                    # finally adding
+                    csr_rel = csr.add_relation(
+                        arguments=rel_arg_ids, arg_names=rel_arg_roles,
+                        component=extra_info.get("component"), span=span_info["span"],
+                        score=math.exp(rel["score"]),
+                    )
+                    if csr_rel:
+                        csr_rel.add_type(rel_type)
+                else:
+                    logging.warning(f"Adding rel failed (invalid num of args) for {rel})")
+            except:
+                logging.warning(f"Adding rel failed (some except?) for {rel})")
         # --
 
 # =====
