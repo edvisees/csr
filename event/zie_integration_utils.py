@@ -118,7 +118,7 @@ def add_zie_event(zie_event_file, csr):
                 rel_type = "ldcOnt:" + rel["type"].split(":")[-1]
                 rel_arg_ids, rel_arg_roles = [], []
                 for arg in rel["em_arg"]:
-                    if not arg["role"].startswith("rel:"):
+                    if not (arg["role"].startswith("rel:") or arg["role"].startswith("aida:")):
                         continue
                     # find the arg
                     arg_extra_info = arg["extra_info"]
@@ -136,11 +136,11 @@ def add_zie_event(zie_event_file, csr):
                         logging.warning(f"Adding rel_arg failed for {arg})")
                         continue
                     # put it
-                    arg_role = f"{rel_type}_{arg['role'].split(':')[-1]}"
+                    arg_role = arg['role'] if arg["role"].startswith("aida:") else f"{rel_type}_{arg['role'].split(':')[-1]}"
                     rel_arg_ids.append(one_arg.id)
                     rel_arg_roles.append(arg_role)
                 # finally checking
-                if len(rel_arg_ids) == 2:
+                if len(rel_arg_ids) >= 2:  # allow extra ones for time
                     # finally adding
                     csr_rel = csr.add_relation(
                         arguments=rel_arg_ids, arg_names=rel_arg_roles,
