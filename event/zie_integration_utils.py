@@ -20,7 +20,7 @@ def add_ef(csr, arg_ef, check_type=False):
             ef_score = math.exp(ef_score)
         ent = csr.add_entity_mention(
             span_info["head_span"], span_info["span"], span_info["text"], ef_type,
-            component=extra_info.get("component"), score=ef_score,
+            entity_form=extra_info.get("entity_form"), component=extra_info.get("component"), score=ef_score,
         )
         return ent
     else:
