@@ -40,22 +40,24 @@ def add_entity_relations(relation_file, edl_entities, csr):
                 arg_names = []
                 mention_span = rel['span']
                 score = rel['score']
-                for arg_name, relen in rel.items():
+                for arg_name, relens in rel.items():
+                    relens = [relens] if isinstance(relens, str) else relens
                     if (arg_name == 'rel' or arg_name == 'span' or
                             arg_name == 'score' or arg_name == 'en1'
                             or arg_name == 'en2'):
                         # Not an argument field.
                         continue
 
-                    if relen not in edl_entities:
-                        logging.error(
-                            "Relation entities [{}] not found at {}".format(
-                                relen, relation_file)
-                        )
-                        continue
+                    for relen in relens:
+                        if relen not in edl_entities:
+                            logging.error(
+                                "Relation entities [{}] not found at {}".format(
+                                    relen, relation_file)
+                            )
+                            continue
 
-                    args.append(edl_entities[relen].id)
-                    arg_names.append(arg_name)
+                        args.append(edl_entities[relen].id)
+                        arg_names.append(arg_name)
 
                 if len(args) < 2:
                     logging.error(
