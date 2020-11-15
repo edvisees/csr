@@ -419,7 +419,7 @@ class SpanInterpFrame(InterpFrame):
         self.head_span = None
 
     def add_head_span(self, head_span):
-        self.head_span = tuple(head_span)
+        self.head_span = head_span
 
     def set_text(self, text):
         self.text = text
@@ -447,8 +447,8 @@ class SpanInterpFrame(InterpFrame):
 
             rep['provenance'] = default_provenance
             if self.head_span:
-                rep['provenance']['head_span_start'] = self.head_span[0]
-                rep['provenance']['head_span_end'] = self.head_span[1]
+                rep['provenance']['head_span_start'] = self.head_span.begin
+                rep['provenance']['head_span_length'] = self.head_span.length
         return rep
 
 
@@ -1293,7 +1293,15 @@ class CSR:
                     fitted_span[1] - fitted_span[0], valid_text,
                     component=component, score=score
                 )
-                entity_mention.add_head_span(head_span)
+                head_aligned = self.align_to_text(head_span, None, parent_sent)
+                if head_aligned:
+                    h_parent, h_span_fit, h_text_valid = head_aligned
+                    h_relative_begin = h_span_fit[0] - h_parent.span.begin
+                    h_length = h_span_fit[1] - h_span_fit[0]
+                    head_span = Span(
+                        h_parent.id, h_relative_begin, h_length,
+                        h_text_valid)
+                    entity_mention.add_head_span(head_span)
                 self._frame_map[self.entity_key][entity_id] = entity_mention
 
                 self._span_frame_map[self.entity_key][
@@ -1394,7 +1402,15 @@ class CSR:
                     event_id, parent_sent, relative_begin, length, valid_text,
                     component=component, score=score
                 )
-                evm.add_head_span(head_span)
+                head_aligned = self.align_to_text(head_span, None, parent_sent)
+                if head_aligned:
+                    h_parent, h_span_fit, h_text_valid = head_aligned
+                    h_relative_begin = h_span_fit[0] - h_parent.span.begin
+                    h_length = h_span_fit[1] - h_span_fit[0]
+                    head_span = Span(
+                        h_parent.id, h_relative_begin, h_length,
+                        h_text_valid)
+                    evm.add_head_span(head_span)
 
                 if extent_text and extent_span:
                     extent_aligned = self.align_to_text(
