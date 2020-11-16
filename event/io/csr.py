@@ -449,6 +449,7 @@ class SpanInterpFrame(InterpFrame):
             if self.head_span:
                 rep['provenance']['head_span_start'] = self.head_span.begin
                 rep['provenance']['head_span_length'] = self.head_span.length
+                rep['provenance']['head_span_text'] = self.head_span.text
         return rep
 
 
